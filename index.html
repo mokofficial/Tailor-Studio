@@ -323,15 +323,16 @@ window.onafterprint = function(){ if(state.printing){ state.printing = null; ren
 
 async function loadAll(){
   try{
-    const [c,o,cat,b,th] = await Promise.allSettled([
-      window.storage.get("clients"), window.storage.get("orders"),
-      window.storage.get("catalogue"), window.storage.get("business"), window.storage.get("theme"),
-    ]);
-    if(c.status==="fulfilled" && c.value) state.clients = JSON.parse(c.value.value);
-    if(o.status==="fulfilled" && o.value) state.orders = JSON.parse(o.value.value);
-    if(cat.status==="fulfilled" && cat.value) state.catalogue = JSON.parse(cat.value.value);
-    if(b.status==="fulfilled" && b.value) state.business = Object.assign({}, state.business, JSON.parse(b.value.value));
-    if(th.status==="fulfilled" && th.value) applyTheme(JSON.parse(th.value.value));
+    const c = localStorage.getItem("clients");
+    const o = localStorage.getItem("orders");
+    const cat = localStorage.getItem("catalogue");
+    const b = localStorage.getItem("business");
+    const th = localStorage.getItem("theme");
+    if(c) state.clients = JSON.parse(c);
+    if(o) state.orders = JSON.parse(o);
+    if(cat) state.catalogue = JSON.parse(cat);
+    if(b) state.business = Object.assign({}, state.business, JSON.parse(b));
+    if(th) applyTheme(JSON.parse(th));
   }catch(e){ /* first run */ }
   if(!state.business.bankAccounts) state.business.bankAccounts = [];
   if(state.business.bankAccounts.length===0 && (state.business.bankName || state.business.bankAccountNumber)){
@@ -352,7 +353,7 @@ async function loadAll(){
 let persistTimers = {};
 function persist(key, value){
   clearTimeout(persistTimers[key]);
-  persistTimers[key] = setTimeout(() => { try{ window.storage.set(key, JSON.stringify(value), false); }catch(e){} }, 350);
+  persistTimers[key] = setTimeout(() => { try{ localStorage.setItem(key, JSON.stringify(value)); }catch(e){} }, 350);
 }
 const persistClients = () => persist("clients", state.clients);
 const persistOrders = () => persist("orders", state.orders);
