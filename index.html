@@ -1,0 +1,1255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#1E3A3A">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tailor Studio</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,500&family=Work+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap');
+  :root{
+    --bg:#E7E1D3; --surface:#FBF9F3; --ink:#26221B; --ink-soft:#645E50;
+    --primary:#1E3A3A; --primary-dark:#122626; --gold:#B8842E; --gold-soft:#E7D2A4;
+    --rust:#A2432B; --rust-soft:#F0DAD1; --line:#D6CDB6; --green:#3E6B4F; --green-soft:#DCE9DD;
+  }
+  *{box-sizing:border-box;}
+  html,body{height:100%;margin:0;overflow:hidden;background:var(--bg);overscroll-behavior:none;}
+  body{font-family:'Work Sans',sans-serif;color:var(--ink);}
+  .disp{font-family:'Fraunces',serif;}
+  .mono{font-family:'IBM Plex Mono',monospace;}
+  ::selection{background:var(--gold-soft);}
+  button{font-family:inherit;cursor:pointer;}
+  input,select,textarea{
+    font-family:inherit;background:var(--surface);border:1px solid var(--line);
+    border-radius:6px;padding:8px 10px;color:var(--ink);font-size:13.5px;width:100%;
+  }
+  input:focus,select:focus,textarea:focus{outline:2px solid var(--gold);outline-offset:1px;}
+  label{font-size:12px;color:var(--ink-soft);font-weight:500;display:block;margin-bottom:4px;}
+  a{color:inherit;text-decoration:none;}
+
+  .shell{display:flex;flex-direction:column;height:100vh;height:100dvh;width:100vw;overflow:hidden;}
+  .topbar{display:flex;align-items:center;justify-content:space-between;gap:14px;
+    padding:14px 20px;background:var(--surface);border-bottom:1px solid var(--line);flex-shrink:0;}
+  .brand{display:flex;align-items:center;gap:12px;min-width:0;}
+  .brand-badge{width:42px;height:42px;border-radius:12px;background:var(--primary);color:#fff;
+    display:flex;align-items:center;justify-content:center;font-family:'Fraunces',serif;font-weight:600;
+    font-size:16px;flex-shrink:0;overflow:hidden;}
+  .brand-badge img{width:100%;height:100%;object-fit:cover;}
+  .brand-text{min-width:0;}
+  .brand-name{font-family:'Fraunces',serif;font-weight:600;font-size:17px;line-height:1.2;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:46vw;}
+  .brand-greet{font-size:11.5px;color:var(--ink-soft);margin-top:1px;}
+
+  .content{flex:1;min-height:0;overflow-y:auto;padding:20px;}
+  .bottomnav{display:flex;background:var(--surface);border-top:1px solid var(--line);flex-shrink:0;
+    padding:6px 4px calc(6px + env(safe-area-inset-bottom,0px));position:relative;z-index:5;}
+  .navtab{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 2px;
+    border-radius:12px;color:var(--ink-soft);cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;user-select:none;}
+  .navtab svg{width:21px;height:21px;}
+  .navtab .navlabel{font-size:10px;font-weight:500;}
+  .navtab.active{color:var(--primary);}
+  .navtab.active svg{color:var(--gold);}
+  .navtab:hover{background:rgba(38,34,27,0.04);}
+
+  .btn{border:1px solid var(--primary);background:var(--primary);color:#fff;border-radius:8px;
+    padding:9px 14px;font-size:13.5px;font-weight:500;display:inline-flex;align-items:center;gap:6px;}
+  .btn:hover{background:var(--primary-dark);}
+  .btn.ghost{background:transparent;color:var(--primary);}
+  .btn.ghost:hover{background:rgba(30,58,58,0.08);}
+  .btn.gold{background:var(--gold);border-color:var(--gold);color:#fff;}
+  .btn.gold:hover{background:#a1751f;}
+  .btn.rust{background:var(--rust);border-color:var(--rust);color:#fff;}
+  .btn.wa{background:#3fa858;border-color:#3fa858;color:#fff;}
+  .btn.wa:hover{background:#358f4a;}
+  .btn.sm{padding:6px 10px;font-size:12.5px;}
+  .btn svg{width:14px;height:14px;flex-shrink:0;}
+  .btn:disabled{opacity:.45;cursor:not-allowed;}
+  .iconbtn{border:1px solid var(--line);background:var(--surface);color:var(--ink-soft);border-radius:8px;
+    width:34px;height:34px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .iconbtn:hover{background:rgba(38,34,27,0.05);}
+  .iconbtn svg{width:15px;height:15px;}
+
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px;
+    box-shadow:0 1px 2px rgba(38,34,27,0.05), 0 6px 16px rgba(38,34,27,0.05);}
+  .pill{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:20px;font-size:11.5px;font-weight:600;}
+  .icon-badge{width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .icon-badge svg{width:16px;height:16px;}
+
+  .grid-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:18px;}
+  .grid-2{display:grid;grid-template-columns:1.4fr 1fr;gap:16px;margin-bottom:18px;}
+  .grid-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px;}
+  .grid-form2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  .grid-meas{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:10px;}
+  @media (max-width:760px){ .grid-2{grid-template-columns:1fr;} }
+
+  .chipbar{display:flex;flex-wrap:wrap;gap:6px;}
+  .tape-track{position:relative;height:16px;border-radius:3px;
+    background-image:repeating-linear-gradient(to right,var(--line) 0 1px,transparent 1px 8px),
+      repeating-linear-gradient(to right,var(--line) 0 1.5px,transparent 1.5px 40px);
+    background-color:var(--surface);border:1px solid var(--line);overflow:hidden;}
+  .tape-track .fill{position:absolute;top:0;left:0;height:100%;background:var(--primary);transition:width .4s ease;}
+  .tape-track.cancelled .fill{background:var(--ink-soft);}
+  .tape-labels{display:flex;justify-content:space-between;margin-top:4px;font-size:9.5px;color:var(--ink-soft);flex-wrap:wrap;}
+  .divider{height:10px;margin:10px 0 16px;
+    background-image:repeating-linear-gradient(to right,var(--gold) 0 2px,transparent 2px 12px);opacity:.55;}
+
+  .thumb{width:64px;height:64px;object-fit:cover;border-radius:8px;border:1px solid var(--line);}
+  .thumbwrap{position:relative;}
+  .thumb-x{position:absolute;top:-6px;right:-6px;background:var(--rust);color:#fff;border:none;
+    border-radius:50%;width:18px;height:18px;font-size:11px;line-height:1;display:flex;align-items:center;justify-content:center;}
+  .addthumb{width:64px;height:64px;flex-direction:column;padding:0;border-style:dashed;}
+  .addthumb svg{width:15px;height:15px;}
+
+  .modalwrap{position:fixed;inset:0;background:rgba(20,20,15,0.55);display:flex;align-items:flex-start;
+    justify-content:center;z-index:50;padding:30px 16px;overflow-y:auto;}
+  .modal{background:var(--surface);border-radius:14px;width:100%;max-width:640px;padding:22px;margin-bottom:30px;}
+  .modal.wide{max-width:760px;}
+  .modal-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;}
+  .modal-title{font-family:'Fraunces',serif;font-size:19px;font-weight:600;margin:0;}
+
+  .logo-upload{width:88px;height:88px;border-radius:16px;border:1.5px dashed var(--line);background:var(--surface);
+    display:flex;align-items:center;justify-content:center;overflow:hidden;color:var(--ink-soft);flex-shrink:0;}
+  .logo-upload img{width:100%;height:100%;object-fit:cover;}
+
+  .theme-swatch{display:flex;flex-direction:column;align-items:center;gap:6px;border:none;background:transparent;padding:6px;border-radius:10px;}
+  .theme-swatch:hover{background:rgba(38,34,27,0.05);}
+  .swatch-circle{width:38px;height:38px;border-radius:50%;border:2px solid var(--line);}
+  .theme-swatch.active .swatch-circle{box-shadow:0 0 0 2px var(--surface),0 0 0 4px var(--ink);}
+  .swatch-label{font-size:10.5px;color:var(--ink-soft);}
+  .theme-swatch.active .swatch-label{color:var(--ink);font-weight:600;}
+
+  .bank-entry{border:1px solid var(--line);border-radius:10px;padding:12px;margin-bottom:10px;position:relative;}
+
+  .status-pending{background:var(--gold-soft);color:#8A5F1F;}
+  .status-cutting{background:var(--gold-soft);color:#8A5F1F;}
+  .status-sewing{background:var(--gold-soft);color:#8A5F1F;}
+  .status-fitting{background:var(--gold-soft);color:#8A5F1F;}
+  .status-ready{background:var(--green-soft);color:var(--green);}
+  .status-delivered{background:var(--green-soft);color:var(--green);}
+  .status-cancelled{background:#EDEAE0;color:var(--ink-soft);}
+
+  .empty{color:var(--ink-soft);font-size:13.5px;padding:6px 0;}
+  .rowline{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--line);}
+  .rowline:last-child{border-bottom:none;}
+
+  @media print{
+    body *{visibility:hidden;}
+    .print-area,.print-area *{visibility:visible;}
+    .print-area{position:absolute;top:0;left:0;width:100%;padding:20px;}
+  }
+
+  .welcome-shell{height:100vh;height:100dvh;display:flex;flex-direction:column;background:var(--bg);overflow:hidden;}
+  .welcome-hero{position:relative;height:54%;flex-shrink:0;overflow:hidden;background:var(--ink);}
+  .welcome-track{display:flex;height:100%;transition:transform .6s cubic-bezier(.4,0,.2,1);}
+  .welcome-slide{min-width:100%;height:100%;position:relative;}
+  .welcome-slide img{width:100%;height:100%;object-fit:cover;display:block;}
+  .welcome-caption{position:absolute;left:0;right:0;bottom:0;padding:18px 18px 16px;
+    background:linear-gradient(to top, rgba(10,8,6,0.72), rgba(10,8,6,0));color:#fff;}
+  .welcome-caption .wname{font-family:'Fraunces',serif;font-size:17px;font-weight:600;}
+  .welcome-caption .wcat{font-size:11px;opacity:.75;margin-top:1px;}
+  .welcome-caption .wprice{font-family:'IBM Plex Mono',monospace;font-size:14.5px;margin-top:4px;font-weight:500;}
+  .welcome-dots{position:absolute;bottom:10px;left:0;right:0;display:flex;justify-content:center;gap:6px;z-index:2;}
+  .welcome-dot{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,0.5);border:none;padding:0;}
+  .welcome-dot.active{background:#fff;width:16px;border-radius:4px;}
+  .welcome-arrow{position:absolute;top:50%;transform:translateY(-50%);background:rgba(10,8,6,0.35);color:#fff;
+    border:none;width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;z-index:2;}
+  .welcome-arrow.prev{left:8px;} .welcome-arrow.next{right:8px;}
+  .welcome-empty{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:rgba(255,255,255,0.75);}
+  .welcome-body{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:26px 24px;gap:12px;min-height:0;}
+  .welcome-logo{width:60px;height:60px;border-radius:16px;background:var(--primary);color:#fff;display:flex;align-items:center;justify-content:center;
+    font-family:'Fraunces',serif;font-weight:600;font-size:22px;overflow:hidden;}
+  .welcome-logo img{width:100%;height:100%;object-fit:cover;}
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<script>
+/* ================= ICONS ================= */
+const ICONS = {
+  dashboard:'<rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/>',
+  users:'<circle cx="9" cy="8" r="3"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><circle cx="17.5" cy="9" r="2.3"/><path d="M15.2 20c.3-2.6 2-4.5 4.3-5"/>',
+  bag:'<path d="M6 8h12l-1 12H7L6 8z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/>',
+  image:'<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8.5" cy="9.5" r="1.5"/><path d="M21 16l-5-5-4 4-3-3-5 5"/>',
+  account:'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="10" r="3"/><path d="M6.3 18a6 6 0 0 1 11.4 0"/>',
+  plus:'<path d="M12 5v14M5 12h14"/>',
+  x:'<path d="M6 6l12 12M18 6L6 18"/>',
+  trash:'<path d="M4 7h16"/><path d="M9 7V4h6v3"/><path d="M6 7l1 13h10l1-13"/>',
+  edit:'<path d="M4 20l4-1 11-11-3-3L5 16l-1 4z"/>',
+  phone:'<path d="M5.5 4.5h3l1.2 4.5-2.4 1.6a11 11 0 0 0 5.1 5.1l1.6-2.4 4.5 1.2v3a1.2 1.2 0 0 1-1.3 1.2C10.5 18.4 5.6 13.5 4.3 6.8A1.2 1.2 0 0 1 5.5 4.5z"/>',
+  pin:'<path d="M12 21s7-7.5 7-12a7 7 0 1 0-14 0c0 4.5 7 12 7 12z"/><circle cx="12" cy="9" r="2.3"/>',
+  check:'<path d="M5 13l4 4 10-10"/>',
+  send:'<path d="M3 11l18-8-8 18-2.5-7L3 11z"/>',
+  camera:'<path d="M4 8h3l2-2h6l2 2h3v11H4z"/><circle cx="12" cy="13.5" r="3.5"/>',
+  upload:'<path d="M12 15V4M8 8l4-4 4 4"/><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/>',
+  search:'<circle cx="10.5" cy="10.5" r="6.5"/><path d="M20 20l-4.5-4.5"/>',
+  back:'<path d="M19 12H5M11 6l-6 6 6 6"/>',
+  chat:'<path d="M21 11.6a8.5 8.5 0 1 1-3.8-7.1L21 3l-1.1 4.3c.7 1.2 1.1 2.6 1.1 4.3z"/>',
+  cash:'<rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/>',
+  alert:'<path d="M12 3l10 18H2L12 3z"/><path d="M12 9.5v5"/><circle cx="12" cy="17" r=".3" fill="currentColor"/>',
+  calendar:'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9.5h18"/><path d="M8 3v4.5M16 3v4.5"/>',
+  scissors:'<circle cx="6" cy="6" r="2.4"/><circle cx="6" cy="18" r="2.4"/><path d="M8 8l11 11M19 5L8 16"/>',
+  printer:'<path d="M6 9V4h12v5"/><rect x="4" y="9" width="16" height="7" rx="1.5"/><path d="M6 16h12v5H6z"/>',
+  forward:'<path d="M5 12h14M13 6l6 6-6 6"/>',
+  close:'<path d="M6 6l12 12M18 6L6 18"/>',
+};
+function icon(name,size){ size=size||16; return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="'+size+'" height="'+size+'" aria-hidden="true">'+(ICONS[name]||'')+'</svg>'; }
+
+/* ================= HELPERS ================= */
+const THEMES = {
+  indigo:     { label:"Indigo & Gold",    vars:{ bg:"#E7E1D3", surface:"#FBF9F3", ink:"#26221B", "ink-soft":"#645E50", primary:"#1E3A3A", "primary-dark":"#122626", gold:"#B8842E", "gold-soft":"#E7D2A4", rust:"#A2432B", "rust-soft":"#F0DAD1", line:"#D6CDB6", green:"#3E6B4F", "green-soft":"#DCE9DD" } },
+  terracotta: { label:"Terracotta & Cream", vars:{ bg:"#F3E9DC", surface:"#FFFBF5", ink:"#3A2A20", "ink-soft":"#8A6F5C", primary:"#B4552F", "primary-dark":"#8C3F20", gold:"#C99A3D", "gold-soft":"#EAD9A8", rust:"#8C2F2F", "rust-soft":"#EFD3D0", line:"#E3CBB0", green:"#4F7A5A", "green-soft":"#DCEBDF" } },
+  emerald:    { label:"Emerald & Blush",  vars:{ bg:"#E8EEE7", surface:"#FBFDF9", ink:"#1F2A22", "ink-soft":"#5E7267", primary:"#1F5C46", "primary-dark":"#123D2E", gold:"#C97B87", "gold-soft":"#F2D9DE", rust:"#A2432B", "rust-soft":"#F0DAD1", line:"#CBDBD0", green:"#2F6E4E", "green-soft":"#D8EBDF" } },
+  charcoal:   { label:"Charcoal & Copper", vars:{ bg:"#E4E1DC", surface:"#FAF9F6", ink:"#211F1C", "ink-soft":"#635F57", primary:"#2B2A28", "primary-dark":"#151412", gold:"#B5652E", "gold-soft":"#E8CBAE", rust:"#9C3B2A", "rust-soft":"#EBD2CB", line:"#D4D0C8", green:"#3E6B4F", "green-soft":"#DCE9DD" } },
+  navy:       { label:"Navy & Rose",      vars:{ bg:"#E6E8ED", surface:"#FBFCFE", ink:"#1C2333", "ink-soft":"#5C6579", primary:"#233A5E", "primary-dark":"#152438", gold:"#C97A8C", "gold-soft":"#F1D7DE", rust:"#A2432B", "rust-soft":"#F0DAD1", line:"#CDD3DE", green:"#3E6B4F", "green-soft":"#DCE9DD" } },
+  plum:       { label:"Plum & Champagne", vars:{ bg:"#EAE1E6", surface:"#FBF6F8", ink:"#2B1F2A", "ink-soft":"#73636D", primary:"#5B2E52", "primary-dark":"#3D1D37", gold:"#C9A15A", "gold-soft":"#EFDFB8", rust:"#8C3B4A", "rust-soft":"#EBD5D9", line:"#D9C9D3", green:"#4F7A5A", "green-soft":"#DCEBDF" } },
+  ocean:      { label:"Ocean & Sand",     vars:{ bg:"#DCE6E6", surface:"#F6FBFB", ink:"#16282C", "ink-soft":"#587178", primary:"#1F5C6B", "primary-dark":"#123A44", gold:"#D9A65C", "gold-soft":"#F2DFB8", rust:"#A2432B", "rust-soft":"#F0DAD1", line:"#C4D6D6", green:"#3E6B4F", "green-soft":"#DCE9DD" } },
+  mustard:    { label:"Mustard & Ink",    vars:{ bg:"#EDE6D3", surface:"#FBF8ED", ink:"#221F17", "ink-soft":"#6B6350", primary:"#221F17", "primary-dark":"#100E0A", gold:"#C9A227", "gold-soft":"#EDE0A0", rust:"#9C3B2A", "rust-soft":"#EBD2CB", line:"#DCD1AE", green:"#556B2F", "green-soft":"#E3E9D0" } },
+  berry:      { label:"Berry & Cream",    vars:{ bg:"#F0E4E6", surface:"#FEFAFA", ink:"#2E1B20", "ink-soft":"#7A5C63", primary:"#7A2E44", "primary-dark":"#551F2F", gold:"#C9915A", "gold-soft":"#EFD9BE", rust:"#9C3B2A", "rust-soft":"#EBD2CB", line:"#E3CDD1", green:"#4F7A5A", "green-soft":"#DCEBDF" } },
+  forest:     { label:"Forest & Rust",    vars:{ bg:"#E2E6DC", surface:"#F8FAF5", ink:"#1E2A1B", "ink-soft":"#5A6B54", primary:"#33502E", "primary-dark":"#20331C", gold:"#B5652E", "gold-soft":"#E8CBAE", rust:"#9C3B2A", "rust-soft":"#EBD2CB", line:"#CBD6C0", green:"#4F7A5A", "green-soft":"#DCEBDF" } },
+};
+function applyTheme(key){
+  const t = THEMES[key] ? key : "indigo";
+  const vars = THEMES[t].vars;
+  Object.keys(vars).forEach(k => document.documentElement.style.setProperty("--"+k, vars[k]));
+  state.theme = t;
+}
+
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2,7);
+const todayISO = () => new Date().toISOString().slice(0,10);
+const fmtDate = (iso) => { if(!iso) return "—"; const d=new Date(iso+"T00:00:00"); return d.toLocaleDateString(undefined,{day:"numeric",month:"short",year:"numeric"}); };
+const daysUntil = (iso) => { if(!iso) return null; const d=new Date(iso+"T00:00:00"); const t=new Date(); t.setHours(0,0,0,0); return Math.round((d-t)/86400000); };
+const money = (n,cur) => (cur||"")+Number(n||0).toLocaleString(undefined,{maximumFractionDigits:0});
+const greeting = () => { const h=new Date().getHours(); return h<12?"Good morning":h<17?"Good afternoon":"Good evening"; };
+function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function getPath(obj, path){ return path.split('.').reduce((o,k)=> (o==null?undefined:o[k]), obj); }
+function setPath(obj, path, value){ const keys=path.split('.'); let o=obj; for(let i=0;i<keys.length-1;i++){ o=o[keys[i]]; } o[keys[keys.length-1]]=value; }
+
+function resizeImage(file, maxDim, quality){
+  maxDim = maxDim || 480; quality = quality || 0.72;
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        let width = img.width, height = img.height;
+        if(width > height){ if(width > maxDim){ height = Math.round(height*(maxDim/width)); width = maxDim; } }
+        else{ if(height > maxDim){ width = Math.round(width*(maxDim/height)); height = maxDim; } }
+        const canvas = document.createElement('canvas');
+        canvas.width = width; canvas.height = height;
+        canvas.getContext('2d').drawImage(img,0,0,width,height);
+        resolve(canvas.toDataURL('image/jpeg', quality));
+      };
+      img.onerror = reject;
+      img.src = e.target.result;
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+const MEASUREMENT_FIELDS = [
+  ["neck","Neck"],["shoulder","Shoulder"],["chest","Chest / Bust"],["waist","Waist"],
+  ["hip","Hip"],["sleeveLength","Sleeve length"],["bicep","Bicep"],["wrist","Wrist"],
+  ["topLength","Top length"],["trouserLength","Trouser length"],["thigh","Thigh"],
+  ["knee","Knee"],["ankle","Ankle"],["inseam","Inseam"],["acrossBack","Across back"],
+];
+const STATUSES = [
+  {key:"Pending",pct:8},{key:"Cutting",pct:30},{key:"Sewing",pct:55},
+  {key:"Fitting",pct:78},{key:"Ready",pct:92},{key:"Delivered",pct:100},{key:"Cancelled",pct:100},
+];
+const statusInfo = (s) => STATUSES.find(x=>x.key===s) || STATUSES[0];
+const statusClass = (s) => "status-"+(s||"pending").toLowerCase();
+
+const waLink = (phone, text) => { const digits=(phone||"").replace(/[^0-9]/g,""); return "https://wa.me/"+digits+"?text="+encodeURIComponent(text); };
+const orderTotal = (o) => (o.items||[]).reduce((s,i)=>s+Number(i.price||0),0);
+const orderPaid = (o) => (o.payments||[]).reduce((s,p)=>s+Number(p.amount||0),0);
+
+function buildInvoiceText(order, client, business, kind){
+  const total = orderTotal(order), paid = orderPaid(order), bal = total - paid;
+  const lines = [];
+  lines.push("*"+business.name+"*");
+  if(business.address) lines.push(business.address);
+  if(business.phone) lines.push(business.phone);
+  if(business.regNumber) lines.push("RC: "+business.regNumber);
+  lines.push("—————————————");
+  lines.push(kind==="receipt" ? "RECEIPT" : "INVOICE");
+  lines.push("Client: "+(client?client.name:"—"));
+  lines.push("Order: "+(order.title||"Untitled order"));
+  lines.push("Date: "+fmtDate(todayISO()));
+  lines.push("");
+  (order.items||[]).forEach(it => lines.push(it.desc+" — "+money(it.price, business.currency)));
+  lines.push("—————————————");
+  lines.push("Total: "+money(total, business.currency));
+  lines.push("Paid: "+money(paid, business.currency));
+  lines.push("Balance: "+money(bal, business.currency));
+  if(order.dueDate) lines.push("Due date: "+fmtDate(order.dueDate));
+  if(bal > 0 && business.bankAccounts && business.bankAccounts.length > 0){
+    lines.push("");
+    lines.push(business.bankAccounts.length > 1 ? "Pay into any of:" : "Pay into:");
+    business.bankAccounts.forEach((acc,i) => {
+      if(business.bankAccounts.length > 1) lines.push("Option "+(i+1)+":");
+      if(acc.accountName) lines.push(acc.accountName);
+      if(acc.bankName) lines.push(acc.bankName);
+      if(acc.accountNumber) lines.push(acc.accountNumber);
+    });
+  }
+  lines.push("");
+  lines.push("Thank you for your patronage!");
+  return lines.join("\n");
+}
+
+/* ================= STATE ================= */
+const state = {
+  tab: "dashboard",
+  clients: [],
+  orders: [],
+  catalogue: { categories: [], items: [] },
+  business: { name:"My Tailor Shop", phone:"", address:"", currency:"₦", regNumber:"", bankAccounts:[], logo:null },
+  loaded: false,
+  selectedClientId: null,
+  activeCategoryId: null,
+  orderFilterStatus: "All",
+  modal: null,     // {type:'client'|'order'|'catitem', draft:{...}, isNew:bool}
+  printing: null,  // {order, client, kind} | {catalogue:true}
+  showWelcome: true,
+  welcomeIndex: 0,
+};
+let welcomeTimer = null;
+let dashCharts = { bar:null, pie:null };
+window.onafterprint = function(){ if(state.printing){ state.printing = null; render(); } };
+
+async function loadAll(){
+  try{
+    const [c,o,cat,b,th] = await Promise.allSettled([
+      window.storage.get("clients"), window.storage.get("orders"),
+      window.storage.get("catalogue"), window.storage.get("business"), window.storage.get("theme"),
+    ]);
+    if(c.status==="fulfilled" && c.value) state.clients = JSON.parse(c.value.value);
+    if(o.status==="fulfilled" && o.value) state.orders = JSON.parse(o.value.value);
+    if(cat.status==="fulfilled" && cat.value) state.catalogue = JSON.parse(cat.value.value);
+    if(b.status==="fulfilled" && b.value) state.business = Object.assign({}, state.business, JSON.parse(b.value.value));
+    if(th.status==="fulfilled" && th.value) applyTheme(JSON.parse(th.value.value));
+  }catch(e){ /* first run */ }
+  if(!state.business.bankAccounts) state.business.bankAccounts = [];
+  if(state.business.bankAccounts.length===0 && (state.business.bankName || state.business.bankAccountNumber)){
+    state.business.bankAccounts.push({ id:uid(), bankName:state.business.bankName||"", accountName:state.business.bankAccountName||"", accountNumber:state.business.bankAccountNumber||"" });
+  }
+  if(!state.theme) applyTheme("indigo");
+  if(!state.catalogue.categories || state.catalogue.categories.length===0){
+    state.catalogue.categories = [
+      {id:uid(), name:"Native wear", gallery:[]},
+      {id:uid(), name:"Suits", gallery:[]},
+      {id:uid(), name:"Casual", gallery:[]},
+    ];
+  }
+  state.activeCategoryId = state.catalogue.categories[0] ? state.catalogue.categories[0].id : null;
+  state.loaded = true;
+  render();
+}
+let persistTimers = {};
+function persist(key, value){
+  clearTimeout(persistTimers[key]);
+  persistTimers[key] = setTimeout(() => { try{ window.storage.set(key, JSON.stringify(value), false); }catch(e){} }, 350);
+}
+const persistClients = () => persist("clients", state.clients);
+const persistOrders = () => persist("orders", state.orders);
+const persistCatalogue = () => persist("catalogue", state.catalogue);
+const persistBusiness = () => persist("business", state.business);
+
+/* ================= RENDER ROOT ================= */
+function render(){
+  const app = document.getElementById("app");
+  if(!state.loaded){ app.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100vh;color:var(--ink-soft)">Loading…</div>'; return; }
+
+  if(state.printing){ app.innerHTML = renderPrintView(); setTimeout(() => { try{ window.print(); }catch(e){} }, 250); return; }
+
+  if(state.showWelcome){ app.innerHTML = renderWelcomeView(); startWelcomeCarousel(); return; }
+  clearWelcomeTimer();
+
+  const contentScroll = document.getElementById("content") ? document.getElementById("content").scrollTop : 0;
+
+  const initials = (state.business.name||"T S").trim().split(/\s+/).slice(0,2).map(w=>w[0]).join("").toUpperCase();
+  const logoHtml = state.business.logo ? '<img src="'+state.business.logo+'" alt="">' : esc(initials);
+
+  const NAV = [
+    {key:"dashboard", label:"Home", icon:"dashboard"},
+    {key:"clients", label:"Clients", icon:"users"},
+    {key:"orders", label:"Orders", icon:"bag"},
+    {key:"catalogue", label:"Catalogue", icon:"image"},
+    {key:"account", label:"Account", icon:"account"},
+  ];
+
+  app.innerHTML =
+    '<div class="shell">'+
+      '<div class="topbar">'+
+        '<div class="brand" data-action="open-welcome" style="cursor:pointer;">'+
+          '<div class="brand-badge">'+logoHtml+'</div>'+
+          '<div class="brand-text"><div class="brand-name">'+esc(state.business.name)+'</div><div class="brand-greet">'+greeting()+'</div></div>'+
+        '</div>'+
+        '<div style="display:flex;gap:8px;align-items:center;">'+
+          '<button class="btn gold sm" data-action="open-order-modal-new"><span>'+icon("plus",14)+'</span> New order</button>'+
+        '</div>'+
+      '</div>'+
+      '<div class="content" id="content">'+ renderTabContent() +'</div>'+
+      '<div class="bottomnav">'+
+        NAV.map(n => '<div class="navtab '+(state.tab===n.key?'active':'')+'" data-action="set-tab" data-tab="'+n.key+'">'+icon(n.icon,21)+'<span class="navlabel">'+n.label+'</span></div>').join("")+
+      '</div>'+
+    '</div>'+
+    renderModal();
+
+  const contentEl = document.getElementById("content");
+  if(contentEl) contentEl.scrollTop = contentScroll;
+
+  if(state.tab === "dashboard") renderDashboardCharts();
+}
+
+function renderTabContent(){
+  if(state.tab === "dashboard") return renderDashboard();
+  if(state.tab === "clients") return state.selectedClientId ? renderClientDetail() : renderClients();
+  if(state.tab === "orders") return renderOrders();
+  if(state.tab === "catalogue") return renderCatalogue();
+  if(state.tab === "account") return renderAccount();
+  return "";
+}
+
+/* ================= DASHBOARD ================= */
+function renderDashboard(){
+  const orders = state.orders, clients = state.clients, business = state.business;
+  const totalRevenue = orders.reduce((s,o)=>s+orderPaid(o),0);
+  const outstanding = orders.filter(o=>o.status!=="Cancelled").reduce((s,o)=>s+(orderTotal(o)-orderPaid(o)),0);
+  const activeOrders = orders.filter(o=>!["Delivered","Cancelled"].includes(o.status)).length;
+
+  const reminders = orders.filter(o=>o.status!=="Delivered" && o.status!=="Cancelled").map(o=>{
+    const bal = orderTotal(o)-orderPaid(o); const dleft = daysUntil(o.dueDate);
+    return {o, bal, dleft, client: clients.find(c=>c.id===o.clientId)};
+  }).filter(x=>x.dleft!==null && x.dleft<=5).sort((a,b)=>a.dleft-b.dleft);
+
+  const spend = {};
+  orders.forEach(o=>{ spend[o.clientId] = (spend[o.clientId]||0) + orderTotal(o); });
+  const topClients = Object.entries(spend).map(([id,total])=>({client:clients.find(c=>c.id===id), total}))
+    .filter(x=>x.client).sort((a,b)=>b.total-a.total).slice(0,5);
+
+  return (
+    '<div style="margin-bottom:18px;"><div class="disp" style="font-size:21px;font-weight:600;">'+greeting()+'</div>'+
+      '<div style="font-size:13px;color:var(--ink-soft);margin-top:2px;">Here\'s how the shop is doing today.</div></div>'+
+    '<div class="grid-stats">'+
+      statCard("Total revenue", money(totalRevenue, business.currency), "cash", "var(--green)", "var(--green-soft)")+
+      statCard("Outstanding balance", money(outstanding, business.currency), "alert", "var(--rust)", "var(--rust-soft)")+
+      statCard("Active orders", activeOrders, "scissors", "var(--primary)", "rgba(30,58,58,0.08)")+
+      statCard("Total clients", clients.length, "users", "#8A5F1F", "var(--gold-soft)")+
+    '</div>'+
+    '<div class="grid-2">'+
+      '<div class="card"><div class="disp" style="font-weight:600;margin-bottom:10px;">Revenue, last 6 months</div>'+
+        '<div style="position:relative;height:220px;"><canvas id="revChart" role="img" aria-label="Bar chart of revenue over the last six months"></canvas></div></div>'+
+      '<div class="card"><div class="disp" style="font-weight:600;margin-bottom:10px;">Orders by status</div>'+
+        '<div style="position:relative;height:220px;"><canvas id="statusChart" role="img" aria-label="Doughnut chart of orders grouped by status"></canvas></div></div>'+
+    '</div>'+
+    '<div class="grid-2">'+
+      '<div class="card"><div class="disp" style="font-weight:600;margin-bottom:10px;">Due soon &amp; overdue</div>'+
+        (reminders.length===0 ? '<div class="empty">Nothing due in the next 5 days.</div>' :
+          reminders.map(({o,bal,dleft,client}) => (
+            '<div class="rowline"><div>'+
+              '<div style="font-weight:500;font-size:13.5px;cursor:pointer;" data-action="open-order-modal" data-id="'+o.id+'">'+esc(client?client.name:"Unknown")+' — '+esc(o.title||"Order")+'</div>'+
+              '<div style="font-size:11.5px;color:'+(dleft<0?'var(--rust)':'var(--ink-soft)')+';">'+
+                (dleft<0 ? Math.abs(dleft)+"d overdue" : dleft===0 ? "Due today" : "Due in "+dleft+"d")+' · Balance '+money(bal,business.currency)+
+              '</div></div>'+
+              (client ? '<a class="btn wa sm" href="'+waLink(client.phone, reminderText(o,client,bal,business))+'" target="_blank" rel="noreferrer">'+icon("send",13)+'</a>' : '')+
+            '</div>'
+          )).join("")
+        )+
+      '</div>'+
+      '<div class="card"><div class="disp" style="font-weight:600;margin-bottom:10px;">Top clients</div>'+
+        (topClients.length===0 ? '<div class="empty">No orders yet.</div>' :
+          topClients.map(({client,total}) => '<div class="rowline"><span>'+esc(client.name)+'</span><span class="mono" style="font-weight:500;">'+money(total,business.currency)+'</span></div>').join("")
+        )+
+      '</div>'+
+    '</div>'
+  );
+}
+function reminderText(o, client, bal, business){
+  return "Hi "+client.name+", friendly reminder that your order \""+(o.title||"your order")+"\" has a balance of "+money(bal, business.currency)+(o.dueDate?(" due "+fmtDate(o.dueDate)):"")+". Thank you!";
+}
+function statCard(label, value, iconName, tone, bg){
+  return '<div class="card" style="display:flex;flex-direction:column;gap:10px;">'+
+    '<div style="display:flex;align-items:center;gap:9px;">'+
+      '<div class="icon-badge" style="background:'+bg+';color:'+tone+';">'+icon(iconName,16)+'</div>'+
+      '<span style="font-size:12.5px;font-weight:500;color:var(--ink-soft);">'+label+'</span>'+
+    '</div>'+
+    '<div class="disp" style="font-size:24px;font-weight:600;color:'+tone+';">'+value+'</div>'+
+  '</div>';
+}
+function renderDashboardCharts(){
+  const orders = state.orders, business = state.business;
+  const revBy = {}; orders.forEach(o=> (o.payments||[]).forEach(p=>{
+    const d = new Date(p.date+"T00:00:00"); const key = d.toLocaleDateString(undefined,{month:"short"});
+    revBy[key] = (revBy[key]||0) + Number(p.amount||0);
+  }));
+  const now = new Date(); const labels=[]; const data=[];
+  for(let i=5;i>=0;i--){ const d=new Date(now.getFullYear(), now.getMonth()-i, 1); const key=d.toLocaleDateString(undefined,{month:"short"}); labels.push(key); data.push(revBy[key]||0); }
+
+  const statusBy = {}; orders.forEach(o=>{ statusBy[o.status] = (statusBy[o.status]||0)+1; });
+  const sLabels = Object.keys(statusBy); const sData = sLabels.map(k=>statusBy[k]);
+  const palette = ["#1E3A3A","#B8842E","#A2432B","#3E6B4F","#8C7B5A","#645E50","#C79A4B"];
+
+  const revCanvas = document.getElementById("revChart");
+  if(revCanvas && window.Chart){
+    if(dashCharts.bar) dashCharts.bar.destroy();
+    dashCharts.bar = new Chart(revCanvas, {
+      type:"bar",
+      data:{ labels, datasets:[{ label:"Revenue", data, backgroundColor:"#1E3A3A", borderRadius:4, maxBarThickness:36 }] },
+      options:{ responsive:true, maintainAspectRatio:false,
+        plugins:{ legend:{display:false}, tooltip:{ callbacks:{ label:(ctx)=> money(ctx.parsed.y, business.currency) } } },
+        scales:{ y:{ beginAtZero:true, grid:{color:"#D6CDB6"}, ticks:{color:"#645E50", font:{size:11}} },
+                 x:{ grid:{display:false}, ticks:{color:"#645E50", font:{size:12}} } } }
+    });
+  }
+  const statusCanvas = document.getElementById("statusChart");
+  if(statusCanvas && window.Chart){
+    if(dashCharts.pie) dashCharts.pie.destroy();
+    dashCharts.pie = new Chart(statusCanvas, {
+      type:"doughnut",
+      data:{ labels:sLabels, datasets:[{ data:sData, backgroundColor: sLabels.map((_,i)=>palette[i%palette.length]), borderColor:"#FBF9F3", borderWidth:2 }] },
+      options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{ position:"bottom", labels:{ boxWidth:10, font:{size:11}, color:"#26221B" } } } }
+    });
+  }
+}
+
+/* ================= CLIENTS ================= */
+function renderClients(){
+  const q = (state.clientSearch||"").toLowerCase();
+  const filtered = state.clients.filter(c => c.name.toLowerCase().includes(q) || (c.phone||"").includes(q));
+  return (
+    '<div style="display:flex;justify-content:space-between;margin-bottom:16px;gap:10px;flex-wrap:wrap;">'+
+      '<div style="position:relative;flex:1;min-width:180px;max-width:320px;">'+
+        '<span style="position:absolute;left:10px;top:11px;color:var(--ink-soft);">'+icon("search",14)+'</span>'+
+        '<input style="padding-left:30px;" placeholder="Search clients..." data-action="search-clients" value="'+esc(state.clientSearch||"")+'">'+
+      '</div>'+
+      '<button class="btn" data-action="open-client-modal-new"><span>'+icon("plus",15)+'</span> New client</button>'+
+    '</div>'+
+    '<div class="grid-cards" id="clientsGrid">'+ clientCardsHtml(filtered) +'</div>'
+  );
+}
+function clientCardsHtml(filtered){
+  return (filtered.length===0 ? '<div class="empty">No clients found.</div>' : filtered.map(c => {
+    const orderCount = state.orders.filter(o=>o.clientId===c.id).length;
+    return '<div class="card" style="cursor:pointer;" data-action="select-client" data-id="'+c.id+'">'+
+      '<div style="display:flex;justify-content:space-between;align-items:flex-start;">'+
+        '<div><div class="disp" style="font-weight:600;font-size:15.5px;">'+esc(c.name)+'</div>'+
+          '<div style="font-size:12.5px;color:var(--ink-soft);display:flex;align-items:center;gap:4px;margin-top:2px;">'+icon("phone",11)+' '+esc(c.phone||"—")+'</div></div>'+
+        '<div style="display:flex;gap:4px;" data-stop="1">'+
+          '<button class="iconbtn" data-action="open-client-modal" data-id="'+c.id+'">'+icon("edit",13)+'</button>'+
+          '<button class="iconbtn" data-action="delete-client" data-id="'+c.id+'">'+icon("trash",13)+'</button>'+
+        '</div></div>'+
+      '<div style="display:flex;gap:10px;margin-top:10px;font-size:12px;color:var(--ink-soft);">'+
+        '<span>'+orderCount+' order'+(orderCount!==1?"s":"")+'</span>'+
+        '<span>'+(c.styleImages?c.styleImages.length:0)+' photo'+((c.styleImages&&c.styleImages.length!==1)?"s":"")+'</span></div>'+
+      ((c.styleImages&&c.styleImages.length>0) ? '<div style="display:flex;gap:6px;margin-top:8px;">'+c.styleImages.slice(0,4).map(s=>'<img src="'+s+'" class="thumb" style="width:40px;height:40px;">').join("")+'</div>' : '')+
+    '</div>';
+  }).join(""));
+}
+function renderClientDetail(){
+  const client = state.clients.find(c=>c.id===state.selectedClientId);
+  if(!client) { state.selectedClientId=null; return renderClients(); }
+  const clientOrders = state.orders.filter(o=>o.clientId===client.id);
+  const business = state.business;
+  return (
+    '<button class="btn ghost sm" data-action="back-to-clients" style="margin-bottom:14px;">'+icon("back",14)+' Back to clients</button>'+
+    '<div class="card" style="margin-bottom:16px;">'+
+      '<div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px;">'+
+        '<div><div class="disp" style="font-size:21px;font-weight:600;">'+esc(client.name)+'</div>'+
+          '<div style="font-size:13px;color:var(--ink-soft);margin-top:4px;display:flex;gap:14px;flex-wrap:wrap;">'+
+            '<span style="display:flex;align-items:center;gap:4px;">'+icon("phone",12)+' '+esc(client.phone||"—")+'</span>'+
+            '<span style="display:flex;align-items:center;gap:4px;">'+icon("pin",12)+' '+esc(client.address||"—")+'</span></div></div>'+
+        '<button class="btn ghost sm" data-action="open-client-modal" data-id="'+client.id+'">'+icon("edit",13)+' Edit</button>'+
+      '</div>'+
+      (client.notes ? '<div style="margin-top:10px;font-size:13px;color:var(--ink-soft);">'+esc(client.notes)+'</div>' : '')+
+    '</div>'+
+    '<div class="card" style="margin-bottom:16px;">'+
+      '<div class="disp" style="font-weight:600;margin-bottom:10px;">Body measurements (cm)</div>'+
+      '<div class="grid-meas">'+
+        (MEASUREMENT_FIELDS.filter(([k])=>client.measurements&&client.measurements[k]).map(([k,l])=>
+          '<div><div style="font-size:11px;color:var(--ink-soft);">'+l+'</div><div class="mono" style="font-weight:500;">'+esc(client.measurements[k])+'</div></div>'
+        ).join("") || '<div class="empty">No measurements recorded yet.</div>')+
+      '</div></div>'+
+    ((client.styleImages&&client.styleImages.length>0) ? (
+      '<div class="card" style="margin-bottom:16px;"><div class="disp" style="font-weight:600;margin-bottom:10px;">Style reference photos</div>'+
+      '<div style="display:flex;gap:8px;flex-wrap:wrap;">'+client.styleImages.map(s=>'<img src="'+s+'" style="width:88px;height:88px;object-fit:cover;border-radius:8px;border:1px solid var(--line);">').join("")+'</div></div>'
+    ) : '')+
+    '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">'+
+      '<div class="disp" style="font-weight:600;font-size:16px;">Orders</div>'+
+      '<button class="btn gold sm" data-action="open-order-modal-new-for-client" data-id="'+client.id+'">'+icon("plus",14)+' New order</button></div>'+
+    '<div style="display:flex;flex-direction:column;gap:10px;">'+
+      (clientOrders.length===0 ? '<div class="empty">No orders yet for this client.</div>' : clientOrders.map(o=>{
+        const total=orderTotal(o), paid=orderPaid(o);
+        return '<div class="card" style="cursor:pointer;" data-action="open-order-modal" data-id="'+o.id+'">'+
+          '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;">'+
+            '<div style="font-weight:500;">'+esc(o.title||"Untitled order")+'</div>'+
+            '<span class="pill '+statusClass(o.status)+'">'+o.status+'</span></div>'+
+          '<div style="font-size:12.5px;color:var(--ink-soft);margin-top:6px;display:flex;gap:12px;flex-wrap:wrap;">'+
+            '<span>Total '+money(total,business.currency)+'</span><span>Balance '+money(total-paid,business.currency)+'</span>'+
+            (o.dueDate?('<span>Due '+fmtDate(o.dueDate)+'</span>'):'')+'</div></div>';
+      }).join(""))+
+    '</div>'
+  );
+}
+
+/* ================= ORDERS ================= */
+function renderOrders(){
+  const business = state.business;
+  const filter = state.orderFilterStatus || "All";
+  const filtered = filter==="All" ? state.orders : state.orders.filter(o=>o.status===filter);
+  const sorted = filtered.slice().sort((a,b)=>(a.dueDate||"9999").localeCompare(b.dueDate||"9999"));
+  return (
+    '<div style="display:flex;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px;">'+
+      '<div class="chipbar">'+ ["All"].concat(STATUSES.map(s=>s.key)).map(s=>
+        '<button class="btn '+(filter===s?'gold':'ghost')+' sm" data-action="filter-orders" data-status="'+s+'">'+s+'</button>'
+      ).join("") +'</div>'+
+      '<button class="btn" data-action="open-order-modal-new"><span>'+icon("plus",15)+'</span> New order</button>'+
+    '</div>'+
+    '<div style="display:flex;flex-direction:column;gap:10px;">'+
+      (sorted.length===0 ? '<div class="empty">No orders in this view.</div>' : sorted.map(o=>{
+        const client = state.clients.find(c=>c.id===o.clientId);
+        const total=orderTotal(o), paid=orderPaid(o), bal=total-paid, dleft=daysUntil(o.dueDate);
+        const info = statusInfo(o.status);
+        return '<div class="card" style="cursor:pointer;" data-action="open-order-modal" data-id="'+o.id+'">'+
+          '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">'+
+            '<div><div style="font-weight:500;">'+esc(client?client.name:"Unknown client")+' — '+esc(o.title||"Untitled order")+'</div>'+
+              '<div style="font-size:12px;color:var(--ink-soft);margin-top:2px;display:flex;gap:12px;flex-wrap:wrap;">'+
+                '<span>Total '+money(total,business.currency)+'</span>'+
+                '<span style="color:'+(bal>0?'var(--rust)':'var(--green)')+';">Balance '+money(bal,business.currency)+'</span>'+
+                (o.dueDate?('<span>'+(dleft<0?(Math.abs(dleft)+"d overdue"):("Due "+fmtDate(o.dueDate)))+'</span>'):'')+
+              '</div></div>'+
+            '<span class="pill '+statusClass(o.status)+'">'+o.status+'</span></div>'+
+          '<div style="margin-top:10px;"><div class="tape-track '+(o.status==="Cancelled"?"cancelled":"")+'"><div class="fill" style="width:'+info.pct+'%;"></div></div>'+
+            '<div class="tape-labels"><span>Pending</span><span>Cutting</span><span>Sewing</span><span>Fitting</span><span>Ready</span><span>Delivered</span></div></div>'+
+        '</div>';
+      }).join(""))+
+    '</div>'
+  );
+}
+
+/* ================= CATALOGUE ================= */
+function renderCatalogue(){
+  const business = state.business;
+  const cats = state.catalogue.categories;
+  if(!state.activeCategoryId && cats[0]) state.activeCategoryId = cats[0].id;
+  const activeCat = cats.find(c=>c.id===state.activeCategoryId);
+  const items = activeCat ? state.catalogue.items.filter(i=>i.categoryId===activeCat.id) : [];
+
+  return (
+    '<div style="display:flex;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px;">'+
+      '<div class="chipbar">'+ cats.map(c=>
+        '<button class="btn '+(state.activeCategoryId===c.id?'gold':'ghost')+' sm" data-action="select-category" data-id="'+c.id+'">'+esc(c.name)+'</button>'
+      ).join("") +
+        '<span style="display:inline-flex;gap:4px;">'+
+          '<input placeholder="New category" data-action="input-new-category" value="'+esc(state.newCategoryName||"")+'" style="width:130px;">'+
+          '<button class="btn ghost sm" data-action="add-category">'+icon("plus",13)+'</button>'+
+        '</span>'+
+      '</div>'+
+      '<a class="btn wa sm" href="'+waLink("", buildCatalogueShareText())+'" target="_blank" rel="noreferrer">'+icon("chat",14)+' Share price list</a>'+
+    '</div>'+
+    (!activeCat ? '<div class="empty">Add a category to get started.</div>' :
+      '<div class="card" style="margin-bottom:16px;">'+
+        '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:10px;">'+
+          '<div class="disp" style="font-weight:600;">'+esc(activeCat.name)+' — photo gallery</div>'+
+          '<button class="btn rust sm" data-action="delete-category" data-id="'+activeCat.id+'">'+icon("trash",13)+' Delete category</button>'+
+        '</div>'+
+        '<div style="display:flex;flex-wrap:wrap;gap:8px;">'+
+          activeCat.gallery.map((src,i)=>(
+            '<div class="thumbwrap"><img src="'+src+'" class="thumb" style="width:80px;height:80px;">'+
+            '<button class="thumb-x" data-action="remove-gallery-image" data-cat="'+activeCat.id+'" data-index="'+i+'">×</button></div>'
+          )).join("")+
+          '<label class="btn ghost sm addthumb" style="width:80px;height:80px;">'+icon("camera",16)+'<span style="font-size:9.5px;">Add photos</span>'+
+            '<input type="file" accept="image/*" multiple data-action="upload-gallery-images" data-cat="'+activeCat.id+'" style="display:none;"></label>'+
+        '</div>'+
+      '</div>'+
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">'+
+        '<div class="disp" style="font-weight:600;font-size:15px;">Priced items</div>'+
+        '<button class="btn gold sm" data-action="open-catitem-modal-new" data-cat="'+activeCat.id+'">'+icon("plus",14)+' New item</button>'+
+      '</div>'+
+      '<div class="grid-cards">'+
+        (items.length===0 ? '<div class="empty">No items in this category yet.</div>' : items.map(it=>{
+          const img = (it.images&&it.images[0]) || null;
+          return '<div class="card" style="cursor:pointer;padding:0;overflow:hidden;" data-action="open-catitem-modal" data-id="'+it.id+'">'+
+            (img ? '<img src="'+img+'" style="width:100%;height:130px;object-fit:cover;">' : '<div style="width:100%;height:130px;background:var(--line);display:flex;align-items:center;justify-content:center;color:var(--ink-soft);">'+icon("image",22)+'</div>')+
+            '<div style="padding:10px;">'+
+              '<div style="font-weight:500;font-size:13.5px;">'+esc(it.name)+'</div>'+
+              '<div style="font-size:11px;color:var(--ink-soft);margin-top:2px;">'+(it.images?it.images.length:0)+' photo'+((it.images&&it.images.length!==1)?"s":"")+'</div>'+
+              '<div class="mono" style="font-weight:600;margin-top:4px;">'+money(it.price,business.currency)+'</div>'+
+            '</div></div>';
+        }).join(""))+
+      '</div>'
+    )
+  );
+}
+function buildCatalogueShareText(){
+  const business = state.business;
+  const lines = ["*"+business.name+" — Price List*", ""];
+  state.catalogue.categories.forEach(cat=>{
+    const items = state.catalogue.items.filter(i=>i.categoryId===cat.id);
+    if(items.length===0) return;
+    lines.push("*"+cat.name+"*");
+    items.forEach(i=>lines.push("• "+i.name+" — "+money(i.price,business.currency)));
+    lines.push("");
+  });
+  if(business.phone) lines.push("Contact us: "+business.phone);
+  return lines.join("\n");
+}
+
+/* ================= ACCOUNT ================= */
+function renderAccount(){
+  const b = state.business;
+  const logoHtml = b.logo ? '<img src="'+b.logo+'" alt="Business logo">' : icon("upload",20);
+  return (
+    '<div class="disp" style="font-size:19px;font-weight:600;margin-bottom:16px;">Account</div>'+
+    '<div class="card" style="margin-bottom:16px;">'+
+      '<div class="disp" style="font-weight:600;font-size:14.5px;margin-bottom:12px;">Business profile</div>'+
+      '<div style="display:flex;gap:16px;align-items:center;margin-bottom:16px;flex-wrap:wrap;">'+
+        '<label class="logo-upload">'+logoHtml+'<input type="file" accept="image/*" data-action="upload-logo" style="display:none;"></label>'+
+        '<div><div style="font-size:13px;font-weight:500;">Business logo</div>'+
+        '<div style="font-size:12px;color:var(--ink-soft);margin-top:2px;max-width:280px;">Tap the box to upload. Shown in the header and can be used on printed invoices.</div></div>'+
+      '</div>'+
+      '<div class="grid-form2">'+
+        '<div><label>Business name</label><input data-bind="business.name" value="'+esc(b.name)+'"></div>'+
+        '<div><label>Phone</label><input data-bind="business.phone" value="'+esc(b.phone)+'"></div>'+
+        '<div style="grid-column:1/-1;"><label>Address</label><input data-bind="business.address" value="'+esc(b.address)+'"></div>'+
+        '<div><label>Currency symbol</label><input data-bind="business.currency" value="'+esc(b.currency)+'"></div>'+
+        '<div><label>Registration number (CAC / RC no.)</label><input data-bind="business.regNumber" value="'+esc(b.regNumber)+'" placeholder="RC 1234567"></div>'+
+      '</div>'+
+    '</div>'+
+    '<div class="card" style="margin-bottom:16px;">'+
+      '<div class="disp" style="font-weight:600;font-size:14.5px;margin-bottom:4px;">Bank account details</div>'+
+      '<div style="font-size:12px;color:var(--ink-soft);margin-bottom:12px;">Shown on invoices so clients know where to pay. Add more than one if you use several banks.</div>'+
+      (b.bankAccounts||[]).map((acc,i) => (
+        '<div class="bank-entry">'+
+          '<button class="iconbtn" data-action="remove-bank-account" data-index="'+i+'" style="position:absolute;top:10px;right:10px;" aria-label="Remove">'+icon("x",13)+'</button>'+
+          '<div class="grid-form2">'+
+            '<div style="grid-column:1/-1;"><label>Bank name</label><input data-bind="business.bankAccounts.'+i+'.bankName" value="'+esc(acc.bankName)+'" placeholder="GTBank"></div>'+
+            '<div><label>Account name</label><input data-bind="business.bankAccounts.'+i+'.accountName" value="'+esc(acc.accountName)+'"></div>'+
+            '<div><label>Account number</label><input class="mono" data-bind="business.bankAccounts.'+i+'.accountNumber" value="'+esc(acc.accountNumber)+'"></div>'+
+          '</div>'+
+        '</div>'
+      )).join("")+
+      ((b.bankAccounts||[]).length===0 ? '<div class="empty" style="margin-bottom:10px;">No bank accounts added yet.</div>' : '')+
+      '<button class="btn ghost sm" data-action="add-bank-account">'+icon("plus",14)+' Add another account</button>'+
+    '</div>'+
+    '<div class="card">'+
+      '<div class="disp" style="font-weight:600;font-size:14.5px;margin-bottom:10px;">Appearance</div>'+
+      '<div style="display:flex;flex-wrap:wrap;gap:6px;">'+
+        Object.keys(THEMES).map(key => {
+          const t = THEMES[key];
+          const active = (state.theme||"indigo")===key;
+          return '<button class="theme-swatch '+(active?"active":"")+'" data-action="select-theme" data-theme="'+key+'" title="'+t.label+'">'+
+            '<span class="swatch-circle" style="background:linear-gradient(135deg, '+t.vars.primary+' 50%, '+t.vars.gold+' 50%);"></span>'+
+            '<span class="swatch-label">'+t.label+'</span>'+
+          '</button>';
+        }).join("")+
+      '</div>'+
+    '</div>'
+  );
+}
+
+/* ================= MODAL ================= */
+function renderModal(){
+  if(!state.modal) return "";
+  if(state.modal.type==="client") return renderClientModal();
+  if(state.modal.type==="order") return renderOrderModal();
+  if(state.modal.type==="catitem") return renderCatItemModal();
+  return "";
+}
+function modalShell(title, bodyHtml, wide){
+  return '<div class="modalwrap" data-action="modal-backdrop"><div class="modal '+(wide?"wide":"")+'" data-stop="1">'+
+    '<div class="modal-head"><h2 class="modal-title">'+esc(title)+'</h2>'+
+      '<button class="iconbtn" data-action="close-modal" aria-label="Close">'+icon("close",16)+'</button></div>'+
+    bodyHtml+
+  '</div></div>';
+}
+
+function renderClientModal(){
+  const c = state.modal.draft;
+  return modalShell(state.modal.isNew?"New client":"Edit client",
+    '<div class="grid-form2">'+
+      '<div><label>Full name</label><input data-bind="modal.draft.name" value="'+esc(c.name)+'" placeholder="Amaka Obi"></div>'+
+      '<div><label>Phone (WhatsApp)</label><input data-bind="modal.draft.phone" value="'+esc(c.phone)+'" placeholder="2348012345678"></div>'+
+      '<div><label>Gender</label><select data-bind="modal.draft.gender" data-rerender="1">'+
+        ['','Female','Male','Other'].map(g=>'<option value="'+g+'" '+(c.gender===g?"selected":"")+'>'+(g||"Select")+'</option>').join("")+
+      '</select></div>'+
+      '<div><label>Address</label><input data-bind="modal.draft.address" value="'+esc(c.address)+'" placeholder="Lekki, Lagos"></div>'+
+    '</div>'+
+    '<div style="margin-top:12px;"><label>Notes</label><textarea rows="2" data-bind="modal.draft.notes" placeholder="Preferences, fabric notes, etc.">'+esc(c.notes)+'</textarea></div>'+
+    '<div class="divider"></div>'+
+    '<div class="disp" style="font-weight:600;margin-bottom:8px;font-size:15px;">Body measurements (cm)</div>'+
+    '<div class="grid-meas">'+
+      MEASUREMENT_FIELDS.map(([k,l])=>(
+        '<div><label>'+l+'</label><input class="mono" type="number" step="0.1" data-bind="modal.draft.measurements.'+k+'" value="'+esc(c.measurements[k]||"")+'" placeholder="0.0"></div>'
+      )).join("")+
+    '</div>'+
+    '<div class="divider"></div>'+
+    imagePickerHtml("Reference / style photos for this client", c.styleImages, "modal.draft.styleImages")+
+    '<div style="display:flex;justify-content:flex-end;gap:8px;margin-top:20px;">'+
+      '<button class="btn ghost" data-action="close-modal">Cancel</button>'+
+      '<button class="btn" id="modalSaveBtn" '+(!c.name.trim()?"disabled":"")+' data-action="save-client">'+icon("check",15)+' Save client</button>'+
+    '</div>', true
+  );
+}
+
+function renderOrderModal(){
+  const o = state.modal.draft;
+  const clients = state.clients;
+  const business = state.business;
+  const client = clients.find(c=>c.id===o.clientId);
+  const total = orderTotal(o), paid = orderPaid(o), bal = total-paid;
+  const info = statusInfo(o.status);
+
+  const itemsHtml = o.items.map((it,i)=>(
+    '<div style="display:flex;gap:8px;margin-bottom:8px;align-items:center;">'+
+      '<input style="flex:2;" data-bind="modal.draft.items.'+i+'.desc" value="'+esc(it.desc)+'" placeholder="e.g. Native wear (agbada)">'+
+      '<input class="mono" style="flex:1;" type="number" data-bind="modal.draft.items.'+i+'.price" value="'+esc(it.price)+'" placeholder="Price">'+
+      '<button class="iconbtn" data-action="remove-order-item" data-index="'+i+'">'+icon("trash",14)+'</button>'+
+    '</div>'
+  )).join("");
+
+  const paymentsHtml = o.payments.map(p=>(
+    '<div class="rowline"><span>'+fmtDate(p.date)+' · '+esc(p.method)+'</span>'+
+    '<span style="display:flex;gap:10px;align-items:center;"><span class="mono">'+money(p.amount,business.currency)+'</span>'+
+    '<button class="iconbtn" data-action="remove-payment" data-id="'+p.id+'">'+icon("x",12)+'</button></span></div>'
+  )).join("") || '<div class="empty">No payments recorded yet.</div>';
+
+  const invoiceSection = state.modal.isExisting && client ? (
+    '<div class="divider"></div>'+
+    '<div class="disp" style="font-weight:600;font-size:15px;margin-bottom:8px;">Invoice &amp; reminders</div>'+
+    '<div style="display:flex;flex-wrap:wrap;gap:8px;">'+
+      '<a class="btn wa sm" href="'+waLink(client.phone, buildInvoiceText(o,client,business,"invoice"))+'" target="_blank" rel="noreferrer">'+icon("chat",14)+' Share invoice</a>'+
+      '<a class="btn wa sm" href="'+waLink(client.phone, buildInvoiceText(o,client,business,"receipt"))+'" target="_blank" rel="noreferrer">'+icon("chat",14)+' Share receipt</a>'+
+      '<button class="btn ghost sm" data-action="print-invoice" data-kind="invoice">'+icon("printer",14)+' Print invoice</button>'+
+      (bal>0 ? '<a class="btn wa sm" href="'+waLink(client.phone, reminderText(o,client,bal,business))+'" target="_blank" rel="noreferrer">'+icon("send",14)+' Send payment reminder</a>' : '')+
+    '</div>'
+  ) : "";
+
+  return modalShell(state.modal.isNew?"New order":"Edit order",
+    '<div class="grid-form2">'+
+      '<div><label>Client</label><select data-bind="modal.draft.clientId" data-rerender="1">'+
+        (clients.length===0 ? '<option value="">No clients yet</option>' : clients.map(c=>'<option value="'+c.id+'" '+(o.clientId===c.id?"selected":"")+'>'+esc(c.name)+'</option>').join(""))+
+      '</select></div>'+
+      '<div><label>Order title</label><input data-bind="modal.draft.title" value="'+esc(o.title)+'" placeholder="Wedding aso-ebi, native wear..."></div>'+
+      '<div><label>Due date</label><input type="date" data-bind="modal.draft.dueDate" value="'+esc(o.dueDate)+'"></div>'+
+      '<div><label>Status</label><select data-bind="modal.draft.status" data-rerender="1">'+
+        STATUSES.map(s=>'<option value="'+s.key+'" '+(o.status===s.key?"selected":"")+'>'+s.key+'</option>').join("")+
+      '</select></div>'+
+    '</div>'+
+    '<div style="margin-top:14px;"><div class="tape-track '+(o.status==="Cancelled"?"cancelled":"")+'"><div class="fill" style="width:'+info.pct+'%;"></div></div>'+
+      '<div class="tape-labels"><span>Pending</span><span>Cutting</span><span>Sewing</span><span>Fitting</span><span>Ready</span><span>Delivered</span></div></div>'+
+    '<div class="divider"></div>'+
+    '<div class="disp" style="font-weight:600;font-size:15px;margin-bottom:8px;">Items &amp; pricing</div>'+
+    itemsHtml+
+    '<button class="btn ghost sm" data-action="add-order-item">'+icon("plus",14)+' Add item</button>'+
+    '<div class="divider"></div>'+
+    imagePickerHtml("Style / reference photos for this order", o.styleImages, "modal.draft.styleImages")+
+    '<div class="divider"></div>'+
+    '<div class="disp" style="font-weight:600;font-size:15px;margin-bottom:8px;">Payments</div>'+
+    '<div class="card" style="display:flex;gap:16px;margin-bottom:10px;padding:12px;flex-wrap:wrap;">'+
+      '<div><div style="font-size:11.5px;color:var(--ink-soft);">Total</div><div class="mono" id="ordTotalVal" style="font-weight:600;">'+money(total,business.currency)+'</div></div>'+
+      '<div><div style="font-size:11.5px;color:var(--ink-soft);">Paid</div><div class="mono" id="ordPaidVal" style="font-weight:600;color:var(--green);">'+money(paid,business.currency)+'</div></div>'+
+      '<div><div style="font-size:11.5px;color:var(--ink-soft);">Balance</div><div class="mono" id="ordBalanceVal" style="font-weight:600;color:'+(bal>0?"var(--rust)":"var(--green)")+';">'+money(bal,business.currency)+'</div></div>'+
+    '</div>'+
+    paymentsHtml+
+    '<div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;">'+
+      '<input class="mono" type="number" placeholder="Amount received" data-bind="modal.payAmt" value="'+esc(state.modal.payAmt||"")+'" style="flex:1;min-width:140px;">'+
+      '<select data-bind="modal.payMethod" style="max-width:140px;">'+
+        ["Cash","Bank transfer","POS/Card","Other"].map(m=>'<option '+(state.modal.payMethod===m?"selected":"")+'>'+m+'</option>').join("")+
+      '</select>'+
+      '<button class="btn gold sm" data-action="add-payment">'+icon("plus",14)+' Add</button>'+
+    '</div>'+
+    '<div style="margin-top:14px;"><label>Notes</label><textarea rows="2" data-bind="modal.draft.notes">'+esc(o.notes)+'</textarea></div>'+
+    invoiceSection+
+    '<div style="display:flex;justify-content:space-between;margin-top:20px;flex-wrap:wrap;gap:10px;">'+
+      (state.modal.isExisting ? '<button class="btn rust" data-action="delete-order">'+icon("trash",14)+' Delete order</button>' : '<span></span>')+
+      '<div style="display:flex;gap:8px;">'+
+        '<button class="btn ghost" data-action="close-modal">Cancel</button>'+
+        '<button class="btn" '+(!o.clientId?"disabled":"")+' data-action="save-order">'+icon("check",15)+' Save order</button>'+
+      '</div></div>', true
+  );
+}
+
+function renderCatItemModal(){
+  const it = state.modal.draft;
+  const cats = state.catalogue.categories;
+  const images = it.images||[];
+  return modalShell(state.modal.isNew?"New catalogue item":"Edit catalogue item",
+    imagePickerHtml("Item photos", images, "modal.draft.images")+
+    '<div class="grid-form2" style="margin-top:12px;">'+
+      '<div style="grid-column:1/-1;"><label>Item name</label><input data-bind="modal.draft.name" value="'+esc(it.name)+'" placeholder="Ankara wrap dress"></div>'+
+      '<div><label>Category</label><select data-bind="modal.draft.categoryId">'+
+        cats.map(c=>'<option value="'+c.id+'" '+(it.categoryId===c.id?"selected":"")+'>'+esc(c.name)+'</option>').join("")+
+      '</select></div>'+
+      '<div><label>Price</label><input class="mono" type="number" data-bind="modal.draft.price" value="'+esc(it.price)+'"></div>'+
+      '<div style="grid-column:1/-1;"><label>Description</label><textarea rows="2" data-bind="modal.draft.description">'+esc(it.description)+'</textarea></div>'+
+    '</div>'+
+    '<div style="display:flex;justify-content:space-between;margin-top:20px;">'+
+      (state.modal.isExisting ? '<button class="btn rust sm" data-action="delete-catitem">'+icon("trash",14)+' Delete</button>' : '<span></span>')+
+      '<div style="display:flex;gap:8px;">'+
+        '<button class="btn ghost" data-action="close-modal">Cancel</button>'+
+        '<button class="btn" id="modalSaveBtn" '+(!it.name.trim()?"disabled":"")+' data-action="save-catitem">'+icon("check",15)+' Save item</button>'+
+      '</div></div>'
+  );
+}
+
+function imagePickerHtml(label, images, targetPath){
+  images = images || [];
+  return '<div><label>'+label+'</label><div style="display:flex;flex-wrap:wrap;gap:8px;">'+
+    images.map((src,i)=>(
+      '<div class="thumbwrap"><img src="'+src+'" class="thumb" alt="style">'+
+      '<button class="thumb-x" data-action="remove-image" data-target="'+targetPath+'" data-index="'+i+'">×</button></div>'
+    )).join("")+
+    '<label class="btn ghost sm addthumb">'+icon("camera",16)+'<span style="font-size:9.5px;">Add</span>'+
+      '<input type="file" accept="image/*" multiple data-action="upload-images" data-target="'+targetPath+'" style="display:none;"></label>'+
+  '</div></div>';
+}
+
+/* ================= WELCOME / SHOWCASE ================= */
+function welcomeSlidesData(){
+  const catNames = {};
+  state.catalogue.categories.forEach(c => { catNames[c.id] = c.name; });
+  return state.catalogue.items.filter(i => i.images && i.images.length > 0).map(i => ({
+    img: i.images[0], name: i.name, price: i.price, category: catNames[i.categoryId] || ""
+  }));
+}
+function renderWelcomeView(){
+  const business = state.business;
+  const slides = welcomeSlidesData();
+  const logoHtml = business.logo ? '<img src="'+business.logo+'" alt="">' : (business.name||"T").trim()[0].toUpperCase();
+
+  const heroHtml = slides.length === 0 ? (
+    '<div class="welcome-empty">'+icon("image",30)+'<div style="font-size:12.5px;max-width:220px;text-align:center;">Add photos to your catalogue items to showcase them here.</div></div>'
+  ) : (
+    '<div class="welcome-track" id="welcomeTrack">'+
+      slides.map(s => (
+        '<div class="welcome-slide"><img src="'+s.img+'" alt="'+esc(s.name)+'">'+
+          '<div class="welcome-caption"><div class="wname">'+esc(s.name)+'</div>'+
+            (s.category ? '<div class="wcat">'+esc(s.category)+'</div>' : '')+
+            '<div class="wprice">'+money(s.price, business.currency)+'</div>'+
+          '</div>'+
+        '</div>'
+      )).join("")+
+    '</div>'+
+    (slides.length > 1 ? (
+      '<button class="welcome-arrow prev" data-action="welcome-prev" aria-label="Previous">'+icon("back",16)+'</button>'+
+      '<button class="welcome-arrow next" data-action="welcome-next" aria-label="Next">'+icon("forward",16)+'</button>'+
+      '<div class="welcome-dots" id="welcomeDots">'+
+        slides.map((_,i) => '<button class="welcome-dot '+(i===state.welcomeIndex?"active":"")+'" data-action="welcome-goto" data-index="'+i+'"></button>').join("")+
+      '</div>'
+    ) : "")
+  );
+
+  return (
+    '<div class="welcome-shell">'+
+      '<div class="welcome-hero">'+ heroHtml +'</div>'+
+      '<div class="welcome-body">'+
+        '<div class="welcome-logo">'+logoHtml+'</div>'+
+        '<div class="disp" style="font-size:25px;font-weight:600;">'+esc(business.name)+'</div>'+
+        '<div style="font-size:13.5px;color:var(--ink-soft);max-width:300px;">Browse our latest styles and prices, then step inside to manage clients, orders and your catalogue.</div>'+
+        '<button class="btn gold" data-action="enter-shop" style="padding:12px 30px;font-size:14.5px;margin-top:4px;">Enter shop '+icon("forward",15)+'</button>'+
+      '</div>'+
+    '</div>'
+  );
+}
+function goToWelcomeSlide(index){
+  const slides = welcomeSlidesData();
+  if(slides.length === 0) return;
+  state.welcomeIndex = ((index % slides.length) + slides.length) % slides.length;
+  const track = document.getElementById("welcomeTrack");
+  if(track) track.style.transform = "translateX(-"+(state.welcomeIndex*100)+"%)";
+  const dots = document.getElementById("welcomeDots");
+  if(dots) Array.from(dots.children).forEach((d,i) => d.classList.toggle("active", i===state.welcomeIndex));
+}
+function startWelcomeCarousel(){
+  clearWelcomeTimer();
+  const slides = welcomeSlidesData();
+  if(slides.length <= 1) return;
+  welcomeTimer = setInterval(() => goToWelcomeSlide(state.welcomeIndex + 1), 3800);
+}
+function clearWelcomeTimer(){ if(welcomeTimer){ clearInterval(welcomeTimer); welcomeTimer = null; } }
+
+/* ================= PRINT VIEW ================= */
+function renderPrintView(){
+  const p = state.printing;
+  if(p.catalogue){
+    const business = state.business;
+    let body = '<h2 class="disp">'+esc(business.name)+' — Price List</h2>';
+    state.catalogue.categories.forEach(cat=>{
+      const items = state.catalogue.items.filter(i=>i.categoryId===cat.id);
+      if(items.length===0) return;
+      body += '<h3 class="disp">'+esc(cat.name)+'</h3><ul>'+items.map(i=>'<li>'+esc(i.name)+' — '+money(i.price,business.currency)+'</li>').join("")+'</ul>';
+    });
+    return '<div style="padding:24px;"><button class="btn ghost sm" data-action="close-print" style="margin-bottom:16px;">'+icon("back",14)+' Back</button>'+
+      '<div class="print-area">'+body+'</div></div>';
+  }
+  const {order, client, kind} = p;
+  const business = state.business;
+  const total = orderTotal(order), paid = orderPaid(order), bal = total-paid;
+  const rows = order.items.map(it=>'<tr><td style="padding:4px 0;">'+esc(it.desc)+'</td><td style="text-align:right;">'+money(it.price,business.currency)+'</td></tr>').join("");
+  return '<div style="padding:24px;max-width:520px;margin:0 auto;">'+
+    '<button class="btn ghost sm" data-action="close-print" style="margin-bottom:16px;">'+icon("back",14)+' Back</button>'+
+    '<div class="print-area">'+
+      '<h2 class="disp" style="margin-bottom:0;">'+esc(business.name)+'</h2>'+
+      (business.address?('<div>'+esc(business.address)+'</div>'):'')+
+      (business.phone?('<div>'+esc(business.phone)+'</div>'):'')+
+      (business.regNumber?('<div>RC: '+esc(business.regNumber)+'</div>'):'')+
+      '<hr>'+
+      '<h3 class="disp">'+(kind==="receipt"?"RECEIPT":"INVOICE")+'</h3>'+
+      '<div>Client: '+esc(client?client.name:"—")+'</div>'+
+      '<div>Order: '+esc(order.title||"Untitled order")+'</div>'+
+      '<div>Date: '+fmtDate(todayISO())+'</div>'+
+      '<table style="width:100%;margin-top:12px;border-collapse:collapse;">'+rows+'</table>'+
+      '<hr>'+
+      '<div>Total: '+money(total,business.currency)+'</div>'+
+      '<div>Paid: '+money(paid,business.currency)+'</div>'+
+      '<div style="font-weight:600;">Balance: '+money(bal,business.currency)+'</div>'+
+      (order.dueDate?('<div>Due date: '+fmtDate(order.dueDate)+'</div>'):'')+
+      ((bal>0 && business.bankAccounts && business.bankAccounts.length>0) ? (
+        '<div style="margin-top:10px;">'+(business.bankAccounts.length>1?"Pay into any of:":"Pay into:")+'<br>'+
+        business.bankAccounts.map(acc => esc(acc.accountName)+'<br>'+esc(acc.bankName)+'<br>'+esc(acc.accountNumber)).join('<br><br>')+
+        '</div>'
+      ) : '')+
+      '<p>Thank you for your patronage!</p>'+
+    '</div></div>';
+}
+
+/* ================= ACTIONS ================= */
+function findOrder(id){ return state.orders.find(o=>o.id===id); }
+function findClient(id){ return state.clients.find(c=>c.id===id); }
+function findCatItem(id){ return state.catalogue.items.find(i=>i.id===id); }
+
+function openClientModal(existing){
+  state.modal = { type:"client", isNew: !existing,
+    draft: existing ? JSON.parse(JSON.stringify(existing)) : { id:uid(), name:"", phone:"", gender:"", address:"", notes:"", measurements:{}, styleImages:[], createdAt: todayISO() } };
+  render();
+}
+function openOrderModal(existing, prefillClientId){
+  state.modal = { type:"order", isNew: !existing, isExisting: !!existing, payAmt:"", payMethod:"Cash",
+    draft: existing ? JSON.parse(JSON.stringify(existing)) : {
+      id:uid(), clientId: prefillClientId || (state.clients[0]?state.clients[0].id:""), title:"",
+      items:[{desc:"",price:""}], styleImages:[], payments:[], dueDate:"", status:"Pending", notes:"", createdAt: todayISO()
+    }};
+  render();
+}
+function openCatItemModal(existing, catId){
+  state.modal = { type:"catitem", isNew: !existing, isExisting: !!existing,
+    draft: existing ? JSON.parse(JSON.stringify(existing)) : { id:uid(), name:"", categoryId: catId || (state.catalogue.categories[0]?state.catalogue.categories[0].id:""), price:"", description:"", images:[] } };
+  render();
+}
+function closeModal(){ state.modal = null; render(); }
+
+document.addEventListener("click", (e) => {
+  const stop = e.target.closest('[data-stop]');
+  const backdrop = e.target.closest('[data-action="modal-backdrop"]');
+  if(backdrop && !stop && e.target === backdrop){ closeModal(); return; }
+
+  const el = e.target.closest("[data-action]");
+  if(!el) return;
+  const action = el.getAttribute("data-action");
+  const id = el.getAttribute("data-id");
+
+  switch(action){
+    case "set-tab": state.tab = el.getAttribute("data-tab"); state.selectedClientId=null; render(); break;
+    case "select-client": state.selectedClientId = id; render(); break;
+    case "back-to-clients": state.selectedClientId = null; render(); break;
+    case "delete-client": if(confirm("Delete this client? This cannot be undone.")){ state.clients = state.clients.filter(c=>c.id!==id); if(state.selectedClientId===id) state.selectedClientId=null; persistClients(); render(); } break;
+    case "open-client-modal-new": openClientModal(null); break;
+    case "open-client-modal": openClientModal(findClient(id)); break;
+    case "save-client": {
+      const c = state.modal.draft;
+      if(!c.name.trim()) return;
+      const exists = state.clients.some(x=>x.id===c.id);
+      state.clients = exists ? state.clients.map(x=>x.id===c.id?c:x) : state.clients.concat([c]);
+      persistClients();
+      if(state.selectedClientId===c.id) {} // detail will re-render from state.clients
+      state.modal = null; render();
+      break;
+    }
+    case "open-order-modal-new": openOrderModal(null); break;
+    case "open-order-modal-new-for-client": openOrderModal(null, id); break;
+    case "open-order-modal": openOrderModal(findOrder(id)); break;
+    case "add-order-item": state.modal.draft.items.push({desc:"",price:""}); render(); break;
+    case "remove-order-item": state.modal.draft.items.splice(Number(el.getAttribute("data-index")),1); render(); break;
+    case "add-payment": {
+      const amt = Number(state.modal.payAmt);
+      if(!amt || amt<=0) return;
+      state.modal.draft.payments.push({ id:uid(), amount:amt, date: todayISO(), method: state.modal.payMethod||"Cash" });
+      state.modal.payAmt = "";
+      render();
+      break;
+    }
+    case "remove-payment": state.modal.draft.payments = state.modal.draft.payments.filter(p=>p.id!==id); render(); break;
+    case "print-invoice": {
+      const o = state.modal.draft; const client = findClient(o.clientId);
+      state.printing = { order:o, client, kind: el.getAttribute("data-kind")||"invoice" };
+      state.modal = null; render();
+      break;
+    }
+    case "save-order": {
+      const o = state.modal.draft;
+      if(!o.clientId) return;
+      o.items = o.items.filter(it => (it.desc && it.desc.trim()) || Number(it.price)>0);
+      if(o.items.length===0) o.items = [{desc:"",price:0}];
+      const exists = state.orders.some(x=>x.id===o.id);
+      state.orders = exists ? state.orders.map(x=>x.id===o.id?o:x) : state.orders.concat([o]);
+      persistOrders();
+      state.modal = null; render();
+      break;
+    }
+    case "delete-order": if(confirm("Delete this order?")){ const o=state.modal.draft; state.orders = state.orders.filter(x=>x.id!==o.id); persistOrders(); state.modal=null; render(); } break;
+    case "filter-orders": state.orderFilterStatus = el.getAttribute("data-status"); render(); break;
+
+    case "select-category": state.activeCategoryId = id; render(); break;
+    case "add-category": {
+      const name = (state.newCategoryName||"").trim();
+      if(!name) return;
+      const cat = { id:uid(), name, gallery:[] };
+      state.catalogue.categories.push(cat);
+      state.newCategoryName = "";
+      state.activeCategoryId = cat.id;
+      persistCatalogue(); render();
+      break;
+    }
+    case "delete-category": if(confirm('Delete this category and its items?')){
+      state.catalogue.items = state.catalogue.items.filter(i=>i.categoryId!==id);
+      state.catalogue.categories = state.catalogue.categories.filter(c=>c.id!==id);
+      state.activeCategoryId = state.catalogue.categories[0] ? state.catalogue.categories[0].id : null;
+      persistCatalogue(); render();
+    } break;
+    case "open-catitem-modal-new": openCatItemModal(null, el.getAttribute("data-cat")); break;
+    case "open-catitem-modal": openCatItemModal(findCatItem(id)); break;
+    case "save-catitem": {
+      const it = state.modal.draft;
+      if(!it.name.trim()) return;
+      const exists = state.catalogue.items.some(x=>x.id===it.id);
+      state.catalogue.items = exists ? state.catalogue.items.map(x=>x.id===it.id?it:x) : state.catalogue.items.concat([it]);
+      persistCatalogue(); state.modal=null; render();
+      break;
+    }
+    case "delete-catitem": if(confirm("Delete this item?")){ const it=state.modal.draft; state.catalogue.items = state.catalogue.items.filter(x=>x.id!==it.id); persistCatalogue(); state.modal=null; render(); } break;
+    case "remove-gallery-image": {
+      const cat = state.catalogue.categories.find(c=>c.id===el.getAttribute("data-cat"));
+      if(cat) cat.gallery.splice(Number(el.getAttribute("data-index")),1);
+      persistCatalogue(); render();
+      break;
+    }
+    case "remove-image": {
+      const arr = getPath(state, el.getAttribute("data-target"));
+      if(Array.isArray(arr)) arr.splice(Number(el.getAttribute("data-index")),1);
+      render();
+      break;
+    }
+    case "close-modal": closeModal(); break;
+    case "close-print": state.printing = null; render(); break;
+    case "enter-shop": state.showWelcome = false; render(); break;
+    case "open-welcome": state.showWelcome = true; state.welcomeIndex = 0; render(); break;
+    case "welcome-goto": goToWelcomeSlide(Number(el.getAttribute("data-index"))); startWelcomeCarousel(); break;
+    case "welcome-prev": goToWelcomeSlide(state.welcomeIndex - 1); startWelcomeCarousel(); break;
+    case "welcome-next": goToWelcomeSlide(state.welcomeIndex + 1); startWelcomeCarousel(); break;
+    case "select-theme": {
+      const key = el.getAttribute("data-theme");
+      applyTheme(key);
+      persist("theme", key);
+      render();
+      break;
+    }
+    case "add-bank-account": {
+      if(!state.business.bankAccounts) state.business.bankAccounts = [];
+      state.business.bankAccounts.push({ id:uid(), bankName:"", accountName:"", accountNumber:"" });
+      persistBusiness(); render();
+      break;
+    }
+    case "remove-bank-account": {
+      state.business.bankAccounts.splice(Number(el.getAttribute("data-index")),1);
+      persistBusiness(); render();
+      break;
+    }
+  }
+});
+
+document.addEventListener("input", (e) => {
+  const bindEl = e.target.closest("[data-bind]");
+  if(bindEl){
+    const path = bindEl.getAttribute("data-bind");
+    setPath(state, path, e.target.value);
+    if(path.startsWith("business.")) persistBusiness();
+    if(/^modal\.draft\.items\.\d+\.price$/.test(path)) updateOrderTotalsInline();
+    if(path === "modal.draft.name"){
+      const btn = document.getElementById("modalSaveBtn");
+      if(btn) btn.disabled = !e.target.value.trim();
+    }
+    return;
+  }
+  if(e.target.matches('[data-action="input-new-category"]')){ state.newCategoryName = e.target.value; return; }
+  if(e.target.matches('[data-action="search-clients"]')){
+    state.clientSearch = e.target.value;
+    const grid = document.getElementById("clientsGrid");
+    if(grid){
+      const q = state.clientSearch.toLowerCase();
+      const filtered = state.clients.filter(c => c.name.toLowerCase().includes(q) || (c.phone||"").includes(q));
+      grid.innerHTML = clientCardsHtml(filtered);
+    }
+    return;
+  }
+});
+function updateOrderTotalsInline(){
+  if(!state.modal || state.modal.type!=="order") return;
+  const o = state.modal.draft, business = state.business;
+  const total = orderTotal(o), paid = orderPaid(o), bal = total-paid;
+  const tEl=document.getElementById("ordTotalVal"), pEl=document.getElementById("ordPaidVal"), bEl=document.getElementById("ordBalanceVal");
+  if(tEl) tEl.textContent = money(total, business.currency);
+  if(pEl) pEl.textContent = money(paid, business.currency);
+  if(bEl){ bEl.textContent = money(bal, business.currency); bEl.style.color = bal>0 ? "var(--rust)" : "var(--green)"; }
+}
+
+document.addEventListener("change", (e) => {
+  const bindEl = e.target.closest("[data-bind]");
+  if(bindEl && bindEl.hasAttribute("data-rerender")){
+    setPath(state, bindEl.getAttribute("data-bind"), e.target.value);
+    render();
+    return;
+  }
+  if(e.target.matches('[data-action="upload-logo"]')){
+    const f = e.target.files && e.target.files[0];
+    if(f){ resizeImage(f, 300, 0.82).then(url => { state.business.logo = url; persistBusiness(); render(); }); }
+    return;
+  }
+  if(e.target.matches('[data-action="upload-images"]')){
+    const target = e.target.getAttribute("data-target");
+    const files = Array.from(e.target.files||[]);
+    Promise.all(files.map(f=>resizeImage(f))).then(urls=>{
+      const arr = getPath(state, target);
+      urls.forEach(u=>arr.push(u));
+      render();
+    });
+    return;
+  }
+  if(e.target.matches('[data-action="upload-gallery-images"]')){
+    const catId = e.target.getAttribute("data-cat");
+    const files = Array.from(e.target.files||[]);
+    Promise.all(files.map(f=>resizeImage(f, 640, 0.75))).then(urls=>{
+      const cat = state.catalogue.categories.find(c=>c.id===catId);
+      if(cat){ urls.forEach(u=>cat.gallery.push(u)); persistCatalogue(); }
+      render();
+    });
+    return;
+  }
+});
+
+loadAll();
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./sw.js')
+        .then((reg) => console.log('Service worker registered successfully.', reg))
+        .catch((err) => console.log('Service worker registration failed:', err));
+    });
+  }
+</script>
+</body>
+</html>
