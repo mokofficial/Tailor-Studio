@@ -320,7 +320,64 @@ const state = {
 };
 let welcomeTimer = null;
 let dashCharts = { bar:null, pie:null };
-window.onafterprint = function(){ if(state.printing){ state.printing = null; render(); } };
+window.onafterprint = function(){ if(state.printing){ state.printing = null; collapseNav(1); render(); } };
+
+/* ================= BACK NAVIGATION =================
+   Real hardware/gesture back presses walk out one screen at a time
+   (modal -> printing -> client detail -> tab -> welcome), and pressing
+   back again from the welcome screen shows a "tap back again to exit"
+   prompt before actually closing the app. Manual UI actions (Cancel,
+   Save, tapping the Dashboard tab, the logo) perform the same state
+   change directly and quietly keep the browser history stack in sync
+   via collapseNav(), so hardware back always stays correct afterwards. */
+let navDepth = 0;
+let suppressPop = false;
+let exitArmed = false;
+let exitTimer = null;
+
+function pushNav(){
+  if(suppressPop) return;
+  navDepth++;
+  history.pushState({d:navDepth}, "", location.href);
+}
+function collapseNav(steps){
+  steps = Math.min(steps||1, navDepth);
+  if(steps<=0) return;
+  suppressPop = true;
+  navDepth -= steps;
+  history.go(-steps);
+  setTimeout(() => { suppressPop = false; }, 60);
+}
+function showExitToast(){
+  let t = document.getElementById("exitToast");
+  if(!t){
+    t = document.createElement("div");
+    t.id = "exitToast";
+    t.style.cssText = "position:fixed;left:50%;bottom:28px;transform:translateX(-50%);background:rgba(20,20,20,.92);color:#fff;padding:10px 18px;border-radius:999px;font-size:13px;z-index:9999;box-shadow:0 6px 20px rgba(0,0,0,.25);pointer-events:none;transition:opacity .25s;opacity:0;";
+    document.body.appendChild(t);
+  }
+  t.textContent = "Tap back again to exit";
+  t.style.opacity = "1";
+  clearTimeout(t._hideTimer);
+  t._hideTimer = setTimeout(() => { t.style.opacity = "0"; }, 1600);
+}
+window.addEventListener("popstate", function(){
+  if(suppressPop) return;
+  if(state.modal){ state.modal = null; navDepth = Math.max(0, navDepth-1); render(); return; }
+  if(state.printing){ state.printing = null; navDepth = Math.max(0, navDepth-1); render(); return; }
+  if(state.selectedClientId){ state.selectedClientId = null; navDepth = Math.max(0, navDepth-1); render(); return; }
+  if(!state.showWelcome && state.tab !== "dashboard"){ state.tab = "dashboard"; navDepth = Math.max(0, navDepth-1); render(); return; }
+  if(!state.showWelcome){ state.showWelcome = true; navDepth = Math.max(0, navDepth-1); render(); return; }
+  if(!exitArmed){
+    exitArmed = true;
+    history.pushState({guard:true}, "", location.href);
+    showExitToast();
+    clearTimeout(exitTimer);
+    exitTimer = setTimeout(() => { exitArmed = false; }, 2000);
+  }
+  // exitArmed already true: let this back press proceed and close the app.
+});
+history.pushState({guard:true}, "", location.href);
 
 async function loadAll(){
   try{
@@ -577,7 +634,7 @@ function renderClientDetail(){
         ).join("") || '<div class="empty">No measurements recorded yet.</div>')+
       '</div></div>'+
     ((client.styleImages&&client.styleImages.length>0) ? (
-      '<div class="card" style="margin-bottom:16px;"><div class="disp" style="font-weight:600;margin-bottom:10px;">Style reference photos</div>'+
+      '<div class="card" style="margin-bottom:16px;"><div class="disp" style="font-weight:600;margin-bottom:10px;">Client photo</div>'+
       '<div style="display:flex;gap:8px;flex-wrap:wrap;">'+client.styleImages.map(s=>'<img src="'+s+'" style="width:88px;height:88px;object-fit:cover;border-radius:8px;border:1px solid var(--line);">').join("")+'</div></div>'
     ) : '')+
     '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">'+
@@ -800,7 +857,7 @@ function renderClientModal(){
       )).join("")+
     '</div>'+
     '<div class="divider"></div>'+
-    imagePickerHtml("Reference / style photos for this client", c.styleImages, "modal.draft.styleImages")+
+    imagePickerHtml("Client photo (for identification)", c.styleImages, "modal.draft.styleImages", 1)+
     '<div style="display:flex;justify-content:flex-end;gap:8px;margin-top:20px;">'+
       '<button class="btn ghost" data-action="close-modal">Cancel</button>'+
       '<button class="btn" id="modalSaveBtn" '+(!c.name.trim()?"disabled":"")+' data-action="save-client">'+icon("check",15)+' Save client</button>'+
@@ -859,7 +916,7 @@ function renderOrderModal(){
     itemsHtml+
     '<button class="btn ghost sm" data-action="add-order-item">'+icon("plus",14)+' Add item</button>'+
     '<div class="divider"></div>'+
-    imagePickerHtml("Style / reference photos for this order", o.styleImages, "modal.draft.styleImages")+
+    imagePickerHtml("Style chosen to be sewn", o.styleImages, "modal.draft.styleImages")+
     '<div class="divider"></div>'+
     '<div class="disp" style="font-weight:600;font-size:15px;margin-bottom:8px;">Payments</div>'+
     '<div class="card" style="display:flex;gap:16px;margin-bottom:10px;padding:12px;flex-wrap:wrap;">'+
@@ -909,15 +966,16 @@ function renderCatItemModal(){
   );
 }
 
-function imagePickerHtml(label, images, targetPath){
+function imagePickerHtml(label, images, targetPath, max){
   images = images || [];
+  const canAddMore = !max || images.length < max;
   return '<div><label>'+label+'</label><div style="display:flex;flex-wrap:wrap;gap:8px;">'+
     images.map((src,i)=>(
-      '<div class="thumbwrap"><img src="'+src+'" class="thumb" alt="style">'+
+      '<div class="thumbwrap"><img src="'+src+'" class="thumb" alt="photo">'+
       '<button class="thumb-x" data-action="remove-image" data-target="'+targetPath+'" data-index="'+i+'">×</button></div>'
     )).join("")+
-    '<label class="btn ghost sm addthumb">'+icon("camera",16)+'<span style="font-size:9.5px;">Add</span>'+
-      '<input type="file" accept="image/*" multiple data-action="upload-images" data-target="'+targetPath+'" style="display:none;"></label>'+
+    (canAddMore ? ('<label class="btn ghost sm addthumb">'+icon("camera",16)+'<span style="font-size:9.5px;">Add</span>'+
+      '<input type="file" accept="image/*" '+(max===1?"":"multiple ")+'data-action="upload-images" data-target="'+targetPath+'" style="display:none;"></label>') : '')+
   '</div></div>';
 }
 
@@ -1038,6 +1096,7 @@ function findCatItem(id){ return state.catalogue.items.find(i=>i.id===id); }
 function openClientModal(existing){
   state.modal = { type:"client", isNew: !existing,
     draft: existing ? JSON.parse(JSON.stringify(existing)) : { id:uid(), name:"", phone:"", gender:"", address:"", notes:"", measurements:{}, styleImages:[], createdAt: todayISO() } };
+  pushNav();
   render();
 }
 function openOrderModal(existing, prefillClientId){
@@ -1046,14 +1105,16 @@ function openOrderModal(existing, prefillClientId){
       id:uid(), clientId: prefillClientId || (state.clients[0]?state.clients[0].id:""), title:"",
       items:[{desc:"",price:""}], styleImages:[], payments:[], dueDate:"", status:"Pending", notes:"", createdAt: todayISO()
     }};
+  pushNav();
   render();
 }
 function openCatItemModal(existing, catId){
   state.modal = { type:"catitem", isNew: !existing, isExisting: !!existing,
     draft: existing ? JSON.parse(JSON.stringify(existing)) : { id:uid(), name:"", categoryId: catId || (state.catalogue.categories[0]?state.catalogue.categories[0].id:""), price:"", description:"", images:[] } };
+  pushNav();
   render();
 }
-function closeModal(){ state.modal = null; render(); }
+function closeModal(){ state.modal = null; collapseNav(1); render(); }
 
 document.addEventListener("click", (e) => {
   const stop = e.target.closest('[data-stop]');
@@ -1066,10 +1127,18 @@ document.addEventListener("click", (e) => {
   const id = el.getAttribute("data-id");
 
   switch(action){
-    case "set-tab": state.tab = el.getAttribute("data-tab"); state.selectedClientId=null; render(); break;
-    case "select-client": state.selectedClientId = id; render(); break;
-    case "back-to-clients": state.selectedClientId = null; render(); break;
-    case "delete-client": if(confirm("Delete this client? This cannot be undone.")){ state.clients = state.clients.filter(c=>c.id!==id); if(state.selectedClientId===id) state.selectedClientId=null; persistClients(); render(); } break;
+    case "set-tab": {
+      const newTab = el.getAttribute("data-tab");
+      const wasHome = state.tab === "dashboard";
+      state.tab = newTab; state.selectedClientId = null;
+      if(wasHome && newTab !== "dashboard") pushNav();
+      else if(!wasHome && newTab === "dashboard") collapseNav(1);
+      render();
+      break;
+    }
+    case "select-client": state.selectedClientId = id; pushNav(); render(); break;
+    case "back-to-clients": state.selectedClientId = null; collapseNav(1); render(); break;
+    case "delete-client": if(confirm("Delete this client? This cannot be undone.")){ state.clients = state.clients.filter(c=>c.id!==id); if(state.selectedClientId===id){ state.selectedClientId=null; collapseNav(1); } persistClients(); render(); } break;
     case "open-client-modal-new": openClientModal(null); break;
     case "open-client-modal": openClientModal(findClient(id)); break;
     case "save-client": {
@@ -1079,7 +1148,7 @@ document.addEventListener("click", (e) => {
       state.clients = exists ? state.clients.map(x=>x.id===c.id?c:x) : state.clients.concat([c]);
       persistClients();
       if(state.selectedClientId===c.id) {} // detail will re-render from state.clients
-      state.modal = null; render();
+      closeModal();
       break;
     }
     case "open-order-modal-new": openOrderModal(null); break;
@@ -1110,10 +1179,10 @@ document.addEventListener("click", (e) => {
       const exists = state.orders.some(x=>x.id===o.id);
       state.orders = exists ? state.orders.map(x=>x.id===o.id?o:x) : state.orders.concat([o]);
       persistOrders();
-      state.modal = null; render();
+      closeModal();
       break;
     }
-    case "delete-order": if(confirm("Delete this order?")){ const o=state.modal.draft; state.orders = state.orders.filter(x=>x.id!==o.id); persistOrders(); state.modal=null; render(); } break;
+    case "delete-order": if(confirm("Delete this order?")){ const o=state.modal.draft; state.orders = state.orders.filter(x=>x.id!==o.id); persistOrders(); closeModal(); } break;
     case "filter-orders": state.orderFilterStatus = el.getAttribute("data-status"); render(); break;
 
     case "select-category": state.activeCategoryId = id; render(); break;
@@ -1140,10 +1209,10 @@ document.addEventListener("click", (e) => {
       if(!it.name.trim()) return;
       const exists = state.catalogue.items.some(x=>x.id===it.id);
       state.catalogue.items = exists ? state.catalogue.items.map(x=>x.id===it.id?it:x) : state.catalogue.items.concat([it]);
-      persistCatalogue(); state.modal=null; render();
+      persistCatalogue(); closeModal();
       break;
     }
-    case "delete-catitem": if(confirm("Delete this item?")){ const it=state.modal.draft; state.catalogue.items = state.catalogue.items.filter(x=>x.id!==it.id); persistCatalogue(); state.modal=null; render(); } break;
+    case "delete-catitem": if(confirm("Delete this item?")){ const it=state.modal.draft; state.catalogue.items = state.catalogue.items.filter(x=>x.id!==it.id); persistCatalogue(); closeModal(); } break;
     case "remove-gallery-image": {
       const cat = state.catalogue.categories.find(c=>c.id===el.getAttribute("data-cat"));
       if(cat) cat.gallery.splice(Number(el.getAttribute("data-index")),1);
@@ -1157,9 +1226,15 @@ document.addEventListener("click", (e) => {
       break;
     }
     case "close-modal": closeModal(); break;
-    case "close-print": state.printing = null; render(); break;
-    case "enter-shop": state.showWelcome = false; render(); break;
-    case "open-welcome": state.showWelcome = true; state.welcomeIndex = 0; render(); break;
+    case "close-print": state.printing = null; collapseNav(1); render(); break;
+    case "enter-shop": state.showWelcome = false; pushNav(); render(); break;
+    case "open-welcome": {
+      state.modal = null; state.printing = null; state.selectedClientId = null;
+      state.tab = "dashboard"; state.showWelcome = true; state.welcomeIndex = 0;
+      collapseNav(navDepth);
+      render();
+      break;
+    }
     case "welcome-goto": goToWelcomeSlide(Number(el.getAttribute("data-index"))); startWelcomeCarousel(); break;
     case "welcome-prev": goToWelcomeSlide(state.welcomeIndex - 1); startWelcomeCarousel(); break;
     case "welcome-next": goToWelcomeSlide(state.welcomeIndex + 1); startWelcomeCarousel(); break;
