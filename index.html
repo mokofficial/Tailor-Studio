@@ -1307,8 +1307,32 @@ loadAll();
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
       navigator.serviceWorker.register('./sw.js')
-        .then((reg) => console.log('Service worker registered successfully.', reg))
+        .then((reg) => {
+          console.log('Service worker registered successfully.', reg);
+          // Check for a newer sw.js every time the app is opened.
+          reg.update().catch(() => {});
+          // If a new worker is already waiting, activate it now.
+          if (reg.waiting) reg.waiting.postMessage('skipWaiting');
+          reg.addEventListener('updatefound', () => {
+            const nw = reg.installing;
+            if (!nw) return;
+            nw.addEventListener('statechange', () => {
+              if (nw.state === 'installed' && navigator.serviceWorker.controller){
+                nw.postMessage('skipWaiting');
+              }
+            });
+          });
+        })
         .catch((err) => console.log('Service worker registration failed:', err));
+
+      // Once the new service worker takes control, reload once so the
+      // page itself (not just cached assets) is the latest version.
+      let refreshed = false;
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (refreshed) return;
+        refreshed = true;
+        window.location.reload();
+      });
     });
   }
 </script>
