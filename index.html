@@ -184,6 +184,7 @@ const ICONS = {
   send:'<path d="M3 11l18-8-8 18-2.5-7L3 11z"/>',
   camera:'<path d="M4 8h3l2-2h6l2 2h3v11H4z"/><circle cx="12" cy="13.5" r="3.5"/>',
   upload:'<path d="M12 15V4M8 8l4-4 4 4"/><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/>',
+  download:'<path d="M12 4v11M8 11l4 4 4-4"/><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/>',
   search:'<circle cx="10.5" cy="10.5" r="6.5"/><path d="M20 20l-4.5-4.5"/>',
   back:'<path d="M19 12H5M11 6l-6 6 6 6"/>',
   chat:'<path d="M21 11.6a8.5 8.5 0 1 1-3.8-7.1L21 3l-1.1 4.3c.7 1.2 1.1 2.6 1.1 4.3z"/>',
@@ -749,6 +750,16 @@ function renderAccount(){
           '</button>';
         }).join("")+
       '</div>'+
+    '</div>'+
+    '<div class="card" style="margin-top:16px;">'+
+      '<div class="disp" style="font-weight:600;font-size:14.5px;margin-bottom:4px;">Backup &amp; transfer</div>'+
+      '<div style="font-size:12px;color:var(--ink-soft);margin-bottom:12px;">Your data is stored only on this device. Export a backup file regularly, or use it to move your clients, orders and catalogue to another device.</div>'+
+      '<div style="display:flex;gap:8px;flex-wrap:wrap;">'+
+        '<button class="btn ghost sm" data-action="export-data">'+icon("download",14)+' Export backup</button>'+
+        '<label class="btn ghost sm" style="margin:0;">'+icon("upload",14)+' Import backup'+
+          '<input type="file" accept="application/json" data-action="import-data-file" style="display:none;">'+
+        '</label>'+
+      '</div>'+
     '</div>'
   );
 }
@@ -1170,8 +1181,49 @@ document.addEventListener("click", (e) => {
       persistBusiness(); render();
       break;
     }
+    case "export-data": exportBackup(); break;
   }
 });
+
+function exportBackup(){
+  const backup = {
+    app: "Tailor Studio", version: 1, exportedAt: new Date().toISOString(),
+    clients: state.clients, orders: state.orders, catalogue: state.catalogue,
+    business: state.business, theme: state.theme || "indigo",
+  };
+  const blob = new Blob([JSON.stringify(backup, null, 2)], {type:"application/json"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  const stamp = new Date().toISOString().slice(0,10);
+  a.href = url; a.download = "tailor-studio-backup-"+stamp+".json";
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 2000);
+}
+
+function importBackup(file){
+  const reader = new FileReader();
+  reader.onload = () => {
+    try{
+      const data = JSON.parse(reader.result);
+      if(!data || typeof data !== "object") throw new Error("bad file");
+      const ok = confirm("Import this backup? This will replace all clients, orders, catalogue and settings currently on this device.");
+      if(!ok) return;
+      if(Array.isArray(data.clients)) state.clients = data.clients;
+      if(Array.isArray(data.orders)) state.orders = data.orders;
+      if(data.catalogue && typeof data.catalogue === "object") state.catalogue = data.catalogue;
+      if(data.business && typeof data.business === "object") state.business = Object.assign({}, state.business, data.business);
+      if(!state.business.bankAccounts) state.business.bankAccounts = [];
+      if(data.theme) applyTheme(data.theme);
+      persistClients(); persistOrders(); persistCatalogue(); persistBusiness(); persist("theme", state.theme||"indigo");
+      state.activeCategoryId = state.catalogue.categories[0] ? state.catalogue.categories[0].id : null;
+      render();
+      alert("Backup imported successfully.");
+    }catch(e){
+      alert("Couldn't read that file. Make sure it's a Tailor Studio backup exported from this app.");
+    }
+  };
+  reader.readAsText(file);
+}
 
 document.addEventListener("input", (e) => {
   const bindEl = e.target.closest("[data-bind]");
@@ -1213,6 +1265,12 @@ document.addEventListener("change", (e) => {
   if(bindEl && bindEl.hasAttribute("data-rerender")){
     setPath(state, bindEl.getAttribute("data-bind"), e.target.value);
     render();
+    return;
+  }
+  if(e.target.matches('[data-action="import-data-file"]')){
+    const f = e.target.files && e.target.files[0];
+    if(f) importBackup(f);
+    e.target.value = "";
     return;
   }
   if(e.target.matches('[data-action="upload-logo"]')){
