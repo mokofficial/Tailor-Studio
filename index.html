@@ -376,6 +376,7 @@ const state = {
   authMode: "signin",
   account: null, // {name, email, password} set after sign-up, persisted locally
   viewOnly: false, // true while signed in with the demo account
+  demoPreview: false, // true when previewing demo data without an actual demo/real session persisted
   orderFilterStatus: "All",
   modal: null,     // {type:'client'|'order'|'catitem', draft:{...}, isNew:bool}
   showWelcome: true,
@@ -584,7 +585,8 @@ history.pushState({guard:true}, "", location.href);
    Shown only the first time the app is opened, before a real account
    exists — gives the demo login something realistic to look at.
    Signing up with the SIGNUP_KEY wipes all of this permanently. */
-function seedDemoData(){
+function seedDemoData(doPersist){
+  if(doPersist === undefined) doPersist = true;
   state.business = Object.assign({}, state.business, {
     name: "Adaeze Couture", phone: "0803 555 0142", address: "12 Allen Avenue, Ikeja, Lagos",
     currency: "₦", regNumber: "1234567", bankAccounts: [
@@ -623,7 +625,22 @@ function seedDemoData(){
       { id:"demo-item-2", name:"Two-piece suit", categoryId:"demo-cat-2", price:95000, description:"Slim-fit two-piece suit.", images:[] },
     ],
   };
-  persistBusiness(); persistClients(); persistOrders(); persistCatalogue();
+  if(doPersist){ persistBusiness(); persistClients(); persistOrders(); persistCatalogue(); }
+}
+function loadRealDataFromStorage(){
+  try{
+    const c = localStorage.getItem("clients");
+    const o = localStorage.getItem("orders");
+    const cat = localStorage.getItem("catalogue");
+    const b = localStorage.getItem("business");
+    state.clients = c ? JSON.parse(c) : [];
+    state.orders = o ? JSON.parse(o) : [];
+    state.catalogue = cat ? JSON.parse(cat) : { categories:[], items:[] };
+    state.business = Object.assign(
+      { name:"My Tailor Shop", phone:"", address:"", currency:"₦", regNumber:"", bankAccounts:[], logo:null },
+      b ? JSON.parse(b) : {}
+    );
+  }catch(e){}
 }
 
 async function loadAll(){
@@ -773,7 +790,9 @@ function render(){
       (state.viewOnly ? (
         '<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:8px 20px;background:var(--gold-soft);color:#8A5F1F;font-size:12px;flex-shrink:0;">'+
           '<span style="display:flex;align-items:center;gap:6px;">'+icon("eye",13)+' Demo mode — viewing sample data only</span>'+
-          '<span data-action="toggle-auth-mode-from-app" style="font-weight:600;text-decoration:underline;cursor:pointer;white-space:nowrap;">Sign up to save your own</span>'+
+          (state.demoPreview ?
+            '<span data-action="sign-out" style="font-weight:600;text-decoration:underline;cursor:pointer;white-space:nowrap;">Exit demo, back to sign in</span>' :
+            '<span data-action="toggle-auth-mode-from-app" style="font-weight:600;text-decoration:underline;cursor:pointer;white-space:nowrap;">Sign up to save your own</span>')+
         '</div>'
       ) : '')+
       '<div class="content" id="content">'+ renderTabContent() +'</div>'+
@@ -1749,7 +1768,11 @@ function renderAuthView(){
       '</div>'
     ) : '')+
     '<div style="text-align:center;margin-top:16px;font-size:12.5px;color:var(--ink-soft);">Don\u2019t have an account? '+
-      '<span data-action="toggle-auth-mode" style="color:var(--primary);font-weight:600;cursor:pointer;text-decoration:underline;">Sign up</span></div>';
+      '<span data-action="toggle-auth-mode" style="color:var(--primary);font-weight:600;cursor:pointer;text-decoration:underline;">Sign up</span></div>'+
+    (state.account ? (
+      '<div style="text-align:center;margin-top:10px;font-size:12.5px;color:var(--ink-soft);">'+
+        '<span data-action="view-demo-account" style="color:var(--primary);font-weight:600;cursor:pointer;text-decoration:underline;">View demo account</span></div>'
+    ) : '');
 
   const signUpBody =
     '<div style="margin-bottom:10px;"><label>Business name</label><input data-bind="authForm.name" value="'+esc(f.name||"")+'" placeholder="e.g. Ade\u2019s Tailor Shop"></div>'+
@@ -2079,6 +2102,7 @@ document.addEventListener("click", (e) => {
       break;
     }
     case "toggle-auth-mode-from-app": {
+      if(state.demoPreview){ loadRealDataFromStorage(); state.demoPreview = false; }
       state.authed = false; state.viewOnly = false;
       state.authMode = "signup"; state.authForm = null; state.authError = null;
       state.modal = null; state.selectedClientId = null; state.tab = "dashboard";
@@ -2107,6 +2131,16 @@ document.addEventListener("click", (e) => {
       break;
     }
     case "biometric-sign-in": tryBiometricSignIn(false); break;
+    case "view-demo-account": {
+      seedDemoData(false); // in-memory only — leaves the real account's saved data untouched
+      state.demoPreview = true;
+      state.authed = true; state.viewOnly = true; state.authError = null;
+      state.modal = null; state.selectedClientId = null; state.tab = "dashboard";
+      state.showWelcome = false;
+      pushNav();
+      render();
+      break;
+    }
     case "sign-up": {
       const f = state.authForm || {};
       const name = (f.name||"").trim();
@@ -2146,6 +2180,7 @@ document.addEventListener("click", (e) => {
       break;
     }
     case "sign-out": {
+      if(state.demoPreview){ loadRealDataFromStorage(); state.demoPreview = false; }
       state.authed = false;
       state.viewOnly = false;
       state.authMode = "signin";
