@@ -7,6 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Tailor Studio</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,500&family=Work+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap');
   :root{
@@ -219,6 +220,8 @@ function applyTheme(key){
 }
 
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2,7);
+const DEMO_EMAIL = "demo@tailorstudio.com";
+const DEMO_PASSWORD = "demo1234";
 const todayISO = () => new Date().toISOString().slice(0,10);
 const fmtDate = (iso) => { if(!iso) return "—"; const d=new Date(iso+"T00:00:00"); return d.toLocaleDateString(undefined,{day:"numeric",month:"short",year:"numeric"}); };
 const daysUntil = (iso) => { if(!iso) return null; const d=new Date(iso+"T00:00:00"); const t=new Date(); t.setHours(0,0,0,0); return Math.round((d-t)/86400000); };
@@ -312,6 +315,11 @@ const state = {
   loaded: false,
   selectedClientId: null,
   activeCategoryId: null,
+  browseCategoryId: null,
+  lightbox: null, // {images:[], index:0}
+  authed: false,
+  authForm: null,
+  authError: null,
   orderFilterStatus: "All",
   modal: null,     // {type:'client'|'order'|'catitem', draft:{...}, isNew:bool}
   printing: null,  // {order, client, kind} | {catalogue:true}
@@ -361,8 +369,66 @@ function showExitToast(){
   clearTimeout(t._hideTimer);
   t._hideTimer = setTimeout(() => { t.style.opacity = "0"; }, 1600);
 }
+function ensureLightboxEl(){
+  let el = document.getElementById("lightboxOverlay");
+  if(!el){
+    el = document.createElement("div");
+    el.id = "lightboxOverlay";
+    el.style.cssText = "position:fixed;inset:0;background:rgba(10,10,10,.94);z-index:10000;display:none;align-items:center;justify-content:center;flex-direction:column;touch-action:pan-y;";
+    el.innerHTML =
+      '<button id="lightboxClose" style="position:absolute;top:16px;right:16px;background:rgba(255,255,255,.15);border:none;color:#fff;width:38px;height:38px;border-radius:50%;font-size:20px;line-height:1;cursor:pointer;">×</button>'+
+      '<div id="lightboxCounter" style="position:absolute;top:22px;left:50%;transform:translateX(-50%);color:#fff;font-size:12px;opacity:.85;letter-spacing:.04em;"></div>'+
+      '<img id="lightboxImg" style="max-width:92vw;max-height:78vh;object-fit:contain;border-radius:8px;user-select:none;-webkit-user-select:none;" draggable="false">'+
+      '<div style="position:absolute;bottom:26px;display:flex;gap:18px;">'+
+        '<button id="lightboxPrev" style="background:rgba(255,255,255,.15);border:none;color:#fff;width:42px;height:42px;border-radius:50%;font-size:19px;cursor:pointer;">‹</button>'+
+        '<button id="lightboxNext" style="background:rgba(255,255,255,.15);border:none;color:#fff;width:42px;height:42px;border-radius:50%;font-size:19px;cursor:pointer;">›</button>'+
+      '</div>';
+    document.body.appendChild(el);
+    el.addEventListener("click", (e) => { if(e.target===el) closeLightbox(); });
+    document.getElementById("lightboxClose").addEventListener("click", closeLightbox);
+    document.getElementById("lightboxPrev").addEventListener("click", () => lightboxStep(-1));
+    document.getElementById("lightboxNext").addEventListener("click", () => lightboxStep(1));
+    let tx=0, ty=0;
+    el.addEventListener("touchstart", (e) => { const t=e.touches[0]; tx=t.clientX; ty=t.clientY; }, {passive:true});
+    el.addEventListener("touchend", (e) => {
+      const t=e.changedTouches[0]; const dx=t.clientX-tx, dy=t.clientY-ty;
+      if(Math.abs(dx)>50 && Math.abs(dx)>Math.abs(dy)) lightboxStep(dx<0?1:-1);
+      else if(dy>90 && Math.abs(dy)>Math.abs(dx)) closeLightbox();
+    }, {passive:true});
+  }
+  return el;
+}
+function lightboxStep(dir){
+  if(!state.lightbox) return;
+  const n = state.lightbox.images.length;
+  state.lightbox.index = (state.lightbox.index + dir + n) % n;
+  updateLightboxUI();
+}
+function updateLightboxUI(){
+  const el = ensureLightboxEl();
+  if(!state.lightbox){ el.style.display = "none"; return; }
+  const {images, index} = state.lightbox;
+  el.style.display = "flex";
+  document.getElementById("lightboxImg").src = images[index];
+  document.getElementById("lightboxCounter").textContent = images.length>1 ? (index+1)+" / "+images.length : "";
+  const multi = images.length>1;
+  document.getElementById("lightboxPrev").style.display = multi?"flex":"none";
+  document.getElementById("lightboxNext").style.display = multi?"flex":"none";
+}
+function openLightbox(images, index){
+  if(!images || images.length===0) return;
+  state.lightbox = { images: images, index: index||0 };
+  pushNav();
+  updateLightboxUI();
+}
+function closeLightbox(){
+  state.lightbox = null;
+  collapseNav(1);
+  updateLightboxUI();
+}
 window.addEventListener("popstate", function(){
   if(suppressPop) return;
+  if(state.lightbox){ state.lightbox = null; navDepth = Math.max(0, navDepth-1); updateLightboxUI(); return; }
   if(state.modal){
     if(state.pendingModal){ state.modal = state.pendingModal; state.pendingModal = null; }
     else { state.modal = null; }
@@ -390,11 +456,13 @@ async function loadAll(){
     const cat = localStorage.getItem("catalogue");
     const b = localStorage.getItem("business");
     const th = localStorage.getItem("theme");
+    const au = localStorage.getItem("authed");
     if(c) state.clients = JSON.parse(c);
     if(o) state.orders = JSON.parse(o);
     if(cat) state.catalogue = JSON.parse(cat);
     if(b) state.business = Object.assign({}, state.business, JSON.parse(b));
     if(th) applyTheme(JSON.parse(th));
+    if(au) state.authed = JSON.parse(au);
   }catch(e){ /* first run */ }
   if(!state.business.bankAccounts) state.business.bankAccounts = [];
   if(state.business.bankAccounts.length===0 && (state.business.bankName || state.business.bankAccountNumber)){
@@ -431,6 +499,8 @@ function render(){
 
   if(state.showWelcome){ app.innerHTML = renderWelcomeView(); startWelcomeCarousel(); return; }
   clearWelcomeTimer();
+
+  if(!state.authed){ app.innerHTML = renderAuthView(); return; }
 
   const contentScroll = document.getElementById("content") ? document.getElementById("content").scrollTop : 0;
 
@@ -519,7 +589,7 @@ function renderDashboard(){
               '<div style="font-size:11.5px;color:'+(dleft<0?'var(--rust)':'var(--ink-soft)')+';">'+
                 (dleft<0 ? Math.abs(dleft)+"d overdue" : dleft===0 ? "Due today" : "Due in "+dleft+"d")+' · Balance '+money(bal,business.currency)+
               '</div></div>'+
-              (client ? '<a class="btn wa sm" href="'+waLink(client.phone, reminderText(o,client,bal,business))+'" target="_blank" rel="noreferrer">'+icon("send",13)+'</a>' : '')+
+              (client ? '<button class="btn wa sm" data-action="share-reminder-image-dash" data-id="'+o.id+'">'+icon("send",13)+'</button>' : '')+
             '</div>'
           )).join("")
         )+
@@ -534,6 +604,147 @@ function renderDashboard(){
 }
 function reminderText(o, client, bal, business){
   return "Hi "+client.name+", friendly reminder that your order \""+(o.title||"your order")+"\" has a balance of "+money(bal, business.currency)+(o.dueDate?(" due "+fmtDate(o.dueDate)):"")+". Thank you!";
+}
+
+/* ================= ARRANGED IMAGE CARDS (share / download) ================= */
+function themeColor(name){
+  const v = getComputedStyle(document.documentElement).getPropertyValue("--"+name);
+  return (v && v.trim()) || "#222";
+}
+function cardLogoHtml(business, size){
+  size = size || 48;
+  return business.logo ? '<img src="'+business.logo+'" style="width:'+size+'px;height:'+size+'px;border-radius:12px;object-fit:cover;">' :
+    '<div style="width:'+size+'px;height:'+size+'px;border-radius:12px;background:'+themeColor("primary")+';color:#fff;display:flex;align-items:center;justify-content:center;font-size:'+Math.round(size*0.38)+'px;font-weight:700;font-family:Georgia,serif;">'+esc((business.name||"T").trim()[0].toUpperCase())+'</div>';
+}
+function buildInvoiceCardHtml(order, client, business, kind){
+  const total = orderTotal(order), paid = orderPaid(order), bal = total-paid;
+  const primary=themeColor("primary"), gold=themeColor("gold"), ink=themeColor("ink"), inkSoft=themeColor("ink-soft"), line=themeColor("line"), surface=themeColor("surface"), green=themeColor("green"), rust=themeColor("rust");
+  const rows = (order.items||[]).map(it=>
+    '<tr><td style="padding:7px 0;border-bottom:1px solid '+line+';font-size:13px;color:'+ink+';">'+esc(it.desc||"Item")+'</td>'+
+    '<td style="padding:7px 0;border-bottom:1px solid '+line+';font-size:13px;color:'+ink+';text-align:right;white-space:nowrap;">'+money(it.price,business.currency)+'</td></tr>'
+  ).join("");
+  const bankHtml = (bal>0 && business.bankAccounts && business.bankAccounts.length>0) ?
+    '<div style="margin-top:16px;padding:12px 14px;background:'+surface+';border-radius:10px;border:1px solid '+line+';">'+
+      '<div style="font-size:11px;font-weight:600;color:'+inkSoft+';text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px;">'+(business.bankAccounts.length>1?"Pay into any of":"Pay into")+'</div>'+
+      business.bankAccounts.map(acc=>'<div style="font-size:12.5px;color:'+ink+';margin-bottom:4px;">'+esc(acc.accountName)+' · '+esc(acc.bankName)+' · '+esc(acc.accountNumber)+'</div>').join("")+
+    '</div>' : '';
+  return '<div style="width:480px;padding:32px;background:#ffffff;font-family:Georgia,serif;box-sizing:border-box;">'+
+    '<div style="display:flex;align-items:center;gap:12px;margin-bottom:18px;">'+cardLogoHtml(business,52)+
+      '<div><div style="font-size:18px;font-weight:700;color:'+ink+';">'+esc(business.name||"")+'</div>'+
+      (business.address?'<div style="font-size:11.5px;color:'+inkSoft+';">'+esc(business.address)+'</div>':'')+
+      (business.phone?'<div style="font-size:11.5px;color:'+inkSoft+';">'+esc(business.phone)+'</div>':'')+
+      '</div></div>'+
+    '<div style="height:3px;background:'+gold+';border-radius:2px;margin-bottom:16px;"></div>'+
+    '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;">'+
+      '<div><div style="font-size:20px;font-weight:700;letter-spacing:.06em;color:'+primary+';">'+(kind==="receipt"?"RECEIPT":"INVOICE")+'</div>'+
+      '<div style="font-size:12px;color:'+inkSoft+';margin-top:2px;">'+fmtDate(todayISO())+'</div></div>'+
+      '<div style="text-align:right;"><div style="font-size:11px;color:'+inkSoft+';">Billed to</div>'+
+      '<div style="font-size:14px;font-weight:600;color:'+ink+';">'+esc(client?client.name:"—")+'</div></div>'+
+    '</div>'+
+    '<div style="font-size:12.5px;color:'+inkSoft+';margin-bottom:10px;">'+esc(order.title||"Untitled order")+'</div>'+
+    '<table style="width:100%;border-collapse:collapse;margin-bottom:14px;">'+rows+'</table>'+
+    '<div style="border-top:2px solid '+ink+';padding-top:10px;">'+
+      '<div style="display:flex;justify-content:space-between;font-size:13px;color:'+inkSoft+';margin-bottom:4px;"><span>Total</span><span>'+money(total,business.currency)+'</span></div>'+
+      '<div style="display:flex;justify-content:space-between;font-size:13px;color:'+inkSoft+';margin-bottom:4px;"><span>Paid</span><span>'+money(paid,business.currency)+'</span></div>'+
+      '<div style="display:flex;justify-content:space-between;font-size:16px;font-weight:700;color:'+(bal>0?rust:green)+';"><span>Balance</span><span>'+money(bal,business.currency)+'</span></div>'+
+    '</div>'+
+    (order.dueDate?'<div style="font-size:12px;color:'+inkSoft+';margin-top:8px;">Due date: '+fmtDate(order.dueDate)+'</div>':'')+
+    bankHtml+
+    '<div style="margin-top:22px;text-align:center;font-size:12px;color:'+inkSoft+';font-style:italic;">Thank you for your patronage!</div>'+
+  '</div>';
+}
+function buildReminderCardHtml(order, client, bal, business){
+  const primary=themeColor("primary"), gold=themeColor("gold"), ink=themeColor("ink"), inkSoft=themeColor("ink-soft"), rust=themeColor("rust"), line=themeColor("line"), surface=themeColor("surface");
+  return '<div style="width:420px;padding:30px;background:#ffffff;font-family:Georgia,serif;box-sizing:border-box;text-align:center;">'+
+    '<div style="display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:14px;">'+cardLogoHtml(business,48)+
+      '<div style="font-size:16px;font-weight:700;color:'+ink+';text-align:left;">'+esc(business.name||"")+'</div></div>'+
+    '<div style="height:3px;width:60px;background:'+gold+';border-radius:2px;margin:0 auto 18px;"></div>'+
+    '<div style="font-size:12px;letter-spacing:.08em;color:'+inkSoft+';text-transform:uppercase;margin-bottom:6px;">Payment Reminder</div>'+
+    '<div style="font-size:15px;color:'+ink+';margin-bottom:16px;">Hi '+esc(client.name)+', a friendly reminder on<br><strong>'+esc(order.title||"your order")+'</strong></div>'+
+    '<div style="background:'+surface+';border:1px solid '+line+';border-radius:12px;padding:16px;margin-bottom:14px;">'+
+      '<div style="font-size:11px;color:'+inkSoft+';text-transform:uppercase;letter-spacing:.05em;">Balance due</div>'+
+      '<div style="font-size:26px;font-weight:700;color:'+rust+';margin-top:4px;">'+money(bal,business.currency)+'</div>'+
+      (order.dueDate?'<div style="font-size:12px;color:'+inkSoft+';margin-top:6px;">Due '+fmtDate(order.dueDate)+'</div>':'')+
+    '</div>'+
+    (business.phone?'<div style="font-size:12px;color:'+inkSoft+';">Contact: '+esc(business.phone)+'</div>':'')+
+    '<div style="margin-top:14px;font-size:12px;color:'+inkSoft+';font-style:italic;">Thank you!</div>'+
+  '</div>';
+}
+function buildPriceListCardHtml(business){
+  const primary=themeColor("primary"), gold=themeColor("gold"), ink=themeColor("ink"), inkSoft=themeColor("ink-soft"), line=themeColor("line");
+  const sections = state.catalogue.categories.map(cat=>{
+    const items = state.catalogue.items.filter(i=>i.categoryId===cat.id);
+    if(items.length===0) return "";
+    return '<div style="margin-bottom:14px;">'+
+      '<div style="font-size:12px;font-weight:700;color:'+primary+';text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">'+esc(cat.name)+'</div>'+
+      items.map(i=>'<div style="display:flex;justify-content:space-between;font-size:13px;color:'+ink+';padding:5px 0;border-bottom:1px solid '+line+';"><span>'+esc(i.name)+'</span><span style="font-weight:600;">'+money(i.price,business.currency)+'</span></div>').join("")+
+    '</div>';
+  }).join("");
+  return '<div style="width:440px;padding:30px;background:#ffffff;font-family:Georgia,serif;box-sizing:border-box;">'+
+    '<div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">'+cardLogoHtml(business,48)+
+      '<div style="font-size:17px;font-weight:700;color:'+ink+';">'+esc(business.name||"")+'</div></div>'+
+    '<div style="height:3px;background:'+gold+';border-radius:2px;margin-bottom:16px;"></div>'+
+    '<div style="font-size:15px;font-weight:700;color:'+primary+';margin-bottom:14px;">Price List</div>'+
+    (sections || '<div style="font-size:12.5px;color:'+inkSoft+';">No priced items yet.</div>')+
+    (business.phone?'<div style="margin-top:6px;font-size:12px;color:'+inkSoft+';">Contact us: '+esc(business.phone)+'</div>':'')+
+  '</div>';
+}
+async function cardToFile(html, filenameBase, widthPx){
+  const holder = document.createElement("div");
+  holder.style.cssText = "position:fixed;left:-9999px;top:0;";
+  holder.style.width = (widthPx||480)+"px";
+  holder.innerHTML = html;
+  document.body.appendChild(holder);
+  try{
+    const canvas = await html2canvas(holder, {backgroundColor:"#ffffff", scale:2});
+    const blob = await new Promise(res => canvas.toBlob(res, "image/png"));
+    return new File([blob], filenameBase+".png", {type:"image/png"});
+  } finally {
+    document.body.removeChild(holder);
+  }
+}
+function downloadFile(file){
+  const url = URL.createObjectURL(file);
+  const a = document.createElement("a");
+  a.href = url; a.download = file.name;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 2000);
+}
+async function shareImageFile(file, caption, phone){
+  if(navigator.share && (!navigator.canShare || navigator.canShare({files:[file]}))){
+    try{ await navigator.share({files:[file], text: caption||"", title: file.name}); return; }
+    catch(e){ if(e && e.name==="AbortError") return; }
+  }
+  // Fallback when the Web Share API (with files) isn't supported: download the
+  // image so it can be attached manually, and open WhatsApp with the caption —
+  // a plain wa.me link cannot carry an image itself.
+  downloadFile(file);
+  window.open(waLink(phone||"", caption||""), "_blank", "noreferrer");
+}
+async function shareInvoiceImage(order, client, kind, mode){
+  const business = state.business;
+  const html = buildInvoiceCardHtml(order, client, business, kind);
+  const base = (kind==="receipt"?"receipt-":"invoice-")+(client?client.name.replace(/[^a-z0-9]+/gi,"-").toLowerCase():"client");
+  const file = await cardToFile(html, base, 480);
+  if(mode==="download"){ downloadFile(file); return; }
+  const caption = (kind==="receipt"?"Receipt":"Invoice")+" from "+(business.name||"")+(order.title?(" — "+order.title):"");
+  await shareImageFile(file, caption, client?client.phone:"");
+}
+async function shareReminderImage(order, client, bal, mode){
+  const business = state.business;
+  const html = buildReminderCardHtml(order, client, bal, business);
+  const base = "reminder-"+(client?client.name.replace(/[^a-z0-9]+/gi,"-").toLowerCase():"client");
+  const file = await cardToFile(html, base, 420);
+  if(mode==="download"){ downloadFile(file); return; }
+  const caption = "Payment reminder from "+(business.name||"");
+  await shareImageFile(file, caption, client?client.phone:"");
+}
+async function sharePriceListImage(mode){
+  const business = state.business;
+  const html = buildPriceListCardHtml(business);
+  const file = await cardToFile(html, "price-list", 440);
+  if(mode==="download"){ downloadFile(file); return; }
+  await shareImageFile(file, (business.name||"")+" — Price List", "");
 }
 function statCard(label, value, iconName, tone, bg){
   return '<div class="card" style="display:flex;flex-direction:column;gap:10px;">'+
@@ -699,25 +910,33 @@ function renderCatalogue(){
   // Read-only "photo library" browsing view — editing happens in Account > Manage catalogue.
   const business = state.business;
   const cats = state.catalogue.categories;
-  if(!state.activeCategoryId && cats[0]) state.activeCategoryId = cats[0].id;
-  const activeCat = cats.find(c=>c.id===state.activeCategoryId);
-  const items = activeCat ? state.catalogue.items.filter(i=>i.categoryId===activeCat.id) : [];
+  if(state.browseCategoryId===null || state.browseCategoryId===undefined) state.browseCategoryId = "__all__";
+  const isAll = state.browseCategoryId === "__all__";
+  const activeCat = isAll ? null : cats.find(c=>c.id===state.browseCategoryId);
+  const items = isAll ? state.catalogue.items.slice() : (activeCat ? state.catalogue.items.filter(i=>i.categoryId===activeCat.id) : []);
+  const catName = (id) => { const c = cats.find(x=>x.id===id); return c ? c.name : ""; };
 
   return (
     '<div style="display:flex;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px;">'+
-      '<div class="chipbar">'+ cats.map(c=>
-        '<button class="btn '+(state.activeCategoryId===c.id?'gold':'ghost')+' sm" data-action="select-category" data-id="'+c.id+'">'+esc(c.name)+'</button>'
-      ).join("") +'</div>'+
-      '<a class="btn wa sm" href="'+waLink("", buildCatalogueShareText())+'" target="_blank" rel="noreferrer">'+icon("chat",14)+' Share price list</a>'+
+      '<div class="chipbar">'+
+        '<button class="btn '+(isAll?'gold':'ghost')+' sm" data-action="select-browse-category" data-id="__all__">All</button>'+
+        cats.map(c=>
+          '<button class="btn '+(state.browseCategoryId===c.id?'gold':'ghost')+' sm" data-action="select-browse-category" data-id="'+c.id+'">'+esc(c.name)+'</button>'
+        ).join("") +'</div>'+
+      '<div style="display:flex;gap:8px;">'+
+        '<button class="btn wa sm" data-action="share-pricelist-image">'+icon("chat",14)+' Share price list</button>'+
+        '<button class="btn ghost sm" data-action="download-pricelist-image">'+icon("download",14)+' Download</button>'+
+      '</div>'+
     '</div>'+
-    (!activeCat ? '<div class="empty">No categories yet — add some from Account &gt; Manage catalogue.</div>' :
-      (items.length===0 ? '<div class="empty">No items in this category yet. Add some from Account &gt; Manage catalogue.</div>' :
+    (cats.length===0 ? '<div class="empty">No categories yet — add some from Account &gt; Manage catalogue.</div>' :
+      (items.length===0 ? '<div class="empty">No items yet. Add some from Account &gt; Manage catalogue.</div>' :
       '<div class="grid-cards">'+
         items.map(it=>{
           const img = (it.images&&it.images[0]) || null;
           return '<div class="card" style="cursor:pointer;padding:0;overflow:hidden;" data-action="view-catitem" data-id="'+it.id+'">'+
             (img ? '<img src="'+img+'" style="width:100%;height:150px;object-fit:cover;">' : '<div style="width:100%;height:150px;background:var(--line);display:flex;align-items:center;justify-content:center;color:var(--ink-soft);">'+icon("image",24)+'</div>')+
             '<div style="padding:10px;">'+
+              (isAll ? '<div style="font-size:10px;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.04em;margin-bottom:2px;">'+esc(catName(it.categoryId))+'</div>' : '')+
               '<div style="font-weight:600;font-size:13.5px;">'+esc(it.name)+'</div>'+
               (it.description ? '<div style="font-size:11.5px;color:var(--ink-soft);margin-top:2px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">'+esc(it.description)+'</div>' : '')+
               '<div class="mono" style="font-weight:700;margin-top:6px;">'+money(it.price,business.currency)+'</div>'+
@@ -753,7 +972,7 @@ function renderCatalogueManager(){
         '</div>'+
         '<div style="display:flex;flex-wrap:wrap;gap:8px;">'+
           activeCat.gallery.map((src,i)=>(
-            '<div class="thumbwrap"><img src="'+src+'" class="thumb" style="width:80px;height:80px;">'+
+            '<div class="thumbwrap"><img src="'+src+'" class="thumb" style="width:80px;height:80px;cursor:pointer;" data-action="open-lightbox-gallery" data-cat="'+activeCat.id+'" data-index="'+i+'">'+
             '<button class="thumb-x" data-action="remove-gallery-image" data-cat="'+activeCat.id+'" data-index="'+i+'">×</button></div>'
           )).join("")+
           '<label class="btn ghost sm addthumb" style="width:80px;height:80px;">'+icon("camera",16)+'<span style="font-size:9.5px;">Add photos</span>'+
@@ -857,6 +1076,11 @@ function renderAccount(){
           '<input type="file" accept="application/json" data-action="import-data-file" style="display:none;">'+
         '</label>'+
       '</div>'+
+    '</div>'+
+    '<div class="card" style="margin-top:16px;">'+
+      '<div class="disp" style="font-weight:600;font-size:14.5px;margin-bottom:4px;">Session</div>'+
+      '<div style="font-size:12px;color:var(--ink-soft);margin-bottom:12px;">Signed in with '+esc(DEMO_EMAIL)+'.</div>'+
+      '<button class="btn rust sm" data-action="sign-out">'+icon("back",14)+' Sign out</button>'+
     '</div>'
   );
 }
@@ -933,10 +1157,12 @@ function renderOrderModal(){
     '<div class="divider"></div>'+
     '<div class="disp" style="font-weight:600;font-size:15px;margin-bottom:8px;">Invoice &amp; reminders</div>'+
     '<div style="display:flex;flex-wrap:wrap;gap:8px;">'+
-      '<a class="btn wa sm" href="'+waLink(client.phone, buildInvoiceText(o,client,business,"invoice"))+'" target="_blank" rel="noreferrer">'+icon("chat",14)+' Share invoice</a>'+
-      '<a class="btn wa sm" href="'+waLink(client.phone, buildInvoiceText(o,client,business,"receipt"))+'" target="_blank" rel="noreferrer">'+icon("chat",14)+' Share receipt</a>'+
+      '<button class="btn wa sm" data-action="share-invoice-image" data-kind="invoice">'+icon("chat",14)+' Share invoice</button>'+
+      '<button class="btn ghost sm" data-action="download-invoice-image" data-kind="invoice">'+icon("download",14)+' Download</button>'+
+      '<button class="btn wa sm" data-action="share-invoice-image" data-kind="receipt">'+icon("chat",14)+' Share receipt</button>'+
+      '<button class="btn ghost sm" data-action="download-invoice-image" data-kind="receipt">'+icon("download",14)+' Download</button>'+
       '<button class="btn ghost sm" data-action="print-invoice" data-kind="invoice">'+icon("printer",14)+' Print invoice</button>'+
-      (bal>0 ? '<a class="btn wa sm" href="'+waLink(client.phone, reminderText(o,client,bal,business))+'" target="_blank" rel="noreferrer">'+icon("send",14)+' Send payment reminder</a>' : '')+
+      (bal>0 ? '<button class="btn wa sm" data-action="share-reminder-image">'+icon("send",14)+' Send payment reminder</button>' : '')+
     '</div>'
   ) : "";
 
@@ -1018,7 +1244,7 @@ function renderCatItemView(){
   const cat = state.catalogue.categories.find(c=>c.id===it.categoryId);
   return modalShell(it.name,
     (images.length ? '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;">'+
-        images.map(s=>'<img src="'+s+'" style="width:140px;height:140px;object-fit:cover;border-radius:10px;border:1px solid var(--line);">').join("")+
+        images.map((s,i)=>'<img src="'+s+'" style="width:140px;height:140px;object-fit:cover;border-radius:10px;border:1px solid var(--line);cursor:pointer;" data-action="open-lightbox" data-target="modal.item.images" data-index="'+i+'">').join("")+
       '</div>' :
       '<div style="width:100%;height:160px;background:var(--line);border-radius:10px;display:flex;align-items:center;justify-content:center;color:var(--ink-soft);margin-bottom:14px;">'+icon("image",26)+'</div>')+
     (cat ? '<div style="font-size:11.5px;color:var(--ink-soft);margin-bottom:4px;">'+esc(cat.name)+'</div>' : '')+
@@ -1060,7 +1286,7 @@ function imagePickerHtml(label, images, targetPath, max){
   const canAddMore = !max || images.length < max;
   return '<div><label>'+label+'</label><div style="display:flex;flex-wrap:wrap;gap:8px;">'+
     images.map((src,i)=>(
-      '<div class="thumbwrap"><img src="'+src+'" class="thumb" alt="photo">'+
+      '<div class="thumbwrap"><img src="'+src+'" class="thumb" alt="photo" style="cursor:pointer;" data-action="open-lightbox" data-target="'+targetPath+'" data-index="'+i+'">'+
       '<button class="thumb-x" data-action="remove-image" data-target="'+targetPath+'" data-index="'+i+'">×</button></div>'
     )).join("")+
     (canAddMore ? ('<label class="btn ghost sm addthumb">'+icon("camera",16)+'<span style="font-size:9.5px;">Add</span>'+
@@ -1111,6 +1337,33 @@ function renderWelcomeView(){
         '<div class="disp" style="font-size:25px;font-weight:600;">'+esc(business.name)+'</div>'+
         '<div style="font-size:13.5px;color:var(--ink-soft);max-width:300px;">Browse our latest styles and prices, then step inside to manage clients, orders and your catalogue.</div>'+
         '<button class="btn gold" data-action="enter-shop" style="padding:12px 30px;font-size:14.5px;margin-top:4px;">Enter shop '+icon("forward",15)+'</button>'+
+      '</div>'+
+    '</div>'
+  );
+}
+function renderAuthView(){
+  const business = state.business;
+  if(!state.authForm) state.authForm = { email: DEMO_EMAIL, password: DEMO_PASSWORD };
+  const f = state.authForm;
+  const logoHtml = business.logo ? '<img src="'+business.logo+'" style="width:56px;height:56px;border-radius:14px;object-fit:cover;">' :
+    '<div style="width:56px;height:56px;border-radius:14px;background:var(--primary);color:#fff;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:700;">'+esc((business.name||"T").trim()[0].toUpperCase())+'</div>';
+  return (
+    '<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;box-sizing:border-box;background:var(--bg);">'+
+      '<div class="card" style="max-width:380px;width:100%;">'+
+        '<div style="display:flex;flex-direction:column;align-items:center;margin-bottom:20px;">'+
+          logoHtml+
+          '<div class="disp" style="font-weight:700;font-size:19px;margin-top:12px;">'+esc(business.name||"Tailor Studio")+'</div>'+
+          '<div style="font-size:12.5px;color:var(--ink-soft);margin-top:2px;">Sign in to continue</div>'+
+        '</div>'+
+        (state.authError ? '<div style="background:var(--rust-soft);color:var(--rust);font-size:12.5px;padding:8px 12px;border-radius:8px;margin-bottom:12px;">'+esc(state.authError)+'</div>' : '')+
+        '<div style="margin-bottom:10px;"><label>Email</label><input data-bind="authForm.email" value="'+esc(f.email)+'" placeholder="'+DEMO_EMAIL+'"></div>'+
+        '<div style="margin-bottom:14px;"><label>Password</label><input type="password" data-bind="authForm.password" value="'+esc(f.password)+'" placeholder="Password"></div>'+
+        '<button class="btn" style="width:100%;justify-content:center;" data-action="sign-in">'+icon("check",15)+' Sign in</button>'+
+        '<div style="margin-top:16px;padding:12px;background:var(--surface);border:1px dashed var(--line);border-radius:10px;font-size:11.5px;color:var(--ink-soft);text-align:center;">'+
+          'Demo credentials (already filled in)<br>'+
+          '<span class="mono" style="color:var(--ink);">'+DEMO_EMAIL+'</span><br>'+
+          '<span class="mono" style="color:var(--ink);">'+DEMO_PASSWORD+'</span>'+
+        '</div>'+
       '</div>'+
     '</div>'
   );
@@ -1329,6 +1582,31 @@ document.addEventListener("click", (e) => {
       state.activeCategoryId = state.catalogue.categories[0] ? state.catalogue.categories[0].id : null;
       persistCatalogue(); render();
     } break;
+    case "share-invoice-image": {
+      const o = state.modal.draft; const client = findClient(o.clientId); const kind = el.getAttribute("data-kind")||"invoice";
+      shareInvoiceImage(o, client, kind, "share");
+      break;
+    }
+    case "download-invoice-image": {
+      const o = state.modal.draft; const client = findClient(o.clientId); const kind = el.getAttribute("data-kind")||"invoice";
+      shareInvoiceImage(o, client, kind, "download");
+      break;
+    }
+    case "share-reminder-image-dash": {
+      const o = findOrder(id); if(!o) break;
+      const client = findClient(o.clientId);
+      const bal = orderTotal(o) - orderPaid(o);
+      shareReminderImage(o, client, bal, "share");
+      break;
+    }
+    case "share-reminder-image": {
+      const o = state.modal.draft; const client = findClient(o.clientId);
+      const bal = orderTotal(o) - orderPaid(o);
+      shareReminderImage(o, client, bal, "share");
+      break;
+    }
+    case "share-pricelist-image": sharePriceListImage("share"); break;
+    case "download-pricelist-image": sharePriceListImage("download"); break;
     case "open-catitem-modal-new": openCatItemModal(null, el.getAttribute("data-cat")); break;
     case "open-catitem-modal": openCatItemModal(findCatItem(id)); break;
     case "view-catitem": openCatItemView(id); break;
@@ -1361,6 +1639,19 @@ document.addEventListener("click", (e) => {
       break;
     }
     case "delete-catitem": if(confirm("Delete this item?")){ const it=state.modal.draft; state.catalogue.items = state.catalogue.items.filter(x=>x.id!==it.id); persistCatalogue(); closeModal(); } break;
+    case "select-browse-category": state.browseCategoryId = el.getAttribute("data-id"); render(); break;
+    case "open-lightbox": {
+      const arr = getPath(state, el.getAttribute("data-target"));
+      const idx = Number(el.getAttribute("data-index")||0);
+      if(Array.isArray(arr)) openLightbox(arr, idx);
+      break;
+    }
+    case "open-lightbox-gallery": {
+      const cat = state.catalogue.categories.find(c=>c.id===el.getAttribute("data-cat"));
+      const idx = Number(el.getAttribute("data-index")||0);
+      if(cat) openLightbox(cat.gallery, idx);
+      break;
+    }
     case "remove-gallery-image": {
       const cat = state.catalogue.categories.find(c=>c.id===el.getAttribute("data-cat"));
       if(cat) cat.gallery.splice(Number(el.getAttribute("data-index")),1);
@@ -1375,6 +1666,25 @@ document.addEventListener("click", (e) => {
     }
     case "close-modal": closeModal(); break;
     case "close-print": state.printing = null; collapseNav(1); render(); break;
+    case "sign-in": {
+      const f = state.authForm || {};
+      if((f.email||"").trim().toLowerCase()===DEMO_EMAIL && f.password===DEMO_PASSWORD){
+        state.authed = true; state.authError = null; persist("authed", true);
+      } else {
+        state.authError = "Incorrect email or password. Try the demo credentials shown below.";
+      }
+      render();
+      break;
+    }
+    case "sign-out": {
+      state.authed = false; persist("authed", false);
+      state.authForm = { email: DEMO_EMAIL, password: DEMO_PASSWORD }; state.authError = null;
+      state.modal = null; state.printing = null; state.selectedClientId = null; state.tab = "dashboard";
+      state.showWelcome = true;
+      collapseNav(navDepth);
+      render();
+      break;
+    }
     case "enter-shop": state.showWelcome = false; pushNav(); render(); break;
     case "open-welcome": {
       state.modal = null; state.printing = null; state.selectedClientId = null;
