@@ -8,6 +8,7 @@
 <title>Tailor Studio</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,500&family=Work+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap');
   :root{
@@ -80,10 +81,11 @@
 
   .grid-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:18px;}
   .grid-2{display:grid;grid-template-columns:1.4fr 1fr;gap:16px;margin-bottom:18px;}
+  .grid-2-even{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:18px;}
   .grid-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px;}
   .grid-form2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
   .grid-meas{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:10px;}
-  @media (max-width:760px){ .grid-2{grid-template-columns:1fr;} }
+  @media (max-width:760px){ .grid-2{grid-template-columns:1fr;} .grid-2-even{grid-template-columns:1fr;} }
 
   .chipbar{display:flex;flex-wrap:wrap;gap:6px;}
   .tape-track{position:relative;height:16px;border-radius:3px;
@@ -196,6 +198,7 @@ const ICONS = {
   eye:'<path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/>',
   mail:'<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/>',
   bell:'<path d="M6 8a6 6 0 0 1 12 0c0 4 1.5 5.5 2 6.5H4c.5-1 2-2.5 2-6.5z"/><path d="M9.5 17a2.5 2.5 0 0 0 5 0"/>',
+  fingerprint:'<path d="M12 2a8 8 0 0 1 8 8c0 2-.3 3.8-.9 5.5"/><path d="M6.1 5.8A8 8 0 0 0 4 10c0 4-1 7-2 8.5"/><path d="M12 6a6 6 0 0 1 6 6c0 3.5-.7 6-1.6 7.7"/><path d="M8 7.6A6 6 0 0 0 6 10c0 5-1.2 7.5-2 8.7"/><path d="M12 10a2 2 0 0 1 2 2c0 3.5-.7 6.2-2 8.3"/><path d="M10 10.3a2 2 0 0 0-1 1.7c0 3-.5 5.5-1.7 7.7"/>',
 };
 function icon(name,size){ size=size||16; return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="'+size+'" height="'+size+'" aria-hidden="true">'+(ICONS[name]||'')+'</svg>'; }
 
@@ -676,6 +679,52 @@ const persistCatalogue = () => persist("catalogue", state.catalogue);
 const persistBusiness = () => persist("business", state.business);
 const persistAccount = () => persist("account", state.account);
 
+/* ================= FINGERPRINT (WEBAUTHN) SIGN-IN ================= */
+let biometricAutoAttempted = false;
+function supportsWebAuthn(){ return !!(window.PublicKeyCredential && navigator.credentials && navigator.credentials.create); }
+function bufToB64(buf){ return btoa(String.fromCharCode.apply(null, new Uint8Array(buf))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,''); }
+function b64ToBuf(b64){ b64 = b64.replace(/-/g,'+').replace(/_/g,'/'); while(b64.length%4) b64+='='; const bin=atob(b64); const buf=new Uint8Array(bin.length); for(let i=0;i<bin.length;i++) buf[i]=bin.charCodeAt(i); return buf.buffer; }
+function getBiometricRecord(){ try{ const s = localStorage.getItem("biometricCred"); return s ? JSON.parse(s) : null; }catch(e){ return null; } }
+function hasBiometricForAccount(){ const rec = getBiometricRecord(); return !!(rec && state.account && rec.email===state.account.email); }
+async function registerBiometric(){
+  if(!supportsWebAuthn() || !state.account) return false;
+  try{
+    const challenge = crypto.getRandomValues(new Uint8Array(32));
+    const userId = crypto.getRandomValues(new Uint8Array(16));
+    const cred = await navigator.credentials.create({ publicKey: {
+      challenge, rp:{ name:"Tailor Studio" },
+      user:{ id:userId, name: state.account.email, displayName: state.account.name || state.account.email },
+      pubKeyCredParams:[{type:"public-key",alg:-7},{type:"public-key",alg:-257}],
+      authenticatorSelection:{ authenticatorAttachment:"platform", userVerification:"required" },
+      timeout: 60000,
+    }});
+    if(!cred) return false;
+    localStorage.setItem("biometricCred", JSON.stringify({ email: state.account.email, credId: bufToB64(cred.rawId) }));
+    return true;
+  }catch(e){ return false; }
+}
+async function tryBiometricSignIn(auto){
+  if(!supportsWebAuthn()) return false;
+  const rec = getBiometricRecord();
+  if(!rec || !state.account || rec.email !== state.account.email) return false;
+  try{
+    const challenge = crypto.getRandomValues(new Uint8Array(32));
+    const assertion = await navigator.credentials.get({ publicKey: {
+      challenge, allowCredentials:[{ id: b64ToBuf(rec.credId), type:"public-key" }],
+      userVerification:"required", timeout: 60000,
+    }});
+    if(assertion){
+      state.authed = true; state.viewOnly = false; state.authError = null;
+      render();
+      return true;
+    }
+  }catch(e){
+    if(!auto){ state.authError = "Fingerprint sign-in failed or was cancelled."; render(); }
+  }
+  return false;
+}
+
+
 /* ================= RENDER ROOT ================= */
 function render(){
   const app = document.getElementById("app");
@@ -684,7 +733,14 @@ function render(){
   if(state.showWelcome){ app.innerHTML = renderWelcomeView(); startWelcomeCarousel(); return; }
   clearWelcomeTimer();
 
-  if(!state.authed){ app.innerHTML = renderAuthView() + renderModal(); return; }
+  if(!state.authed){
+    app.innerHTML = renderAuthView() + renderModal();
+    if(!biometricAutoAttempted && (state.authMode||"signin")==="signin" && hasBiometricForAccount()){
+      biometricAutoAttempted = true;
+      setTimeout(() => tryBiometricSignIn(true), 350);
+    }
+    return;
+  }
 
   const contentScroll = document.getElementById("content") ? document.getElementById("content").scrollTop : 0;
 
@@ -768,7 +824,7 @@ function renderDashboard(){
       statCard("Active orders", activeOrders, "scissors", "var(--primary)", "rgba(30,58,58,0.08)")+
       statCard("Total clients", clients.length, "users", "#8A5F1F", "var(--gold-soft)")+
     '</div>'+
-    '<div class="grid-2">'+
+    '<div class="grid-2-even">'+
       '<div class="card"><div class="disp" style="font-weight:600;margin-bottom:10px;">Revenue, last 6 months</div>'+
         '<div style="position:relative;height:220px;"><canvas id="revChart" role="img" aria-label="Bar chart of revenue over the last six months"></canvas></div></div>'+
       '<div class="card"><div class="disp" style="font-weight:600;margin-bottom:10px;">Orders by status</div>'+
@@ -1682,6 +1738,9 @@ function renderAuthView(){
     '<div style="margin-bottom:10px;"><label>Email</label><input data-bind="authForm.email" value="'+esc(f.email||"")+'" placeholder="'+DEMO_EMAIL+'"></div>'+
     '<div style="margin-bottom:14px;"><label>Password</label><input type="password" data-bind="authForm.password" value="'+esc(f.password||"")+'" placeholder="Password"></div>'+
     '<button class="btn" style="width:100%;justify-content:center;" data-action="sign-in">'+icon("check",15)+' Sign in</button>'+
+    (supportsWebAuthn() && hasBiometricForAccount() ?
+      '<button type="button" class="btn ghost" style="width:100%;justify-content:center;margin-top:10px;" data-action="biometric-sign-in">'+icon("fingerprint",16)+' Use fingerprint</button>'
+      : '')+
     (!state.account ? (
       '<div style="margin-top:16px;padding:12px;background:var(--surface);border:1px dashed var(--line);border-radius:10px;font-size:11.5px;color:var(--ink-soft);text-align:center;">'+
         'Demo credentials (already filled in)<br>'+
@@ -2024,6 +2083,7 @@ document.addEventListener("click", (e) => {
       state.authMode = "signup"; state.authForm = null; state.authError = null;
       state.modal = null; state.selectedClientId = null; state.tab = "dashboard";
       state.showWelcome = true;
+      biometricAutoAttempted = false;
       collapseNav(navDepth);
       render();
       break;
@@ -2035,6 +2095,9 @@ document.addEventListener("click", (e) => {
       const acc = state.account;
       if(acc && email===acc.email && f.password===acc.password){
         state.authed = true; state.authError = null; state.viewOnly = false;
+        if(supportsWebAuthn() && !hasBiometricForAccount()){
+          setTimeout(() => { if(confirm("Enable fingerprint sign-in on this device for next time?")) registerBiometric(); }, 300);
+        }
       } else if(!acc && email===DEMO_EMAIL && f.password===DEMO_PASSWORD){
         state.authed = true; state.authError = null; state.viewOnly = true;
       } else {
@@ -2043,6 +2106,7 @@ document.addEventListener("click", (e) => {
       render();
       break;
     }
+    case "biometric-sign-in": tryBiometricSignIn(false); break;
     case "sign-up": {
       const f = state.authForm || {};
       const name = (f.name||"").trim();
@@ -2068,6 +2132,9 @@ document.addEventListener("click", (e) => {
         persistAccount();
         state.authed = true; state.authError = null; state.authMode = "signin"; state.viewOnly = false;
         state.authForm = null;
+        if(supportsWebAuthn()){
+          setTimeout(() => { if(confirm("Enable fingerprint sign-in on this device for next time?")) registerBiometric(); }, 300);
+        }
       }
       render();
       break;
@@ -2086,6 +2153,7 @@ document.addEventListener("click", (e) => {
       state.authError = null;
       state.modal = null; state.selectedClientId = null; state.tab = "dashboard";
       state.showWelcome = true;
+      biometricAutoAttempted = false;
       collapseNav(navDepth);
       render();
       break;
@@ -2141,65 +2209,92 @@ function exportBackup(){
 }
 
 function downloadUserGuide(){
-  const html =
-'<!DOCTYPE html><html><head><meta charset="UTF-8">'+
-'<title>Tailor Studio — User Guide</title>'+
-'<style>'+
-'body{font-family:Georgia,serif;max-width:680px;margin:40px auto;padding:0 20px;color:#26221B;line-height:1.6;}'+
-'h1{font-size:26px;margin-bottom:4px;}'+
-'.sub{color:#645E50;font-size:13px;margin-bottom:30px;}'+
-'h2{font-size:18px;margin-top:32px;border-bottom:2px solid #B8842E;padding-bottom:6px;}'+
-'ul{padding-left:20px;} li{margin-bottom:6px;}'+
-'.tip{background:#F0DAD1;padding:10px 14px;border-radius:8px;font-size:13.5px;margin-top:10px;}'+
-'</style></head><body>'+
-'<h1>Tailor Studio — User Guide</h1>'+
-'<div class="sub">A quick guide to getting the most out of the app.</div>'+
+  if(!window.jspdf || !window.jspdf.jsPDF){
+    alert("Couldn't load the PDF generator — check your internet connection and try again.");
+    return;
+  }
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit:"pt", format:"a4" });
+  const pageW = doc.internal.pageSize.getWidth();
+  const pageH = doc.internal.pageSize.getHeight();
+  const marginX = 48, maxW = pageW - marginX*2;
+  let y = 56;
 
-'<h2>1. Getting started</h2>'+
-'<ul>'+
-'<li>The app opens on a <b>demo account</b> so you can look around with sample clients, orders and catalogue items already filled in.</li>'+
-'<li>The demo is <b>view-only</b> — nothing you tap can be saved while browsing it.</li>'+
-'<li>Tap <b>Sign up</b> on the sign-in screen to create your own account. You will need the access key from whoever set up your app to do this.</li>'+
-'<li>Creating an account permanently clears the demo data on this device and unlocks full editing.</li>'+
-'</ul>'+
+  const goldRGB = [184,132,46], inkRGB = [38,34,27], softRGB = [100,94,80];
 
-'<h2>2. Clients</h2>'+
-'<ul>'+
-'<li>Add a client from the Clients tab, save their contact details, address and body measurements.</li>'+
-'<li>Attach reference photos to a client\u2019s profile so you can see their preferred styles at a glance.</li>'+
-'<li>Open a client to see their full order history in one place.</li>'+
-'</ul>'+
+  function ensureSpace(need){
+    if(y + need > pageH - 44){ doc.addPage(); y = 56; }
+  }
+  function heading(text){
+    ensureSpace(34);
+    doc.setFont("times","bold"); doc.setFontSize(14); doc.setTextColor(...inkRGB);
+    doc.text(text, marginX, y);
+    y += 6;
+    doc.setDrawColor(...goldRGB); doc.setLineWidth(1.4);
+    doc.line(marginX, y, marginX+maxW, y);
+    y += 18;
+  }
+  function bullet(text){
+    doc.setFont("times","normal"); doc.setFontSize(11); doc.setTextColor(...inkRGB);
+    const lines = doc.splitTextToSize(text, maxW - 16);
+    ensureSpace(lines.length*15 + 6);
+    doc.text("\u2022", marginX, y);
+    doc.text(lines, marginX+14, y);
+    y += lines.length*15 + 6;
+  }
+  function paragraph(text){
+    doc.setFont("times","normal"); doc.setFontSize(11); doc.setTextColor(...inkRGB);
+    const lines = doc.splitTextToSize(text, maxW);
+    ensureSpace(lines.length*15 + 8);
+    doc.text(lines, marginX, y);
+    y += lines.length*15 + 8;
+  }
+  function tip(text){
+    doc.setFont("times","italic"); doc.setFontSize(10.5); doc.setTextColor(...softRGB);
+    const lines = doc.splitTextToSize("Tip: "+text, maxW - 20);
+    ensureSpace(lines.length*14 + 16);
+    doc.setFillColor(240,218,209);
+    doc.roundedRect(marginX, y-12, maxW, lines.length*14 + 14, 4, 4, "F");
+    doc.text(lines, marginX+10, y);
+    y += lines.length*14 + 22;
+  }
 
-'<h2>3. Orders</h2>'+
-'<ul>'+
-'<li>Create a new order from the Orders tab or directly from a client\u2019s profile.</li>'+
-'<li>Add line items with prices, record part-payments as they come in, and set a due date.</li>'+
-'<li>Update the order status (Pending, Cutting, Sewing, Fitting, Ready, Delivered) as work progresses.</li>'+
-'<li>Generate a receipt or invoice image straight from an order to share with your client.</li>'+
-'</ul>'+
+  doc.setFont("times","bold"); doc.setFontSize(24); doc.setTextColor(...inkRGB);
+  doc.text("Tailor Studio", marginX, y); y += 22;
+  doc.setFont("times","normal"); doc.setFontSize(12); doc.setTextColor(...softRGB);
+  doc.text("User Guide — a quick guide to getting the most out of the app.", marginX, y);
+  y += 30;
 
-'<h2>4. Catalogue</h2>'+
-'<ul>'+
-'<li>Organise your styles into categories and add items with photos and prices.</li>'+
-'<li>Share individual items on WhatsApp, or share your full price list as an image.</li>'+
-'</ul>'+
+  heading("1. Getting started");
+  bullet("The app opens on a demo account so you can look around with sample clients, orders and catalogue items already filled in.");
+  bullet("The demo is view-only — nothing you tap can be saved while browsing it.");
+  bullet("Tap Sign up on the sign-in screen to create your own account. You will need the access key from whoever set up your app to do this.");
+  bullet("Creating an account permanently clears the demo data on this device and unlocks full editing.");
 
-'<h2>5. Settings &amp; backup</h2>'+
-'<ul>'+
-'<li>Update your business name, logo, contact details and bank accounts from the Account tab.</li>'+
-'<li>Your data is stored only on this device — export a backup regularly, and use it to move your data to a new device.</li>'+
-'</ul>'+
-'<div class="tip">Tip: export a backup before switching phones or reinstalling the app, then import it on the new device.</div>'+
+  heading("2. Clients");
+  bullet("Add a client from the Clients tab, and save their contact details, address and body measurements.");
+  bullet("Attach reference photos to a client's profile so you can see their preferred styles at a glance.");
+  bullet("Open a client to see their full order history in one place.");
 
-'<h2>Need help?</h2>'+
-'<p>Reach the developer directly from the Account tab, or from the "Contact developer" link on the sign-up screen — WhatsApp, call, or email are all available.</p>'+
-'</body></html>';
-  const blob = new Blob([html], {type:"text/html"});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url; a.download = "tailor-studio-user-guide.html";
-  document.body.appendChild(a); a.click(); a.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 2000);
+  heading("3. Orders");
+  bullet("Create a new order from the Orders tab or directly from a client's profile.");
+  bullet("Add line items with prices, record part-payments as they come in, and set a due date.");
+  bullet("Update the order status (Pending, Cutting, Sewing, Fitting, Ready, Delivered) as work progresses.");
+  bullet("Generate a receipt or invoice image straight from an order to share with your client.");
+
+  heading("4. Catalogue");
+  bullet("Organise your styles into categories and add items with photos and prices.");
+  bullet("Share individual items on WhatsApp, or share your full price list as an image.");
+
+  heading("5. Settings & backup");
+  bullet("Update your business name, logo, contact details and bank accounts from the Account tab.");
+  bullet("Your data is stored only on this device — export a backup regularly, and use it to move your data to a new device.");
+  tip("export a backup before switching phones or reinstalling the app, then import it on the new device.");
+
+  heading("Need help?");
+  paragraph("Reach the developer directly from the Account tab, or from the \"Contact developer\" link on the sign-up screen — WhatsApp, call, or email are all available.");
+
+  doc.save("tailor-studio-user-guide.pdf");
 }
 
 function importBackup(file){
