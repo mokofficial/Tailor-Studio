@@ -2268,19 +2268,101 @@ function downloadUserGuide(){
   const marginX = 48, maxW = pageW - marginX*2;
   let y = 56;
 
-  const goldRGB = [184,132,46], inkRGB = [38,34,27], softRGB = [100,94,80];
+  const goldRGB = [184,132,46], inkRGB = [38,34,27], softRGB = [100,94,80], primaryRGB = [30,58,58];
 
   function ensureSpace(need){
     if(y + need > pageH - 44){ doc.addPage(); y = 56; }
   }
-  function heading(text){
-    ensureSpace(34);
-    doc.setFont("times","bold"); doc.setFontSize(14); doc.setTextColor(...inkRGB);
-    doc.text(text, marginX, y);
-    y += 6;
-    doc.setDrawColor(...goldRGB); doc.setLineWidth(1.4);
-    doc.line(marginX, y, marginX+maxW, y);
-    y += 18;
+
+  function drawIcon(kind, cx, cy, r, badgeRGB){
+    doc.setFillColor(255,255,255);
+    doc.setDrawColor(255,255,255);
+    switch(kind){
+      case "start":
+        doc.triangle(cx-r*0.35, cy-r*0.5, cx-r*0.35, cy+r*0.5, cx+r*0.55, cy, "F");
+        break;
+      case "dashboard": {
+        const s=r*0.5, g=r*0.16;
+        doc.rect(cx-s-g/2, cy-s-g/2, s, s, "F");
+        doc.rect(cx+g/2, cy-s-g/2, s, s, "F");
+        doc.rect(cx-s-g/2, cy+g/2, s, s, "F");
+        doc.rect(cx+g/2, cy+g/2, s, s, "F");
+        break;
+      }
+      case "clients":
+        doc.circle(cx, cy-r*0.32, r*0.3, "F");
+        doc.triangle(cx-r*0.55, cy+r*0.55, cx+r*0.55, cy+r*0.55, cx, cy-r*0.02, "F");
+        break;
+      case "orders":
+        doc.setLineWidth(1.6); doc.setDrawColor(255,255,255);
+        doc.line(cx-r*0.5, cy-r*0.5, cx+r*0.5, cy+r*0.5);
+        doc.line(cx-r*0.5, cy+r*0.5, cx+r*0.5, cy-r*0.5);
+        doc.circle(cx-r*0.5, cy-r*0.5, r*0.14, "F");
+        doc.circle(cx-r*0.5, cy+r*0.5, r*0.14, "F");
+        break;
+      case "invoice":
+        doc.rect(cx-r*0.42, cy-r*0.55, r*0.84, r*1.1, "F");
+        doc.setFillColor(badgeRGB[0],badgeRGB[1],badgeRGB[2]);
+        doc.rect(cx-r*0.28, cy-r*0.3, r*0.56, r*0.06, "F");
+        doc.rect(cx-r*0.28, cy-r*0.08, r*0.56, r*0.06, "F");
+        doc.rect(cx-r*0.28, cy+r*0.14, r*0.36, r*0.06, "F");
+        break;
+      case "catalogue": {
+        const s=r*0.42, g=r*0.14;
+        doc.rect(cx-s-g/2, cy-s*0.5, s, s, "F");
+        doc.rect(cx+g/2, cy-s*0.5, s, s, "F");
+        break;
+      }
+      case "settings":
+        doc.circle(cx, cy, r*0.24, "F");
+        for(let i=0;i<6;i++){
+          const ang = i*Math.PI/3;
+          doc.circle(cx+Math.cos(ang)*r*0.5, cy+Math.sin(ang)*r*0.5, r*0.09, "F");
+        }
+        break;
+      case "backup":
+        doc.setLineWidth(1.8); doc.setDrawColor(255,255,255);
+        doc.line(cx, cy-r*0.5, cx, cy+r*0.1);
+        doc.triangle(cx-r*0.28, cy-r*0.05, cx+r*0.28, cy-r*0.05, cx, cy+r*0.28, "F");
+        doc.line(cx-r*0.5, cy+r*0.5, cx+r*0.5, cy+r*0.5);
+        break;
+      case "security":
+        doc.setDrawColor(255,255,255); doc.setLineWidth(1.4);
+        doc.circle(cx, cy, r*0.55, "S");
+        doc.circle(cx, cy, r*0.35, "S");
+        doc.circle(cx, cy, r*0.15, "F");
+        break;
+      case "demo":
+        doc.ellipse(cx, cy, r*0.55, r*0.32, "F");
+        doc.setFillColor(badgeRGB[0],badgeRGB[1],badgeRGB[2]);
+        doc.circle(cx, cy, r*0.16, "F");
+        break;
+      case "support":
+        doc.setFont("helvetica","bold"); doc.setFontSize(r*1.15);
+        doc.text("?", cx, cy+r*0.35, {align:"center"});
+        break;
+      case "faq":
+        doc.roundedRect(cx-r*0.55, cy-r*0.42, r*1.1, r*0.72, r*0.14, r*0.14, "F");
+        doc.setFillColor(255,255,255);
+        doc.triangle(cx-r*0.2, cy+r*0.28, cx+r*0.05, cy+r*0.28, cx-r*0.1, cy+r*0.55, "F");
+        break;
+      default: break;
+    }
+  }
+
+  function heading(text, kind){
+    ensureSpace(42);
+    const badgeR = 13;
+    const badgeCX = marginX + badgeR, badgeCY = y - 5;
+    doc.setFillColor(...goldRGB);
+    doc.circle(badgeCX, badgeCY, badgeR, "F");
+    if(kind) drawIcon(kind, badgeCX, badgeCY, badgeR*0.85, goldRGB);
+    doc.setFont("times","bold"); doc.setFontSize(14.5); doc.setTextColor(...inkRGB);
+    doc.text(text, marginX + badgeR*2 + 12, y);
+    y += 10;
+    doc.setDrawColor(...goldRGB); doc.setLineWidth(1.2);
+    doc.line(marginX, y+6, marginX+maxW, y+6);
+    y += 24;
   }
   function bullet(text){
     doc.setFont("times","normal"); doc.setFontSize(11); doc.setTextColor(...inkRGB);
@@ -2300,47 +2382,129 @@ function downloadUserGuide(){
   function tip(text){
     doc.setFont("times","italic"); doc.setFontSize(10.5); doc.setTextColor(...softRGB);
     const lines = doc.splitTextToSize("Tip: "+text, maxW - 20);
-    ensureSpace(lines.length*14 + 16);
+    ensureSpace(lines.length*14 + 18);
     doc.setFillColor(240,218,209);
     doc.roundedRect(marginX, y-12, maxW, lines.length*14 + 14, 4, 4, "F");
     doc.text(lines, marginX+10, y);
-    y += lines.length*14 + 22;
+    y += lines.length*14 + 24;
+  }
+  function faqItem(q, a){
+    doc.setFont("times","bold"); doc.setFontSize(11); doc.setTextColor(...primaryRGB);
+    const qLines = doc.splitTextToSize("Q: "+q, maxW);
+    ensureSpace(qLines.length*15 + 4);
+    doc.text(qLines, marginX, y);
+    y += qLines.length*15 + 2;
+    doc.setFont("times","normal"); doc.setFontSize(11); doc.setTextColor(...inkRGB);
+    const aLines = doc.splitTextToSize("A: "+a, maxW);
+    ensureSpace(aLines.length*15 + 12);
+    doc.text(aLines, marginX, y);
+    y += aLines.length*15 + 14;
+  }
+  function contactRow(label, value){
+    ensureSpace(18);
+    doc.setFont("times","bold"); doc.setFontSize(11); doc.setTextColor(...inkRGB);
+    doc.text(label+":", marginX, y);
+    doc.setFont("times","normal"); doc.setTextColor(...softRGB);
+    doc.text(value, marginX + 110, y);
+    y += 18;
   }
 
-  doc.setFont("times","bold"); doc.setFontSize(24); doc.setTextColor(...inkRGB);
-  doc.text("Tailor Studio", marginX, y); y += 22;
-  doc.setFont("times","normal"); doc.setFontSize(12); doc.setTextColor(...softRGB);
-  doc.text("User Guide — a quick guide to getting the most out of the app.", marginX, y);
-  y += 30;
+  // ---- Cover ----
+  doc.setFillColor(...primaryRGB);
+  doc.rect(0,0,pageW,150,"F");
+  doc.setFillColor(...goldRGB);
+  doc.rect(0,150,pageW,4,"F");
+  doc.setFont("times","bold"); doc.setFontSize(30); doc.setTextColor(255,255,255);
+  doc.text(state.business.name || "Tailor Studio", marginX, 90);
+  doc.setFont("times","normal"); doc.setFontSize(13); doc.setTextColor(231,226,211);
+  doc.text("Complete User Guide", marginX, 118);
+  y = 190;
+  doc.setFont("times","italic"); doc.setFontSize(11.5); doc.setTextColor(...softRGB);
+  doc.text("Everything you need to run your tailoring business from your phone.", marginX, y);
+  y += 34;
 
-  heading("1. Getting started");
+  doc.setFont("times","bold"); doc.setFontSize(12); doc.setTextColor(...inkRGB);
+  doc.text("Contents", marginX, y); y += 18;
+  const toc = [
+    "1. Getting started", "2. Dashboard", "3. Clients", "4. Orders",
+    "5. Receipts & invoices", "6. Catalogue", "7. Account & business settings",
+    "8. Backup & restore your data", "9. Fingerprint sign-in", "10. Demo mode",
+    "11. Support & contact the developer", "12. Frequently asked questions",
+  ];
+  doc.setFont("times","normal"); doc.setFontSize(11); doc.setTextColor(...softRGB);
+  toc.forEach(t => { doc.text(t, marginX+8, y); y += 16; });
+  doc.addPage(); y = 56;
+
+  heading("1. Getting started", "start");
   bullet("The app opens on a demo account so you can look around with sample clients, orders and catalogue items already filled in.");
   bullet("The demo is view-only — nothing you tap can be saved while browsing it.");
-  bullet("Tap Sign up on the sign-in screen to create your own account. You will need the access key from whoever set up your app to do this.");
+  bullet("Tap Sign up on the sign-in screen to create your own account. You will need the access key from whoever set up your app.");
   bullet("Creating an account permanently clears the demo data on this device and unlocks full editing.");
+  tip("if you're just exploring, stay in the demo as long as you like before creating a real account.");
 
-  heading("2. Clients");
-  bullet("Add a client from the Clients tab, and save their contact details, address and body measurements.");
-  bullet("Attach reference photos to a client's profile so you can see their preferred styles at a glance.");
+  heading("2. Dashboard", "dashboard");
+  bullet("See total revenue, outstanding balance, active orders and total clients at a glance in the KPI cards.");
+  bullet("The revenue chart shows the last 6 months, and the status chart breaks down your orders by stage.");
+  bullet("Due soon & overdue lists any order with a balance due within 5 days, so nothing slips through.");
+  bullet("Top clients ranks who has spent the most with you.");
+
+  heading("3. Clients", "clients");
+  bullet("Add a client with their name, phone, address, gender and notes.");
+  bullet("Record body measurements once and reuse them for every future order.");
+  bullet("Attach reference photos to a client's profile so you remember their preferred styles.");
   bullet("Open a client to see their full order history in one place.");
 
-  heading("3. Orders");
+  heading("4. Orders", "orders");
   bullet("Create a new order from the Orders tab or directly from a client's profile.");
   bullet("Add line items with prices, record part-payments as they come in, and set a due date.");
-  bullet("Update the order status (Pending, Cutting, Sewing, Fitting, Ready, Delivered) as work progresses.");
-  bullet("Generate a receipt or invoice image straight from an order to share with your client.");
+  bullet("Update the status — Pending, Cutting, Sewing, Fitting, Ready, Delivered — as work progresses.");
+  bullet("Filter the orders list by status to quickly find what needs attention.");
 
-  heading("4. Catalogue");
-  bullet("Organise your styles into categories and add items with photos and prices.");
-  bullet("Share individual items on WhatsApp, or share your full price list as an image.");
+  heading("5. Receipts & invoices", "invoice");
+  bullet("Generate a receipt or invoice image straight from any order.");
+  bullet("Your logo, business name, address and RC number appear automatically at the top.");
+  bullet("Share the image directly on WhatsApp or download it to send however you like.");
 
-  heading("5. Settings & backup");
-  bullet("Update your business name, logo, contact details and bank accounts from the Account tab.");
-  bullet("Your data is stored only on this device — export a backup regularly, and use it to move your data to a new device.");
-  tip("export a backup before switching phones or reinstalling the app, then import it on the new device.");
+  heading("6. Catalogue", "catalogue");
+  bullet("Organise your styles into categories, each with its own photo gallery.");
+  bullet("Add items with photos, prices and a short description.");
+  bullet("Share an individual item on WhatsApp, or share your entire price list as one image.");
 
-  heading("Need help?");
-  paragraph("Reach the developer directly from the Account tab, or from the \"Contact developer\" link on the sign-up screen — WhatsApp, call, or email are all available.");
+  heading("7. Account & business settings", "settings");
+  bullet("Update your business name, logo, phone, address, RC number and currency.");
+  bullet("Add one or more bank accounts so clients know where to pay.");
+  bullet("Choose a colour theme for the whole app.");
+
+  heading("8. Backup & restore your data", "backup");
+  bullet("Your data is stored only on this device.");
+  bullet("Export a backup file regularly, and use it to move your data to a new device or restore after reinstalling.");
+  tip("export a backup before switching phones — it only takes a second and could save all your records.");
+
+  heading("9. Fingerprint sign-in", "security");
+  bullet("After signing in with your password, you'll be asked if you want to enable fingerprint sign-in on that device.");
+  bullet("Once enabled, the fingerprint prompt opens automatically the next time you open the sign-in screen.");
+  bullet("Requires a device with Touch ID, Face ID, Windows Hello or a fingerprint sensor.");
+
+  heading("10. Demo mode", "demo");
+  bullet("The demo account is view-only and safe to explore freely.");
+  bullet("Once you've created a real account, you can still tap View demo account on the sign-in screen to look at the sample data again — your own data is never affected.");
+
+  heading("11. Support & contact the developer", "support");
+  paragraph("Need help, spotted a bug, or want a feature added? Reach out any time.");
+  contactRow("Developer", DEV_NAME);
+  contactRow("Studio", DEV_STUDIO);
+  contactRow("Email", DEV_EMAIL);
+  contactRow("Phone / WhatsApp", DEV_PHONE);
+  y += 4;
+  paragraph("You can also tap \"Contact developer\" on the sign-up screen at any time to reach out directly from the app.");
+
+  heading("12. Frequently asked questions", "faq");
+  faqItem("I forgot my password — what do I do?", "Contact the developer using the details above to help you regain access.");
+  faqItem("Can I use the app on more than one device?", "Data is stored per device. Export a backup on one device and import it on the other to move your data across.");
+  faqItem("What is the access key for signing up?", "It's provided by whoever set up your copy of the app. Contact the developer if you don't have it.");
+  faqItem("Will creating an account delete anything important?", "It clears the sample demo data only. If you already have real data saved, that stays intact.");
+  faqItem("Is my data sent to a server?", "No — everything is stored locally on your device. Back up regularly to avoid losing it.");
+  faqItem("Fingerprint sign-in isn't showing up — why?", "It only appears on devices with a supported biometric sensor, and after you've enabled it once from a password sign-in.");
 
   doc.save("tailor-studio-user-guide.pdf");
 }
