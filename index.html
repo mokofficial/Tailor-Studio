@@ -224,6 +224,20 @@ function applyTheme(key){
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2,7);
 const DEMO_EMAIL = "demo@tailorstudio.com";
 const DEMO_PASSWORD = "demo1234";
+// Access key required to create a real (non-demo) account. Change this string
+// to whatever key you want people to need when they tap "Sign up".
+const SIGNUP_KEY = "12345678";
+// Actions that create, edit, delete, or save data — blocked while
+// signed in with the demo account (state.viewOnly === true).
+const MUTATING_ACTIONS = new Set([
+  "delete-client","open-client-modal-new","open-client-modal","pick-contact-phone","save-client",
+  "open-order-modal-new","open-order-modal-new-for-client","open-order-modal",
+  "add-order-item","remove-order-item","add-payment","remove-payment","save-order","delete-order",
+  "add-category","delete-category","open-catitem-modal-new","open-catitem-modal",
+  "add-catitem-to-new-order","pick-catalog-item","save-catitem","delete-catitem",
+  "remove-gallery-image","remove-image","select-theme","add-bank-account","remove-bank-account",
+]);
+const MUTATING_CHANGE_ACTIONS = new Set(["upload-logo","upload-images","upload-gallery-images","import-data-file"]);
 const DEV_NAME = "Morris Okereke";
 const DEV_STUDIO = "VersaX CS";
 const DEV_EMAIL = "info.versax@gmail.com";
@@ -232,6 +246,7 @@ const SUPPORT_BANK = "Providus Bank";
 const SUPPORT_ACCOUNT_NAME = "VersaX CS Global Services";
 const SUPPORT_ACCOUNT_NO = "9642608094";
 const todayISO = () => new Date().toISOString().slice(0,10);
+const addDaysISO = (n) => { const d=new Date(); d.setDate(d.getDate()+n); return d.toISOString().slice(0,10); };
 const fmtDate = (iso) => { if(!iso) return "—"; const d=new Date(iso+"T00:00:00"); return d.toLocaleDateString(undefined,{day:"numeric",month:"short",year:"numeric"}); };
 const daysUntil = (iso) => { if(!iso) return null; const d=new Date(iso+"T00:00:00"); const t=new Date(); t.setHours(0,0,0,0); return Math.round((d-t)/86400000); };
 const money = (n,cur) => (cur||"")+Number(n||0).toLocaleString(undefined,{maximumFractionDigits:0});
@@ -355,6 +370,9 @@ const state = {
   authed: false,
   authForm: null,
   authError: null,
+  authMode: "signin",
+  account: null, // {name, email, password} set after sign-up, persisted locally
+  viewOnly: false, // true while signed in with the demo account
   orderFilterStatus: "All",
   modal: null,     // {type:'client'|'order'|'catitem', draft:{...}, isNew:bool}
   showWelcome: true,
@@ -401,6 +419,19 @@ function showExitToast(){
   t.style.opacity = "1";
   clearTimeout(t._hideTimer);
   t._hideTimer = setTimeout(() => { t.style.opacity = "0"; }, 1600);
+}
+function showViewOnlyToast(){
+  let t = document.getElementById("viewOnlyToast");
+  if(!t){
+    t = document.createElement("div");
+    t.id = "viewOnlyToast";
+    t.style.cssText = "position:fixed;left:50%;bottom:28px;transform:translateX(-50%);background:rgba(20,20,20,.92);color:#fff;padding:10px 18px;border-radius:999px;font-size:13px;z-index:9999;pointer-events:none;transition:opacity .25s;opacity:0;text-align:center;max-width:88vw;box-shadow:0 6px 20px rgba(0,0,0,.25);";
+    document.body.appendChild(t);
+  }
+  t.textContent = "Demo mode is view-only — sign up to save your own data";
+  t.style.opacity = "1";
+  clearTimeout(t._hideTimer);
+  t._hideTimer = setTimeout(() => { t.style.opacity = "0"; }, 2200);
 }
 let lbScale = 1, lbPanX = 0, lbPanY = 0;
 function lbApplyTransform(){
@@ -546,6 +577,52 @@ window.addEventListener("popstate", function(){
 });
 history.pushState({guard:true}, "", location.href);
 
+/* ================= DEMO / VIEW-ONLY SEED DATA =================
+   Shown only the first time the app is opened, before a real account
+   exists — gives the demo login something realistic to look at.
+   Signing up with the SIGNUP_KEY wipes all of this permanently. */
+function seedDemoData(){
+  state.business = Object.assign({}, state.business, {
+    name: "Adaeze Couture", phone: "0803 555 0142", address: "12 Allen Avenue, Ikeja, Lagos",
+    currency: "₦", regNumber: "1234567", bankAccounts: [
+      { id:"demo-bank-1", bankName:"GTBank", accountName:"Adaeze Couture", accountNumber:"0123456789" }
+    ], logo: null,
+  });
+  state.clients = [
+    { id:"demo-client-1", name:"Ngozi Umeh", phone:"0802 345 6789", gender:"Female", address:"Lekki Phase 1, Lagos",
+      notes:"Prefers fitted silhouettes.", measurements:{chest:"38",waist:"30",hip:"40",shoulder:"15",sleeveLength:"22"},
+      styleImages:[], createdAt: addDaysISO(-40) },
+    { id:"demo-client-2", name:"Emeka Obi", phone:"0805 987 6543", gender:"Male", address:"Surulere, Lagos",
+      notes:"Regular for native wear.", measurements:{chest:"42",waist:"36",shoulder:"18",sleeveLength:"25",topLength:"29"},
+      styleImages:[], createdAt: addDaysISO(-25) },
+    { id:"demo-client-3", name:"Funmi Adeyemi", phone:"0701 222 3344", gender:"Female", address:"Ikoyi, Lagos",
+      notes:"", measurements:{chest:"36",waist:"28",hip:"38"}, styleImages:[], createdAt: addDaysISO(-10) },
+  ];
+  state.orders = [
+    { id:"demo-order-1", clientId:"demo-client-1", title:"Wedding gown", items:[{desc:"Fabric & lace",price:85000},{desc:"Tailoring",price:45000}],
+      styleImages:[], payments:[{id:"demo-pay-1",amount:80000,date:addDaysISO(-30),method:"Transfer"}],
+      dueDate: addDaysISO(3), status:"Fitting", notes:"", createdAt: addDaysISO(-32) },
+    { id:"demo-order-2", clientId:"demo-client-2", title:"Native wear (agbada)", items:[{desc:"Fabric",price:40000},{desc:"Tailoring",price:25000}],
+      styleImages:[], payments:[{id:"demo-pay-2",amount:65000,date:addDaysISO(-20),method:"Cash"}],
+      dueDate: addDaysISO(-2), status:"Ready", notes:"", createdAt: addDaysISO(-22) },
+    { id:"demo-order-3", clientId:"demo-client-3", title:"Office blazer", items:[{desc:"Fabric",price:22000},{desc:"Tailoring",price:18000}],
+      styleImages:[], payments:[{id:"demo-pay-3",amount:15000,date:addDaysISO(-5),method:"Transfer"}],
+      dueDate: addDaysISO(6), status:"Sewing", notes:"", createdAt: addDaysISO(-8) },
+  ];
+  state.catalogue = {
+    categories: [
+      { id:"demo-cat-1", name:"Native wear", gallery:[] },
+      { id:"demo-cat-2", name:"Suits", gallery:[] },
+      { id:"demo-cat-3", name:"Casual", gallery:[] },
+    ],
+    items: [
+      { id:"demo-item-1", name:"Senator wear", categoryId:"demo-cat-1", price:35000, description:"Classic senator style, made to measure.", images:[] },
+      { id:"demo-item-2", name:"Two-piece suit", categoryId:"demo-cat-2", price:95000, description:"Slim-fit two-piece suit.", images:[] },
+    ],
+  };
+  persistBusiness(); persistClients(); persistOrders(); persistCatalogue();
+}
+
 async function loadAll(){
   try{
     const c = localStorage.getItem("clients");
@@ -553,14 +630,24 @@ async function loadAll(){
     const cat = localStorage.getItem("catalogue");
     const b = localStorage.getItem("business");
     const th = localStorage.getItem("theme");
+    const acc = localStorage.getItem("account");
+    if(acc) state.account = JSON.parse(acc);
+    if(th) applyTheme(JSON.parse(th));
+    if(!state.account && !c && !o && !cat && !b){
+      // First-ever run, no real account created yet: seed sample data
+      // so the view-only demo login has something to show.
+      seedDemoData();
+    } else {
+      if(c) state.clients = JSON.parse(c);
+      if(o) state.orders = JSON.parse(o);
+      if(cat) state.catalogue = JSON.parse(cat);
+      if(b) state.business = Object.assign({}, state.business, JSON.parse(b));
+    }
     // Auth state is intentionally NOT loaded from storage: every fresh
     // load (refresh or reopening the app) should require signing in again.
-    if(c) state.clients = JSON.parse(c);
-    if(o) state.orders = JSON.parse(o);
-    if(cat) state.catalogue = JSON.parse(cat);
-    if(b) state.business = Object.assign({}, state.business, JSON.parse(b));
-    if(th) applyTheme(JSON.parse(th));
     state.authed = false;
+    state.authMode = "signin";
+    state.viewOnly = false;
   }catch(e){ /* first run */ }
   if(!state.business.bankAccounts) state.business.bankAccounts = [];
   if(state.business.bankAccounts.length===0 && (state.business.bankName || state.business.bankAccountNumber)){
@@ -587,6 +674,7 @@ const persistClients = () => persist("clients", state.clients);
 const persistOrders = () => persist("orders", state.orders);
 const persistCatalogue = () => persist("catalogue", state.catalogue);
 const persistBusiness = () => persist("business", state.business);
+const persistAccount = () => persist("account", state.account);
 
 /* ================= RENDER ROOT ================= */
 function render(){
@@ -596,7 +684,7 @@ function render(){
   if(state.showWelcome){ app.innerHTML = renderWelcomeView(); startWelcomeCarousel(); return; }
   clearWelcomeTimer();
 
-  if(!state.authed){ app.innerHTML = renderAuthView(); return; }
+  if(!state.authed){ app.innerHTML = renderAuthView() + renderModal(); return; }
 
   const contentScroll = document.getElementById("content") ? document.getElementById("content").scrollTop : 0;
 
@@ -626,6 +714,12 @@ function render(){
           '<button class="btn gold sm" data-action="open-order-modal-new"><span>'+icon("plus",14)+'</span> New order</button>'+
         '</div>'+
       '</div>'+
+      (state.viewOnly ? (
+        '<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:8px 20px;background:var(--gold-soft);color:#8A5F1F;font-size:12px;flex-shrink:0;">'+
+          '<span style="display:flex;align-items:center;gap:6px;">'+icon("eye",13)+' Demo mode — viewing sample data only</span>'+
+          '<span data-action="toggle-auth-mode-from-app" style="font-weight:600;text-decoration:underline;cursor:pointer;white-space:nowrap;">Sign up to save your own</span>'+
+        '</div>'
+      ) : '')+
       '<div class="content" id="content">'+ renderTabContent() +'</div>'+
       '<div class="bottomnav">'+
         NAV.map(n => '<div class="navtab '+(state.tab===n.key?'active':'')+'" data-action="set-tab" data-tab="'+n.key+'">'+icon(n.icon,21)+'<span class="navlabel">'+n.label+'</span></div>').join("")+
@@ -733,14 +827,15 @@ function buildInvoiceCardHtml(order, client, business, kind){
       '<div><div style="font-size:18px;font-weight:700;color:'+ink+';">'+esc(business.name||"")+'</div>'+
       (business.address?'<div style="font-size:11.5px;color:'+inkSoft+';">'+esc(business.address)+'</div>':'')+
       (business.phone?'<div style="font-size:11.5px;color:'+inkSoft+';">'+esc(business.phone)+'</div>':'')+
-      (business.regNumber?'<div style="font-size:11.5px;color:'+inkSoft+';">RC: '+esc(business.regNumber)+'</div>':'')+
       '</div></div>'+
     '<div style="height:3px;background:'+gold+';border-radius:2px;margin-bottom:16px;"></div>'+
     '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;">'+
       '<div><div style="font-size:20px;font-weight:700;letter-spacing:.06em;color:'+primary+';">'+(kind==="receipt"?"RECEIPT":"INVOICE")+'</div>'+
       '<div style="font-size:12px;color:'+inkSoft+';margin-top:2px;">'+fmtDate(todayISO())+'</div></div>'+
       '<div style="text-align:right;"><div style="font-size:11px;color:'+inkSoft+';">Billed to</div>'+
-      '<div style="font-size:14px;font-weight:600;color:'+ink+';">'+esc(client?client.name:"—")+'</div></div>'+
+      '<div style="font-size:14px;font-weight:600;color:'+ink+';">'+esc(client?client.name:"—")+'</div>'+
+      (business.regNumber?'<div style="font-size:11px;color:'+inkSoft+';margin-top:2px;">RC: '+esc(business.regNumber)+'</div>':'')+
+      '</div>'+
     '</div>'+
     '<div style="font-size:12.5px;color:'+inkSoft+';margin-bottom:10px;">'+esc(order.title||"Untitled order")+'</div>'+
     '<table style="width:100%;border-collapse:collapse;margin-bottom:14px;">'+rows+'</table>'+
@@ -934,10 +1029,16 @@ function renderClientDetail(){
     '<button class="btn ghost sm" data-action="back-to-clients" style="margin-bottom:14px;">'+icon("back",14)+' Back to clients</button>'+
     '<div class="card" style="margin-bottom:16px;">'+
       '<div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px;">'+
-        '<div><div class="disp" style="font-size:21px;font-weight:600;">'+esc(client.name)+'</div>'+
-          '<div style="font-size:13px;color:var(--ink-soft);margin-top:4px;display:flex;gap:14px;flex-wrap:wrap;">'+
-            '<span style="display:flex;align-items:center;gap:4px;">'+icon("phone",12)+' '+esc(client.phone||"—")+'</span>'+
-            '<span style="display:flex;align-items:center;gap:4px;">'+icon("pin",12)+' '+esc(client.address||"—")+'</span></div></div>'+
+        '<div style="display:flex;align-items:center;gap:12px;min-width:0;">'+
+          (client.styleImages && client.styleImages[0] ?
+            '<img src="'+client.styleImages[0]+'" alt="" style="width:48px;height:48px;border-radius:50%;object-fit:cover;border:1px solid var(--line);flex-shrink:0;">' :
+            '<div style="width:48px;height:48px;border-radius:50%;background:var(--bg);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;color:var(--ink-soft);flex-shrink:0;">'+icon("account",22)+'</div>'
+          )+
+          '<div><div class="disp" style="font-size:21px;font-weight:600;">'+esc(client.name)+'</div>'+
+            '<div style="font-size:13px;color:var(--ink-soft);margin-top:4px;display:flex;gap:14px;flex-wrap:wrap;">'+
+              '<span style="display:flex;align-items:center;gap:4px;">'+icon("phone",12)+' '+esc(client.phone||"—")+'</span>'+
+              '<span style="display:flex;align-items:center;gap:4px;">'+icon("pin",12)+' '+esc(client.address||"—")+'</span></div></div>'+
+        '</div>'+
         '<button class="btn ghost sm" data-action="open-client-modal" data-id="'+client.id+'">'+icon("edit",13)+' Edit</button>'+
       '</div>'+
       (client.notes ? '<div style="margin-top:10px;font-size:13px;color:var(--ink-soft);">'+esc(client.notes)+'</div>' : '')+
@@ -1207,7 +1308,7 @@ function renderAccount(){
     '</div>'+
     '<div class="card" style="margin-top:16px;">'+
       '<div class="disp" style="font-weight:600;font-size:14.5px;margin-bottom:4px;">Session</div>'+
-      '<div style="font-size:12px;color:var(--ink-soft);margin-bottom:12px;">Signed in with '+esc(DEMO_EMAIL)+'.</div>'+
+      '<div style="font-size:12px;color:var(--ink-soft);margin-bottom:12px;">Signed in with '+esc((state.account&&state.account.email)||DEMO_EMAIL)+'.</div>'+
       '<button class="btn rust sm" data-action="sign-out">'+icon("back",14)+' Sign out</button>'+
     '</div>'+
     '<div class="card" style="margin-top:16px;">'+
@@ -1241,6 +1342,7 @@ function renderModal(){
   if(state.modal.type==="catitem-view") return renderCatItemView();
   if(state.modal.type==="catpicker") return renderCatalogPickerModal();
   if(state.modal.type==="notifications") return renderNotificationsModal();
+  if(state.modal.type==="contact-dev") return renderContactDevModal();
   return "";
 }
 function modalShell(title, bodyHtml, variant){
@@ -1250,6 +1352,17 @@ function modalShell(title, bodyHtml, variant){
       '<button class="iconbtn" data-action="close-modal" aria-label="Close">'+icon("close",16)+'</button></div>'+
     bodyHtml+
   '</div></div>';
+}
+function renderContactDevModal(){
+  return modalShell("Contact the developer",
+    '<div style="font-size:13px;color:var(--ink-soft);margin-bottom:14px;">Need help signing up, or spotted an issue? Reach out directly.</div>'+
+    '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;">'+
+      '<a class="btn wa sm" href="'+waLink(DEV_PHONE, "Hi "+DEV_STUDIO+", I need help with Tailor Studio: ")+'" target="_blank" rel="noopener">'+icon("chat",14)+' WhatsApp</a>'+
+      '<a class="btn ghost sm" href="tel:'+DEV_PHONE.replace(/[^0-9+]/g,"")+'">'+icon("phone",14)+' Call</a>'+
+      '<a class="btn ghost sm" href="mailto:'+DEV_EMAIL+'">'+icon("mail",14)+' Email</a>'+
+    '</div>'+
+    '<div style="font-size:11.5px;color:var(--ink-soft);line-height:1.6;">'+esc(DEV_STUDIO)+' — developed by '+esc(DEV_NAME)+'<br>'+esc(DEV_EMAIL)+' · '+esc(DEV_PHONE)+'</div>'
+  );
 }
 
 function renderClientModal(){
@@ -1548,33 +1661,60 @@ function renderWelcomeView(){
         '<div class="disp" style="font-size:25px;font-weight:600;">'+esc(business.name)+'</div>'+
         '<div style="font-size:13.5px;color:var(--ink-soft);max-width:300px;">Browse our latest styles and prices, then step inside to manage clients, orders and your catalogue.</div>'+
         '<button class="btn gold" data-action="enter-shop" style="padding:12px 30px;font-size:14.5px;margin-top:4px;">Enter shop '+icon("forward",15)+'</button>'+
+        '<button class="btn ghost sm" data-action="download-user-guide" style="margin-top:2px;">'+icon("download",13)+' Download user guide</button>'+
       '</div>'+
     '</div>'
   );
 }
 function renderAuthView(){
   const business = state.business;
-  if(!state.authForm) state.authForm = { email: DEMO_EMAIL, password: DEMO_PASSWORD };
+  const mode = state.authMode || "signin";
+  if(!state.authForm){
+    state.authForm = mode==="signup" ?
+      { name:"", email:"", password:"", confirm:"", key:"" } :
+      { email: (state.account && state.account.email) || DEMO_EMAIL, password: state.account ? "" : DEMO_PASSWORD };
+  }
   const f = state.authForm;
   const logoHtml = business.logo ? '<img src="'+business.logo+'" style="width:56px;height:56px;border-radius:14px;object-fit:cover;">' :
     '<div style="width:56px;height:56px;border-radius:14px;background:var(--primary);color:#fff;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:700;">'+esc((business.name||"T").trim()[0].toUpperCase())+'</div>';
+
+  const signInBody =
+    '<div style="margin-bottom:10px;"><label>Email</label><input data-bind="authForm.email" value="'+esc(f.email||"")+'" placeholder="'+DEMO_EMAIL+'"></div>'+
+    '<div style="margin-bottom:14px;"><label>Password</label><input type="password" data-bind="authForm.password" value="'+esc(f.password||"")+'" placeholder="Password"></div>'+
+    '<button class="btn" style="width:100%;justify-content:center;" data-action="sign-in">'+icon("check",15)+' Sign in</button>'+
+    (!state.account ? (
+      '<div style="margin-top:16px;padding:12px;background:var(--surface);border:1px dashed var(--line);border-radius:10px;font-size:11.5px;color:var(--ink-soft);text-align:center;">'+
+        'Demo credentials (already filled in)<br>'+
+        '<span class="mono" style="color:var(--ink);">'+DEMO_EMAIL+'</span><br>'+
+        '<span class="mono" style="color:var(--ink);">'+DEMO_PASSWORD+'</span>'+
+      '</div>'
+    ) : '')+
+    '<div style="text-align:center;margin-top:16px;font-size:12.5px;color:var(--ink-soft);">Don\u2019t have an account? '+
+      '<span data-action="toggle-auth-mode" style="color:var(--primary);font-weight:600;cursor:pointer;text-decoration:underline;">Sign up</span></div>';
+
+  const signUpBody =
+    '<div style="margin-bottom:10px;"><label>Business name</label><input data-bind="authForm.name" value="'+esc(f.name||"")+'" placeholder="e.g. Ade\u2019s Tailor Shop"></div>'+
+    '<div style="margin-bottom:10px;"><label>Email</label><input data-bind="authForm.email" value="'+esc(f.email||"")+'" placeholder="you@example.com"></div>'+
+    '<div style="margin-bottom:10px;"><label>Password</label><input type="password" data-bind="authForm.password" value="'+esc(f.password||"")+'" placeholder="Create a password"></div>'+
+    '<div style="margin-bottom:10px;"><label>Confirm password</label><input type="password" data-bind="authForm.confirm" value="'+esc(f.confirm||"")+'" placeholder="Confirm password"></div>'+
+    '<div style="margin-bottom:14px;"><label>Access key</label><input data-bind="authForm.key" value="'+esc(f.key||"")+'" placeholder="Enter your access key"></div>'+
+    '<button class="btn gold" style="width:100%;justify-content:center;" data-action="sign-up">'+icon("plus",15)+' Create account</button>'+
+    '<div style="text-align:center;margin-top:16px;font-size:11.5px;color:var(--ink-soft);">Creating an account permanently clears the demo data on this device and unlocks full editing.</div>'+
+    '<div style="text-align:center;margin-top:10px;font-size:12.5px;color:var(--ink-soft);">Already have an account? '+
+      '<span data-action="toggle-auth-mode" style="color:var(--primary);font-weight:600;cursor:pointer;text-decoration:underline;">Sign in</span></div>'+
+    '<div style="text-align:center;margin-top:6px;font-size:12.5px;color:var(--ink-soft);">'+
+      '<span data-action="open-contact-dev-modal" style="color:var(--primary);font-weight:600;cursor:pointer;text-decoration:underline;">Contact developer</span></div>';
+
   return (
     '<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;box-sizing:border-box;background:var(--bg);">'+
       '<div class="card" style="max-width:380px;width:100%;">'+
         '<div style="display:flex;flex-direction:column;align-items:center;margin-bottom:20px;">'+
           logoHtml+
           '<div class="disp" style="font-weight:700;font-size:19px;margin-top:12px;">'+esc(business.name||"Tailor Studio")+'</div>'+
-          '<div style="font-size:12.5px;color:var(--ink-soft);margin-top:2px;">Sign in to continue</div>'+
+          '<div style="font-size:12.5px;color:var(--ink-soft);margin-top:2px;">'+(mode==="signup"?"Create your account":"Sign in to continue")+'</div>'+
         '</div>'+
         (state.authError ? '<div style="background:var(--rust-soft);color:var(--rust);font-size:12.5px;padding:8px 12px;border-radius:8px;margin-bottom:12px;">'+esc(state.authError)+'</div>' : '')+
-        '<div style="margin-bottom:10px;"><label>Email</label><input data-bind="authForm.email" value="'+esc(f.email)+'" placeholder="'+DEMO_EMAIL+'"></div>'+
-        '<div style="margin-bottom:14px;"><label>Password</label><input type="password" data-bind="authForm.password" value="'+esc(f.password)+'" placeholder="Password"></div>'+
-        '<button class="btn" style="width:100%;justify-content:center;" data-action="sign-in">'+icon("check",15)+' Sign in</button>'+
-        '<div style="margin-top:16px;padding:12px;background:var(--surface);border:1px dashed var(--line);border-radius:10px;font-size:11.5px;color:var(--ink-soft);text-align:center;">'+
-          'Demo credentials (already filled in)<br>'+
-          '<span class="mono" style="color:var(--ink);">'+DEMO_EMAIL+'</span><br>'+
-          '<span class="mono" style="color:var(--ink);">'+DEMO_PASSWORD+'</span>'+
-        '</div>'+
+        (mode==="signup" ? signUpBody : signInBody)+
       '</div>'+
     '</div>'
   );
@@ -1691,6 +1831,11 @@ document.addEventListener("click", (e) => {
   if(!el) return;
   const action = el.getAttribute("data-action");
   const id = el.getAttribute("data-id");
+
+  if(state.viewOnly && MUTATING_ACTIONS.has(action)){
+    showViewOnlyToast();
+    return;
+  }
 
   switch(action){
     case "set-tab": {
@@ -1874,20 +2019,71 @@ document.addEventListener("click", (e) => {
       render();
       break;
     }
+    case "toggle-auth-mode-from-app": {
+      state.authed = false; state.viewOnly = false;
+      state.authMode = "signup"; state.authForm = null; state.authError = null;
+      state.modal = null; state.selectedClientId = null; state.tab = "dashboard";
+      state.showWelcome = true;
+      collapseNav(navDepth);
+      render();
+      break;
+    }
     case "close-modal": closeModal(); break;
     case "sign-in": {
       const f = state.authForm || {};
-      if((f.email||"").trim().toLowerCase()===DEMO_EMAIL && f.password===DEMO_PASSWORD){
-        state.authed = true; state.authError = null;
+      const email = (f.email||"").trim().toLowerCase();
+      const acc = state.account;
+      if(acc && email===acc.email && f.password===acc.password){
+        state.authed = true; state.authError = null; state.viewOnly = false;
+      } else if(!acc && email===DEMO_EMAIL && f.password===DEMO_PASSWORD){
+        state.authed = true; state.authError = null; state.viewOnly = true;
       } else {
-        state.authError = "Incorrect email or password. Try the demo credentials shown below.";
+        state.authError = acc ? "Incorrect email or password." : "Incorrect email or password. Try the demo credentials shown below.";
       }
+      render();
+      break;
+    }
+    case "sign-up": {
+      const f = state.authForm || {};
+      const name = (f.name||"").trim();
+      const email = (f.email||"").trim().toLowerCase();
+      const password = f.password||"";
+      const key = f.key||"";
+      if(!email || !password){
+        state.authError = "Please fill in your email and password.";
+      } else if(password.length < 6){
+        state.authError = "Password should be at least 6 characters.";
+      } else if(password !== f.confirm){
+        state.authError = "Passwords don't match.";
+      } else if(key !== SIGNUP_KEY){
+        state.authError = "Incorrect access key.";
+      } else {
+        // Wipe the demo data — the new account starts with a clean slate.
+        state.clients = [];
+        state.orders = [];
+        state.catalogue = { categories: [], items: [] };
+        state.business = { name: name||"My Tailor Shop", phone:"", address:"", currency: state.business.currency||"₦", regNumber:"", bankAccounts:[], logo:null };
+        persistClients(); persistOrders(); persistCatalogue(); persistBusiness();
+        state.account = { name, email, password };
+        persistAccount();
+        state.authed = true; state.authError = null; state.authMode = "signin"; state.viewOnly = false;
+        state.authForm = null;
+      }
+      render();
+      break;
+    }
+    case "toggle-auth-mode": {
+      state.authMode = (state.authMode==="signup") ? "signin" : "signup";
+      state.authForm = null; state.authError = null;
       render();
       break;
     }
     case "sign-out": {
       state.authed = false;
-      state.authForm = { email: DEMO_EMAIL, password: DEMO_PASSWORD }; state.authError = null;
+      state.viewOnly = false;
+      state.authMode = "signin";
+      state.authForm = { email: (state.account&&state.account.email)||DEMO_EMAIL, password: state.account?"":DEMO_PASSWORD };
+      state.authError = null;
       state.modal = null; state.selectedClientId = null; state.tab = "dashboard";
       state.showWelcome = true;
       collapseNav(navDepth);
@@ -1924,6 +2120,8 @@ document.addEventListener("click", (e) => {
       break;
     }
     case "export-data": exportBackup(); break;
+    case "download-user-guide": downloadUserGuide(); break;
+    case "open-contact-dev-modal": state.modal = { type:"contact-dev" }; pushNav(); render(); break;
   }
 });
 
@@ -1938,6 +2136,68 @@ function exportBackup(){
   const a = document.createElement("a");
   const stamp = new Date().toISOString().slice(0,10);
   a.href = url; a.download = "tailor-studio-backup-"+stamp+".json";
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 2000);
+}
+
+function downloadUserGuide(){
+  const html =
+'<!DOCTYPE html><html><head><meta charset="UTF-8">'+
+'<title>Tailor Studio — User Guide</title>'+
+'<style>'+
+'body{font-family:Georgia,serif;max-width:680px;margin:40px auto;padding:0 20px;color:#26221B;line-height:1.6;}'+
+'h1{font-size:26px;margin-bottom:4px;}'+
+'.sub{color:#645E50;font-size:13px;margin-bottom:30px;}'+
+'h2{font-size:18px;margin-top:32px;border-bottom:2px solid #B8842E;padding-bottom:6px;}'+
+'ul{padding-left:20px;} li{margin-bottom:6px;}'+
+'.tip{background:#F0DAD1;padding:10px 14px;border-radius:8px;font-size:13.5px;margin-top:10px;}'+
+'</style></head><body>'+
+'<h1>Tailor Studio — User Guide</h1>'+
+'<div class="sub">A quick guide to getting the most out of the app.</div>'+
+
+'<h2>1. Getting started</h2>'+
+'<ul>'+
+'<li>The app opens on a <b>demo account</b> so you can look around with sample clients, orders and catalogue items already filled in.</li>'+
+'<li>The demo is <b>view-only</b> — nothing you tap can be saved while browsing it.</li>'+
+'<li>Tap <b>Sign up</b> on the sign-in screen to create your own account. You will need the access key from whoever set up your app to do this.</li>'+
+'<li>Creating an account permanently clears the demo data on this device and unlocks full editing.</li>'+
+'</ul>'+
+
+'<h2>2. Clients</h2>'+
+'<ul>'+
+'<li>Add a client from the Clients tab, save their contact details, address and body measurements.</li>'+
+'<li>Attach reference photos to a client\u2019s profile so you can see their preferred styles at a glance.</li>'+
+'<li>Open a client to see their full order history in one place.</li>'+
+'</ul>'+
+
+'<h2>3. Orders</h2>'+
+'<ul>'+
+'<li>Create a new order from the Orders tab or directly from a client\u2019s profile.</li>'+
+'<li>Add line items with prices, record part-payments as they come in, and set a due date.</li>'+
+'<li>Update the order status (Pending, Cutting, Sewing, Fitting, Ready, Delivered) as work progresses.</li>'+
+'<li>Generate a receipt or invoice image straight from an order to share with your client.</li>'+
+'</ul>'+
+
+'<h2>4. Catalogue</h2>'+
+'<ul>'+
+'<li>Organise your styles into categories and add items with photos and prices.</li>'+
+'<li>Share individual items on WhatsApp, or share your full price list as an image.</li>'+
+'</ul>'+
+
+'<h2>5. Settings &amp; backup</h2>'+
+'<ul>'+
+'<li>Update your business name, logo, contact details and bank accounts from the Account tab.</li>'+
+'<li>Your data is stored only on this device — export a backup regularly, and use it to move your data to a new device.</li>'+
+'</ul>'+
+'<div class="tip">Tip: export a backup before switching phones or reinstalling the app, then import it on the new device.</div>'+
+
+'<h2>Need help?</h2>'+
+'<p>Reach the developer directly from the Account tab, or from the "Contact developer" link on the sign-up screen — WhatsApp, call, or email are all available.</p>'+
+'</body></html>';
+  const blob = new Blob([html], {type:"text/html"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = "tailor-studio-user-guide.html";
   document.body.appendChild(a); a.click(); a.remove();
   setTimeout(() => URL.revokeObjectURL(url), 2000);
 }
@@ -1971,6 +2231,7 @@ document.addEventListener("input", (e) => {
   const bindEl = e.target.closest("[data-bind]");
   if(bindEl){
     const path = bindEl.getAttribute("data-bind");
+    if(state.viewOnly && !path.startsWith("authForm.")){ showViewOnlyToast(); e.target.value = getPath(state, path) || ""; return; }
     setPath(state, path, e.target.value);
     if(path.startsWith("business.")) persistBusiness();
     if(/^modal\.draft\.items\.\d+\.price$/.test(path)) updateOrderTotalsInline();
@@ -2005,8 +2266,15 @@ function updateOrderTotalsInline(){
 document.addEventListener("change", (e) => {
   const bindEl = e.target.closest("[data-bind]");
   if(bindEl && bindEl.hasAttribute("data-rerender")){
-    setPath(state, bindEl.getAttribute("data-bind"), e.target.value);
+    const path = bindEl.getAttribute("data-bind");
+    if(state.viewOnly && !path.startsWith("authForm.")){ showViewOnlyToast(); render(); return; }
+    setPath(state, path, e.target.value);
     render();
+    return;
+  }
+  if(state.viewOnly && e.target.matches('[data-action]') && MUTATING_CHANGE_ACTIONS.has(e.target.getAttribute("data-action"))){
+    showViewOnlyToast();
+    e.target.value = "";
     return;
   }
   if(e.target.matches('[data-action="import-data-file"]')){
