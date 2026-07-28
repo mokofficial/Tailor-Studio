@@ -136,12 +136,6 @@
   .rowline{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--line);}
   .rowline:last-child{border-bottom:none;}
 
-  @media print{
-    body *{visibility:hidden;}
-    .print-area,.print-area *{visibility:visible;}
-    .print-area{position:absolute;top:0;left:0;width:100%;padding:20px;}
-  }
-
   .welcome-shell{height:100vh;height:100dvh;display:flex;flex-direction:column;background:var(--bg);overflow:hidden;}
   .welcome-hero{position:relative;height:54%;flex-shrink:0;overflow:hidden;background:var(--ink);}
   .welcome-track{display:flex;height:100%;transition:transform .6s cubic-bezier(.4,0,.2,1);}
@@ -196,9 +190,12 @@ const ICONS = {
   alert:'<path d="M12 3l10 18H2L12 3z"/><path d="M12 9.5v5"/><circle cx="12" cy="17" r=".3" fill="currentColor"/>',
   calendar:'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9.5h18"/><path d="M8 3v4.5M16 3v4.5"/>',
   scissors:'<circle cx="6" cy="6" r="2.4"/><circle cx="6" cy="18" r="2.4"/><path d="M8 8l11 11M19 5L8 16"/>',
-  printer:'<path d="M6 9V4h12v5"/><rect x="4" y="9" width="16" height="7" rx="1.5"/><path d="M6 16h12v5H6z"/>',
   forward:'<path d="M5 12h14M13 6l6 6-6 6"/>',
   close:'<path d="M6 6l12 12M18 6L6 18"/>',
+  gallery:'<rect x="3" y="3" width="7" height="7" rx="1.3"/><rect x="14" y="3" width="7" height="7" rx="1.3"/><rect x="3" y="14" width="7" height="7" rx="1.3"/><rect x="14" y="14" width="7" height="7" rx="1.3"/>',
+  eye:'<path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/>',
+  mail:'<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/>',
+  bell:'<path d="M6 8a6 6 0 0 1 12 0c0 4 1.5 5.5 2 6.5H4c.5-1 2-2.5 2-6.5z"/><path d="M9.5 17a2.5 2.5 0 0 0 5 0"/>',
 };
 function icon(name,size){ size=size||16; return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="'+size+'" height="'+size+'" aria-hidden="true">'+(ICONS[name]||'')+'</svg>'; }
 
@@ -214,6 +211,8 @@ const THEMES = {
   mustard:    { label:"Mustard & Ink",    vars:{ bg:"#EDE6D3", surface:"#FBF8ED", ink:"#221F17", "ink-soft":"#6B6350", primary:"#221F17", "primary-dark":"#100E0A", gold:"#C9A227", "gold-soft":"#EDE0A0", rust:"#9C3B2A", "rust-soft":"#EBD2CB", line:"#DCD1AE", green:"#556B2F", "green-soft":"#E3E9D0" } },
   berry:      { label:"Berry & Cream",    vars:{ bg:"#F0E4E6", surface:"#FEFAFA", ink:"#2E1B20", "ink-soft":"#7A5C63", primary:"#7A2E44", "primary-dark":"#551F2F", gold:"#C9915A", "gold-soft":"#EFD9BE", rust:"#9C3B2A", "rust-soft":"#EBD2CB", line:"#E3CDD1", green:"#4F7A5A", "green-soft":"#DCEBDF" } },
   forest:     { label:"Forest & Rust",    vars:{ bg:"#E2E6DC", surface:"#F8FAF5", ink:"#1E2A1B", "ink-soft":"#5A6B54", primary:"#33502E", "primary-dark":"#20331C", gold:"#B5652E", "gold-soft":"#E8CBAE", rust:"#9C3B2A", "rust-soft":"#EBD2CB", line:"#CBD6C0", green:"#4F7A5A", "green-soft":"#DCEBDF" } },
+  dark:       { label:"Dark Mode",        vars:{ bg:"#121316", surface:"#1C1F23", ink:"#EDEDEE", "ink-soft":"#9AA0A6", primary:"#3E7C6E", "primary-dark":"#2A5850", gold:"#D9A65C", "gold-soft":"#3A2F1C", rust:"#C1583B", "rust-soft":"#3A211A", line:"#2C2F34", green:"#4F9C6E", "green-soft":"#173322" } },
+  mono:       { label:"Black & White",    vars:{ bg:"#EDEDED", surface:"#FFFFFF", ink:"#111111", "ink-soft":"#6B6B6B", primary:"#111111", "primary-dark":"#000000", gold:"#4A4A4A", "gold-soft":"#DDDDDD", rust:"#5A5A5A", "rust-soft":"#E4E4E4", line:"#D0D0D0", green:"#2E2E2E", "green-soft":"#E2E2E2" } },
 };
 function applyTheme(key){
   const t = THEMES[key] ? key : "indigo";
@@ -225,6 +224,13 @@ function applyTheme(key){
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2,7);
 const DEMO_EMAIL = "demo@tailorstudio.com";
 const DEMO_PASSWORD = "demo1234";
+const DEV_NAME = "Morris Okereke";
+const DEV_STUDIO = "VersaX CS";
+const DEV_EMAIL = "info.versax@gmail.com";
+const DEV_PHONE = "+234 813 795 2242";
+const SUPPORT_BANK = "Providus Bank";
+const SUPPORT_ACCOUNT_NAME = "VersaX CS Global Services";
+const SUPPORT_ACCOUNT_NO = "9642608094";
 const todayISO = () => new Date().toISOString().slice(0,10);
 const fmtDate = (iso) => { if(!iso) return "—"; const d=new Date(iso+"T00:00:00"); return d.toLocaleDateString(undefined,{day:"numeric",month:"short",year:"numeric"}); };
 const daysUntil = (iso) => { if(!iso) return null; const d=new Date(iso+"T00:00:00"); const t=new Date(); t.setHours(0,0,0,0); return Math.round((d-t)/86400000); };
@@ -273,6 +279,32 @@ const statusClass = (s) => "status-"+(s||"pending").toLowerCase();
 const waLink = (phone, text) => { const digits=(phone||"").replace(/[^0-9]/g,""); return "https://wa.me/"+digits+"?text="+encodeURIComponent(text); };
 const orderTotal = (o) => (o.items||[]).reduce((s,i)=>s+Number(i.price||0),0);
 const orderPaid = (o) => (o.payments||[]).reduce((s,p)=>s+Number(p.amount||0),0);
+
+/* ================= ALERTS / NOTIFICATIONS =================
+   Flags orders whose due date is near, today, or already passed —
+   split into "delivery" (order not yet marked Delivered) and
+   "payment" (order still has an outstanding balance) reminders. */
+const NEAR_DUE_DAYS = 3;
+function buildAlerts(){
+  const overdue = [], dueToday = [], nearDue = [];
+  state.orders.forEach(o=>{
+    if(o.status==="Cancelled") return;
+    const dleft = daysUntil(o.dueDate);
+    if(dleft===null || dleft>NEAR_DUE_DAYS) return;
+    const bal = orderTotal(o)-orderPaid(o);
+    const kinds = [];
+    if(o.status!=="Delivered") kinds.push("delivery");
+    if(bal>0) kinds.push("payment");
+    if(kinds.length===0) return;
+    const entry = { o, bal, dleft, kinds, client: state.clients.find(c=>c.id===o.clientId) };
+    if(dleft<0) overdue.push(entry);
+    else if(dleft===0) dueToday.push(entry);
+    else nearDue.push(entry);
+  });
+  const byDleft = (a,b)=>a.dleft-b.dleft;
+  overdue.sort(byDleft); dueToday.sort(byDleft); nearDue.sort(byDleft);
+  return { overdue, dueToday, nearDue, total: overdue.length+dueToday.length+nearDue.length };
+}
 
 function buildInvoiceText(order, client, business, kind){
   const total = orderTotal(order), paid = orderPaid(order), bal = total - paid;
@@ -325,17 +357,15 @@ const state = {
   authError: null,
   orderFilterStatus: "All",
   modal: null,     // {type:'client'|'order'|'catitem', draft:{...}, isNew:bool}
-  printing: null,  // {order, client, kind} | {catalogue:true}
   showWelcome: true,
   welcomeIndex: 0,
 };
 let welcomeTimer = null;
 let dashCharts = { bar:null, pie:null };
-window.onafterprint = function(){ if(state.printing){ state.printing = null; collapseNav(1); render(); } };
 
 /* ================= BACK NAVIGATION =================
    Real hardware/gesture back presses walk out one screen at a time
-   (modal -> printing -> client detail -> tab -> welcome), and pressing
+   (modal -> client detail -> tab -> welcome), and pressing
    back again from the welcome screen shows a "tap back again to exit"
    prompt before actually closing the app. Manual UI actions (Cancel,
    Save, tapping the Dashboard tab, the logo) perform the same state
@@ -392,6 +422,7 @@ function ensureLightboxEl(){
       '</div>'+
       '<div id="lightboxHint" style="position:absolute;top:46px;left:50%;transform:translateX(-50%);color:rgba(255,255,255,.6);font-size:10.5px;">Double-tap or pinch to zoom</div>'+
       '<img id="lightboxImg" style="max-width:92vw;max-height:78vh;object-fit:contain;border-radius:8px;user-select:none;-webkit-user-select:none;transition:transform .15s ease;" draggable="false">'+
+      '<div id="lightboxTag" style="position:absolute;bottom:82px;left:50%;transform:translateX(-50%);background:rgba(255,255,255,.16);color:#fff;font-size:11.5px;font-weight:500;padding:5px 13px;border-radius:20px;letter-spacing:.02em;max-width:84vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:none;"></div>'+
       '<div style="position:absolute;bottom:26px;display:flex;gap:18px;">'+
         '<button id="lightboxPrev" style="background:rgba(255,255,255,.15);border:none;color:#fff;width:42px;height:42px;border-radius:50%;font-size:19px;cursor:pointer;">‹</button>'+
         '<button id="lightboxNext" style="background:rgba(255,255,255,.15);border:none;color:#fff;width:42px;height:42px;border-radius:50%;font-size:19px;cursor:pointer;">›</button>'+
@@ -461,7 +492,7 @@ function lightboxStep(dir){
 function updateLightboxUI(){
   const el = ensureLightboxEl();
   if(!state.lightbox){ el.style.display = "none"; return; }
-  const {images, index} = state.lightbox;
+  const {images, index, tags} = state.lightbox;
   el.style.display = "flex";
   lbResetZoom();
   document.getElementById("lightboxImg").src = images[index];
@@ -469,6 +500,12 @@ function updateLightboxUI(){
   const multi = images.length>1;
   document.getElementById("lightboxPrev").style.display = multi?"flex":"none";
   document.getElementById("lightboxNext").style.display = multi?"flex":"none";
+  const tagEl = document.getElementById("lightboxTag");
+  if(tagEl){
+    const t = tags && tags[index];
+    if(t){ tagEl.textContent = t; tagEl.style.display = "block"; }
+    else { tagEl.style.display = "none"; }
+  }
   const hint = document.getElementById("lightboxHint");
   if(hint){
     hint.style.transition = "none"; hint.style.opacity = "1";
@@ -476,9 +513,9 @@ function updateLightboxUI(){
     hint._fadeTimer = setTimeout(() => { hint.style.transition = "opacity .5s"; hint.style.opacity = "0"; }, 2200);
   }
 }
-function openLightbox(images, index){
+function openLightbox(images, index, tags){
   if(!images || images.length===0) return;
-  state.lightbox = { images: images, index: index||0 };
+  state.lightbox = { images: images, index: index||0, tags: tags||null };
   pushNav();
   updateLightboxUI();
 }
@@ -495,7 +532,6 @@ window.addEventListener("popstate", function(){
     else { state.modal = null; }
     navDepth = Math.max(0, navDepth-1); render(); return;
   }
-  if(state.printing){ state.printing = null; navDepth = Math.max(0, navDepth-1); render(); return; }
   if(state.selectedClientId){ state.selectedClientId = null; navDepth = Math.max(0, navDepth-1); render(); return; }
   if(!state.showWelcome && state.tab !== "dashboard"){ state.tab = "dashboard"; navDepth = Math.max(0, navDepth-1); render(); return; }
   if(!state.showWelcome){ state.showWelcome = true; navDepth = Math.max(0, navDepth-1); render(); return; }
@@ -517,13 +553,14 @@ async function loadAll(){
     const cat = localStorage.getItem("catalogue");
     const b = localStorage.getItem("business");
     const th = localStorage.getItem("theme");
-    const au = localStorage.getItem("authed");
+    // Auth state is intentionally NOT loaded from storage: every fresh
+    // load (refresh or reopening the app) should require signing in again.
     if(c) state.clients = JSON.parse(c);
     if(o) state.orders = JSON.parse(o);
     if(cat) state.catalogue = JSON.parse(cat);
     if(b) state.business = Object.assign({}, state.business, JSON.parse(b));
     if(th) applyTheme(JSON.parse(th));
-    if(au) state.authed = JSON.parse(au);
+    state.authed = false;
   }catch(e){ /* first run */ }
   if(!state.business.bankAccounts) state.business.bankAccounts = [];
   if(state.business.bankAccounts.length===0 && (state.business.bankName || state.business.bankAccountNumber)){
@@ -556,8 +593,6 @@ function render(){
   const app = document.getElementById("app");
   if(!state.loaded){ app.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100vh;color:var(--ink-soft)">Loading…</div>'; return; }
 
-  if(state.printing){ app.innerHTML = renderPrintView(); setTimeout(() => { try{ window.print(); }catch(e){} }, 250); return; }
-
   if(state.showWelcome){ app.innerHTML = renderWelcomeView(); startWelcomeCarousel(); return; }
   clearWelcomeTimer();
 
@@ -567,6 +602,7 @@ function render(){
 
   const initials = (state.business.name||"T S").trim().split(/\s+/).slice(0,2).map(w=>w[0]).join("").toUpperCase();
   const logoHtml = state.business.logo ? '<img src="'+state.business.logo+'" alt="">' : esc(initials);
+  const alerts = buildAlerts();
 
   const NAV = [
     {key:"dashboard", label:"Home", icon:"dashboard"},
@@ -584,6 +620,9 @@ function render(){
           '<div class="brand-text"><div class="brand-name">'+esc(state.business.name)+'</div><div class="brand-greet">'+greeting()+'</div></div>'+
         '</div>'+
         '<div style="display:flex;gap:8px;align-items:center;">'+
+          '<button class="iconbtn" style="position:relative;" data-action="open-notifications" aria-label="Notifications">'+icon("bell",16)+
+            (alerts.total>0 ? '<span style="position:absolute;top:-5px;right:-5px;background:var(--rust);color:#fff;font-size:10px;font-weight:700;min-width:16px;height:16px;border-radius:8px;display:flex;align-items:center;justify-content:center;padding:0 3px;line-height:1;">'+(alerts.total>9?"9+":alerts.total)+'</span>' : '')+
+          '</button>'+
           '<button class="btn gold sm" data-action="open-order-modal-new"><span>'+icon("plus",14)+'</span> New order</button>'+
         '</div>'+
       '</div>'+
@@ -967,6 +1006,29 @@ function renderOrders(){
 }
 
 /* ================= CATALOGUE ================= */
+function buildFullGallery(categoryId){
+  // Collects every photo across the catalogue — priced-item photos and
+  // category gallery photos alike — each tagged with its category (and
+  // item name, where relevant) so the swipe-through view stays legible.
+  const cats = state.catalogue.categories;
+  const catName = (id) => { const c = cats.find(x=>x.id===id); return c ? c.name : "Uncategorised"; };
+  const images = [], tags = [];
+  state.catalogue.items.forEach(it=>{
+    if(categoryId && it.categoryId!==categoryId) return;
+    (it.images||[]).forEach(src=>{
+      images.push(src);
+      tags.push(catName(it.categoryId) + (it.name ? " · "+it.name : ""));
+    });
+  });
+  cats.forEach(cat=>{
+    if(categoryId && cat.id!==categoryId) return;
+    (cat.gallery||[]).forEach(src=>{
+      images.push(src);
+      tags.push(cat.name);
+    });
+  });
+  return { images: images, tags: tags };
+}
 function renderCatalogue(){
   // Read-only "photo library" browsing view — editing happens in Account > Manage catalogue.
   const business = state.business;
@@ -985,6 +1047,7 @@ function renderCatalogue(){
           '<button class="btn '+(state.browseCategoryId===c.id?'gold':'ghost')+' sm" data-action="select-browse-category" data-id="'+c.id+'">'+esc(c.name)+'</button>'
         ).join("") +'</div>'+
       '<div style="display:flex;gap:8px;">'+
+        '<button class="iconbtn" data-action="open-full-gallery" title="Browse full gallery">'+icon("gallery",15)+'</button>'+
         '<button class="btn wa sm" data-action="share-pricelist-image">'+icon("chat",14)+' Share price list</button>'+
         '<button class="btn ghost sm" data-action="download-pricelist-image">'+icon("download",14)+' Download</button>'+
       '</div>'+
@@ -996,11 +1059,14 @@ function renderCatalogue(){
           const img = (it.images&&it.images[0]) || null;
           return '<div class="card" style="cursor:pointer;padding:0;overflow:hidden;" data-action="view-catitem" data-id="'+it.id+'">'+
             (img ? '<img src="'+img+'" style="width:100%;height:150px;object-fit:cover;">' : '<div style="width:100%;height:150px;background:var(--line);display:flex;align-items:center;justify-content:center;color:var(--ink-soft);">'+icon("image",24)+'</div>')+
-            '<div style="padding:10px;">'+
-              (isAll ? '<div style="font-size:10px;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.04em;margin-bottom:2px;">'+esc(catName(it.categoryId))+'</div>' : '')+
-              '<div style="font-weight:600;font-size:13.5px;">'+esc(it.name)+'</div>'+
-              (it.description ? '<div style="font-size:11.5px;color:var(--ink-soft);margin-top:2px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">'+esc(it.description)+'</div>' : '')+
-              '<div class="mono" style="font-weight:700;margin-top:6px;">'+money(it.price,business.currency)+'</div>'+
+            '<div style="padding:10px;display:flex;align-items:center;justify-content:space-between;gap:8px;">'+
+              '<div style="min-width:0;flex:1;">'+
+                (isAll ? '<div style="font-size:10px;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.04em;margin-bottom:2px;">'+esc(catName(it.categoryId))+'</div>' : '')+
+                '<div style="font-weight:600;font-size:13.5px;">'+esc(it.name)+'</div>'+
+                (it.description ? '<div style="font-size:11.5px;color:var(--ink-soft);margin-top:2px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">'+esc(it.description)+'</div>' : '')+
+                '<div class="mono" style="font-weight:700;margin-top:6px;">'+money(it.price,business.currency)+'</div>'+
+              '</div>'+
+              '<button class="iconbtn" style="flex-shrink:0;" data-action="view-catitem" data-id="'+it.id+'" title="View item">'+icon("eye",15)+'</button>'+
             '</div></div>';
         }).join("")+
       '</div>')
@@ -1084,7 +1150,7 @@ function renderAccount(){
       '<div style="display:flex;gap:16px;align-items:center;margin-bottom:16px;flex-wrap:wrap;">'+
         '<label class="logo-upload">'+logoHtml+'<input type="file" accept="image/*" data-action="upload-logo" style="display:none;"></label>'+
         '<div><div style="font-size:13px;font-weight:500;">Business logo</div>'+
-        '<div style="font-size:12px;color:var(--ink-soft);margin-top:2px;max-width:280px;">Tap the box to upload. Shown in the header and can be used on printed invoices.</div></div>'+
+        '<div style="font-size:12px;color:var(--ink-soft);margin-top:2px;max-width:280px;">Tap the box to upload. Shown in the header and on shared invoices and receipts.</div></div>'+
       '</div>'+
       '<div class="grid-form2">'+
         '<div><label>Business name</label><input data-bind="business.name" value="'+esc(b.name)+'"></div>'+
@@ -1142,6 +1208,25 @@ function renderAccount(){
       '<div class="disp" style="font-weight:600;font-size:14.5px;margin-bottom:4px;">Session</div>'+
       '<div style="font-size:12px;color:var(--ink-soft);margin-bottom:12px;">Signed in with '+esc(DEMO_EMAIL)+'.</div>'+
       '<button class="btn rust sm" data-action="sign-out">'+icon("back",14)+' Sign out</button>'+
+    '</div>'+
+    '<div class="card" style="margin-top:16px;">'+
+      '<div class="disp" style="font-weight:600;font-size:14.5px;margin-bottom:4px;">Contact the developer</div>'+
+      '<div style="font-size:12px;color:var(--ink-soft);margin-bottom:12px;">Got a query, complaint, or bug to report? Reach out directly.</div>'+
+      '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">'+
+        '<a class="btn wa sm" href="'+waLink(DEV_PHONE, "Hi "+DEV_STUDIO+", I have a query/complaint about "+esc(b.name||"Tailor Studio")+": ")+'" target="_blank" rel="noopener">'+icon("chat",14)+' WhatsApp</a>'+
+        '<a class="btn ghost sm" href="tel:'+DEV_PHONE.replace(/[^0-9+]/g,"")+'">'+icon("phone",14)+' Call</a>'+
+        '<a class="btn ghost sm" href="mailto:'+DEV_EMAIL+'">'+icon("mail",14)+' Email</a>'+
+      '</div>'+
+      '<div style="font-size:11.5px;color:var(--ink-soft);line-height:1.6;margin-bottom:14px;">'+esc(DEV_STUDIO)+' — developed by '+esc(DEV_NAME)+'<br>'+esc(DEV_EMAIL)+' · '+esc(DEV_PHONE)+'</div>'+
+      '<div style="border-top:1px solid var(--line);padding-top:12px;">'+
+        '<div style="font-weight:500;font-size:13px;margin-bottom:6px;">Support VersaX CS</div>'+
+        '<div style="font-size:12.5px;color:var(--ink-soft);line-height:1.7;">'+
+          esc(SUPPORT_BANK)+'<br>'+
+          esc(SUPPORT_ACCOUNT_NAME)+'<br>'+
+          '<span class="mono" id="supportAcctNo" style="color:var(--ink);">'+esc(SUPPORT_ACCOUNT_NO)+'</span>'+
+        '</div>'+
+        '<button class="btn ghost sm" style="margin-top:8px;" data-action="copy-text" data-value="'+esc(SUPPORT_ACCOUNT_NO)+'" data-label="supportAcctCopyBtn" id="supportAcctCopyBtn">'+icon("check",13)+' Copy account number</button>'+
+      '</div>'+
     '</div>'
   );
 }
@@ -1154,6 +1239,7 @@ function renderModal(){
   if(state.modal.type==="catitem") return renderCatItemModal();
   if(state.modal.type==="catitem-view") return renderCatItemView();
   if(state.modal.type==="catpicker") return renderCatalogPickerModal();
+  if(state.modal.type==="notifications") return renderNotificationsModal();
   return "";
 }
 function modalShell(title, bodyHtml, variant){
@@ -1223,7 +1309,6 @@ function renderOrderModal(){
       '<button class="btn ghost sm" data-action="download-invoice-image" data-kind="invoice">'+icon("download",14)+' Download</button>'+
       '<button class="btn wa sm" data-action="share-invoice-image" data-kind="receipt">'+icon("chat",14)+' Share receipt</button>'+
       '<button class="btn ghost sm" data-action="download-invoice-image" data-kind="receipt">'+icon("download",14)+' Download</button>'+
-      '<button class="btn ghost sm" data-action="print-invoice" data-kind="invoice">'+icon("printer",14)+' Print invoice</button>'+
       (bal>0 ? '<button class="btn wa sm" data-action="share-reminder-image">'+icon("send",14)+' Send payment reminder</button>' : '')+
     '</div>'
   ) : "";
@@ -1305,20 +1390,13 @@ function renderCatItemView(){
   const images = it.images||[];
   const cat = state.catalogue.categories.find(c=>c.id===it.categoryId);
   const hero = images[0] || null;
-  const actionButtons =
-    '<div style="display:flex;gap:8px;flex-wrap:wrap;">'+
-      '<button class="btn wa sm" data-action="share-catitem-whatsapp" data-id="'+it.id+'">'+icon("chat",14)+' Share</button>'+
-      '<button class="btn gold sm" data-action="add-catitem-to-new-order" data-id="'+it.id+'">'+icon("plus",14)+' Add to new order</button>'+
-    '</div>';
 
   const heroBlock = hero ?
-    '<div style="position:relative;border-radius:14px;overflow:hidden;margin-bottom:14px;">'+
+    '<div style="border-radius:14px;overflow:hidden;margin-bottom:14px;">'+
       '<img src="'+hero+'" style="width:100%;height:38vh;object-fit:cover;display:block;cursor:zoom-in;" data-action="open-lightbox" data-target="modal.item.images" data-index="0">'+
-      '<div style="position:absolute;left:0;right:0;bottom:0;padding:14px;background:linear-gradient(to top, rgba(0,0,0,.68), rgba(0,0,0,0));">'+actionButtons+'</div>'+
     '</div>' :
-    '<div style="position:relative;width:100%;height:32vh;background:var(--line);border-radius:14px;display:flex;align-items:center;justify-content:center;color:var(--ink-soft);margin-bottom:14px;">'+
+    '<div style="width:100%;height:32vh;background:var(--line);border-radius:14px;display:flex;align-items:center;justify-content:center;color:var(--ink-soft);margin-bottom:14px;">'+
       icon("image",30)+
-      '<div style="position:absolute;left:0;right:0;bottom:0;padding:14px;">'+actionButtons+'</div>'+
     '</div>';
 
   const thumbRow = images.length>1 ? (
@@ -1332,7 +1410,11 @@ function renderCatItemView(){
     thumbRow+
     (cat ? '<div style="font-size:11.5px;color:var(--ink-soft);margin-bottom:4px;">'+esc(cat.name)+'</div>' : '')+
     '<div class="mono" style="font-weight:700;font-size:20px;margin-bottom:8px;">'+money(it.price,business.currency)+'</div>'+
-    (it.description ? '<div style="font-size:13.5px;color:var(--ink-soft);white-space:pre-wrap;">'+esc(it.description)+'</div>' : '')
+    (it.description ? '<div style="font-size:13.5px;color:var(--ink-soft);white-space:pre-wrap;margin-bottom:14px;">'+esc(it.description)+'</div>' : '')+
+    '<div style="display:flex;gap:8px;flex-wrap:wrap;">'+
+      '<button class="btn wa sm" data-action="share-catitem-whatsapp" data-id="'+it.id+'">'+icon("chat",14)+' Share</button>'+
+      '<button class="btn gold sm" data-action="add-catitem-to-new-order" data-id="'+it.id+'">'+icon("plus",14)+' Add to new order</button>'+
+    '</div>'
   , "full");
 }
 
@@ -1358,6 +1440,39 @@ function renderCatalogPickerModal(){
     '</div>'+
     '<div style="display:flex;justify-content:flex-end;margin-top:16px;"><button class="btn ghost" data-action="close-modal">Cancel</button></div>'
   , true);
+}
+
+function renderNotificationsModal(){
+  const alerts = buildAlerts();
+  const business = state.business;
+  const kindPill = (k) => k==="payment" ?
+    '<span class="pill" style="background:var(--rust-soft);color:var(--rust);">Payment</span>' :
+    '<span class="pill" style="background:var(--gold-soft);color:#8A5F1F;">Delivery</span>';
+  const section = (title, list, tone) => {
+    if(list.length===0) return "";
+    return '<div style="margin-bottom:18px;">'+
+      '<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:'+tone+';margin-bottom:6px;">'+esc(title)+' ('+list.length+')</div>'+
+      list.map(({o,bal,dleft,kinds,client}) => (
+        '<div class="rowline" style="align-items:flex-start;gap:8px;">'+
+          '<div style="cursor:pointer;flex:1;min-width:0;" data-action="open-order-modal" data-id="'+o.id+'">'+
+            '<div style="font-weight:500;font-size:13.5px;">'+esc(client?client.name:"Unknown client")+' — '+esc(o.title||"Order")+'</div>'+
+            '<div style="font-size:11.5px;color:'+(dleft<0?"var(--rust)":"var(--ink-soft)")+';margin-top:1px;">'+
+              (dleft<0 ? Math.abs(dleft)+"d overdue" : dleft===0 ? "Due today" : "Due in "+dleft+"d")+
+              (kinds.includes("payment") ? " · Balance "+money(bal,business.currency) : "")+
+            '</div>'+
+            '<div style="margin-top:5px;display:flex;gap:4px;flex-wrap:wrap;">'+kinds.map(kindPill).join("")+'</div>'+
+          '</div>'+
+          (client ? '<button class="btn wa sm" data-action="share-reminder-image-dash" data-id="'+o.id+'" style="flex-shrink:0;">'+icon("send",13)+'</button>' : '')+
+        '</div>'
+      )).join("")+
+    '</div>';
+  };
+  const body = alerts.total===0 ?
+    '<div class="empty">All caught up — nothing due, overdue, or coming up in the next '+NEAR_DUE_DAYS+' days.</div>' :
+    section("Overdue", alerts.overdue, "var(--rust)")+
+    section("Due today", alerts.dueToday, "var(--gold)")+
+    section("Due soon", alerts.nearDue, "var(--ink-soft)");
+  return modalShell("Notifications", body);
 }
 
 function imagePickerHtml(label, images, targetPath, max){
@@ -1464,51 +1579,6 @@ function startWelcomeCarousel(){
 }
 function clearWelcomeTimer(){ if(welcomeTimer){ clearInterval(welcomeTimer); welcomeTimer = null; } }
 
-/* ================= PRINT VIEW ================= */
-function renderPrintView(){
-  const p = state.printing;
-  if(p.catalogue){
-    const business = state.business;
-    let body = '<h2 class="disp">'+esc(business.name)+' — Price List</h2>';
-    state.catalogue.categories.forEach(cat=>{
-      const items = state.catalogue.items.filter(i=>i.categoryId===cat.id);
-      if(items.length===0) return;
-      body += '<h3 class="disp">'+esc(cat.name)+'</h3><ul>'+items.map(i=>'<li>'+esc(i.name)+' — '+money(i.price,business.currency)+'</li>').join("")+'</ul>';
-    });
-    return '<div style="padding:24px;"><button class="btn ghost sm" data-action="close-print" style="margin-bottom:16px;">'+icon("back",14)+' Back</button>'+
-      '<div class="print-area">'+body+'</div></div>';
-  }
-  const {order, client, kind} = p;
-  const business = state.business;
-  const total = orderTotal(order), paid = orderPaid(order), bal = total-paid;
-  const rows = order.items.map(it=>'<tr><td style="padding:4px 0;">'+esc(it.desc)+'</td><td style="text-align:right;">'+money(it.price,business.currency)+'</td></tr>').join("");
-  return '<div style="padding:24px;max-width:520px;margin:0 auto;">'+
-    '<button class="btn ghost sm" data-action="close-print" style="margin-bottom:16px;">'+icon("back",14)+' Back</button>'+
-    '<div class="print-area">'+
-      '<h2 class="disp" style="margin-bottom:0;">'+esc(business.name)+'</h2>'+
-      (business.address?('<div>'+esc(business.address)+'</div>'):'')+
-      (business.phone?('<div>'+esc(business.phone)+'</div>'):'')+
-      (business.regNumber?('<div>RC: '+esc(business.regNumber)+'</div>'):'')+
-      '<hr>'+
-      '<h3 class="disp">'+(kind==="receipt"?"RECEIPT":"INVOICE")+'</h3>'+
-      '<div>Client: '+esc(client?client.name:"—")+'</div>'+
-      '<div>Order: '+esc(order.title||"Untitled order")+'</div>'+
-      '<div>Date: '+fmtDate(todayISO())+'</div>'+
-      '<table style="width:100%;margin-top:12px;border-collapse:collapse;">'+rows+'</table>'+
-      '<hr>'+
-      '<div>Total: '+money(total,business.currency)+'</div>'+
-      '<div>Paid: '+money(paid,business.currency)+'</div>'+
-      '<div style="font-weight:600;">Balance: '+money(bal,business.currency)+'</div>'+
-      (order.dueDate?('<div>Due date: '+fmtDate(order.dueDate)+'</div>'):'')+
-      ((bal>0 && business.bankAccounts && business.bankAccounts.length>0) ? (
-        '<div style="margin-top:10px;">'+(business.bankAccounts.length>1?"Pay into any of:":"Pay into:")+'<br>'+
-        business.bankAccounts.map(acc => esc(acc.accountName)+'<br>'+esc(acc.bankName)+'<br>'+esc(acc.accountNumber)).join('<br><br>')+
-        '</div>'
-      ) : '')+
-      '<p>Thank you for your patronage!</p>'+
-    '</div></div>';
-}
-
 /* ================= ACTIONS ================= */
 function findOrder(id){ return state.orders.find(o=>o.id===id); }
 function findClient(id){ return state.clients.find(c=>c.id===id); }
@@ -1613,6 +1683,28 @@ document.addEventListener("click", (e) => {
     case "open-order-modal-new": openOrderModal(null); break;
     case "open-order-modal-new-for-client": openOrderModal(null, id); break;
     case "open-order-modal": openOrderModal(findOrder(id)); break;
+    case "open-notifications": state.modal = { type:"notifications" }; pushNav(); render(); break;
+    case "copy-text": {
+      const value = el.getAttribute("data-value")||"";
+      const restoreHtml = el.innerHTML;
+      const flash = (ok) => {
+        el.innerHTML = icon(ok?"check":"x",13)+" "+(ok?"Copied!":"Couldn't copy");
+        clearTimeout(el._copyTimer);
+        el._copyTimer = setTimeout(() => { el.innerHTML = restoreHtml; }, 1600);
+      };
+      if(navigator.clipboard && navigator.clipboard.writeText){
+        navigator.clipboard.writeText(value).then(()=>flash(true)).catch(()=>flash(false));
+      } else {
+        try{
+          const ta = document.createElement("textarea");
+          ta.value = value; ta.style.position="fixed"; ta.style.opacity="0";
+          document.body.appendChild(ta); ta.select();
+          document.execCommand("copy"); document.body.removeChild(ta);
+          flash(true);
+        }catch(e){ flash(false); }
+      }
+      break;
+    }
     case "add-order-item": state.modal.draft.items.push({desc:"",price:""}); render(); break;
     case "remove-order-item": state.modal.draft.items.splice(Number(el.getAttribute("data-index")),1); render(); break;
     case "add-payment": {
@@ -1624,12 +1716,6 @@ document.addEventListener("click", (e) => {
       break;
     }
     case "remove-payment": state.modal.draft.payments = state.modal.draft.payments.filter(p=>p.id!==id); render(); break;
-    case "print-invoice": {
-      const o = state.modal.draft; const client = findClient(o.clientId);
-      state.printing = { order:o, client, kind: el.getAttribute("data-kind")||"invoice" };
-      state.modal = null; render();
-      break;
-    }
     case "save-order": {
       const o = state.modal.draft;
       if(!o.clientId) return;
@@ -1731,6 +1817,13 @@ document.addEventListener("click", (e) => {
       if(cat) openLightbox(cat.gallery, idx);
       break;
     }
+    case "open-full-gallery": {
+      const filterCat = (state.browseCategoryId && state.browseCategoryId!=="__all__") ? state.browseCategoryId : null;
+      const g = buildFullGallery(filterCat);
+      if(g.images.length===0){ alert("No photos in the catalogue yet."); break; }
+      openLightbox(g.images, 0, g.tags);
+      break;
+    }
     case "remove-gallery-image": {
       const cat = state.catalogue.categories.find(c=>c.id===el.getAttribute("data-cat"));
       if(cat) cat.gallery.splice(Number(el.getAttribute("data-index")),1);
@@ -1744,11 +1837,10 @@ document.addEventListener("click", (e) => {
       break;
     }
     case "close-modal": closeModal(); break;
-    case "close-print": state.printing = null; collapseNav(1); render(); break;
     case "sign-in": {
       const f = state.authForm || {};
       if((f.email||"").trim().toLowerCase()===DEMO_EMAIL && f.password===DEMO_PASSWORD){
-        state.authed = true; state.authError = null; persist("authed", true);
+        state.authed = true; state.authError = null;
       } else {
         state.authError = "Incorrect email or password. Try the demo credentials shown below.";
       }
@@ -1756,9 +1848,9 @@ document.addEventListener("click", (e) => {
       break;
     }
     case "sign-out": {
-      state.authed = false; persist("authed", false);
+      state.authed = false;
       state.authForm = { email: DEMO_EMAIL, password: DEMO_PASSWORD }; state.authError = null;
-      state.modal = null; state.printing = null; state.selectedClientId = null; state.tab = "dashboard";
+      state.modal = null; state.selectedClientId = null; state.tab = "dashboard";
       state.showWelcome = true;
       collapseNav(navDepth);
       render();
@@ -1766,7 +1858,7 @@ document.addEventListener("click", (e) => {
     }
     case "enter-shop": state.showWelcome = false; pushNav(); render(); break;
     case "open-welcome": {
-      state.modal = null; state.printing = null; state.selectedClientId = null;
+      state.modal = null; state.selectedClientId = null;
       state.tab = "dashboard"; state.showWelcome = true; state.welcomeIndex = 0;
       collapseNav(navDepth);
       render();
@@ -1930,7 +2022,7 @@ function initPullToRefresh(){
   let startY = 0, pulling = false, dragged = 0, refreshing = false;
 
   function contentEl(){ return document.getElementById("content"); }
-  function blocked(){ return refreshing || state.modal || state.lightbox || state.printing; }
+  function blocked(){ return refreshing || state.modal || state.lightbox; }
 
   document.addEventListener("touchstart", (e) => {
     if(blocked() || e.touches.length!==1){ pulling=false; return; }
