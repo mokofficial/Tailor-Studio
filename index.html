@@ -107,6 +107,7 @@
     justify-content:center;z-index:50;padding:30px 16px;overflow-y:auto;}
   .modal{background:var(--surface);border-radius:14px;width:100%;max-width:640px;padding:22px;margin-bottom:30px;}
   .modal.wide{max-width:760px;}
+  .modal.full{max-width:960px;width:96vw;min-height:88vh;}
   .modal-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;}
   .modal-title{font-family:'Fraunces',serif;font-size:19px;font-weight:600;margin:0;}
 
@@ -114,11 +115,11 @@
     display:flex;align-items:center;justify-content:center;overflow:hidden;color:var(--ink-soft);flex-shrink:0;}
   .logo-upload img{width:100%;height:100%;object-fit:cover;}
 
-  .theme-swatch{display:flex;flex-direction:column;align-items:center;gap:6px;border:none;background:transparent;padding:6px;border-radius:10px;}
+  .theme-swatch{display:flex;flex-direction:column;align-items:center;gap:6px;border:none;background:transparent;padding:8px 4px;border-radius:10px;width:100%;box-sizing:border-box;}
   .theme-swatch:hover{background:rgba(38,34,27,0.05);}
   .swatch-circle{width:38px;height:38px;border-radius:50%;border:2px solid var(--line);}
   .theme-swatch.active .swatch-circle{box-shadow:0 0 0 2px var(--surface),0 0 0 4px var(--ink);}
-  .swatch-label{font-size:10.5px;color:var(--ink-soft);}
+  .swatch-label{font-size:10.5px;color:var(--ink-soft);text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;}
   .theme-swatch.active .swatch-label{color:var(--ink);font-weight:600;}
 
   .bank-entry{border:1px solid var(--line);border-radius:10px;padding:12px;margin-bottom:10px;position:relative;}
@@ -162,6 +163,7 @@
   .welcome-logo{width:60px;height:60px;border-radius:16px;background:var(--primary);color:#fff;display:flex;align-items:center;justify-content:center;
     font-family:'Fraunces',serif;font-weight:600;font-size:22px;overflow:hidden;}
   .welcome-logo img{width:100%;height:100%;object-fit:cover;}
+@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 </style>
 </head>
 <body>
@@ -170,6 +172,7 @@
 <script>
 /* ================= ICONS ================= */
 const ICONS = {
+  refresh:'<path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 3v6h-6"/>',
   dashboard:'<rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/>',
   users:'<circle cx="9" cy="8" r="3"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><circle cx="17.5" cy="9" r="2.3"/><path d="M15.2 20c.3-2.6 2-4.5 4.3-5"/>',
   bag:'<path d="M6 8h12l-1 12H7L6 8z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/>',
@@ -369,16 +372,26 @@ function showExitToast(){
   clearTimeout(t._hideTimer);
   t._hideTimer = setTimeout(() => { t.style.opacity = "0"; }, 1600);
 }
+let lbScale = 1, lbPanX = 0, lbPanY = 0;
+function lbApplyTransform(){
+  const img = document.getElementById("lightboxImg");
+  if(img) img.style.transform = "translate("+lbPanX+"px,"+lbPanY+"px) scale("+lbScale+")";
+}
+function lbResetZoom(){
+  lbScale = 1; lbPanX = 0; lbPanY = 0; lbApplyTransform();
+}
 function ensureLightboxEl(){
   let el = document.getElementById("lightboxOverlay");
   if(!el){
     el = document.createElement("div");
     el.id = "lightboxOverlay";
-    el.style.cssText = "position:fixed;inset:0;background:rgba(10,10,10,.94);z-index:10000;display:none;align-items:center;justify-content:center;flex-direction:column;touch-action:pan-y;";
+    el.style.cssText = "position:fixed;inset:0;background:rgba(10,10,10,.94);z-index:10000;display:none;align-items:center;justify-content:center;flex-direction:column;touch-action:pan-y;overflow:hidden;";
     el.innerHTML =
-      '<button id="lightboxClose" style="position:absolute;top:16px;right:16px;background:rgba(255,255,255,.15);border:none;color:#fff;width:38px;height:38px;border-radius:50%;font-size:20px;line-height:1;cursor:pointer;">×</button>'+
-      '<div id="lightboxCounter" style="position:absolute;top:22px;left:50%;transform:translateX(-50%);color:#fff;font-size:12px;opacity:.85;letter-spacing:.04em;"></div>'+
-      '<img id="lightboxImg" style="max-width:92vw;max-height:78vh;object-fit:contain;border-radius:8px;user-select:none;-webkit-user-select:none;" draggable="false">'+
+      '<button id="lightboxClose" style="position:absolute;top:16px;right:16px;background:rgba(255,255,255,.15);border:none;color:#fff;width:38px;height:38px;border-radius:50%;font-size:20px;line-height:1;cursor:pointer;z-index:2;">×</button>'+
+      '<div id="lightboxCounter" style="position:absolute;top:22px;left:50%;transform:translateX(-50%);color:#fff;font-size:12px;opacity:.85;letter-spacing:.04em;">'+
+      '</div>'+
+      '<div id="lightboxHint" style="position:absolute;top:46px;left:50%;transform:translateX(-50%);color:rgba(255,255,255,.6);font-size:10.5px;">Double-tap or pinch to zoom</div>'+
+      '<img id="lightboxImg" style="max-width:92vw;max-height:78vh;object-fit:contain;border-radius:8px;user-select:none;-webkit-user-select:none;transition:transform .15s ease;" draggable="false">'+
       '<div style="position:absolute;bottom:26px;display:flex;gap:18px;">'+
         '<button id="lightboxPrev" style="background:rgba(255,255,255,.15);border:none;color:#fff;width:42px;height:42px;border-radius:50%;font-size:19px;cursor:pointer;">‹</button>'+
         '<button id="lightboxNext" style="background:rgba(255,255,255,.15);border:none;color:#fff;width:42px;height:42px;border-radius:50%;font-size:19px;cursor:pointer;">›</button>'+
@@ -388,12 +401,52 @@ function ensureLightboxEl(){
     document.getElementById("lightboxClose").addEventListener("click", closeLightbox);
     document.getElementById("lightboxPrev").addEventListener("click", () => lightboxStep(-1));
     document.getElementById("lightboxNext").addEventListener("click", () => lightboxStep(1));
-    let tx=0, ty=0;
-    el.addEventListener("touchstart", (e) => { const t=e.touches[0]; tx=t.clientX; ty=t.clientY; }, {passive:true});
+
+    let sx=0, sy=0, startPanX=0, startPanY=0, pinchStartDist=0, pinchStartScale=1, lastTapT=0;
+    const dist = (touches) => { const dx=touches[0].clientX-touches[1].clientX, dy=touches[0].clientY-touches[1].clientY; return Math.sqrt(dx*dx+dy*dy); };
+
+    el.addEventListener("touchstart", (e) => {
+      if(e.touches.length===2){
+        pinchStartDist = dist(e.touches);
+        pinchStartScale = lbScale;
+      } else if(e.touches.length===1){
+        const t=e.touches[0]; sx=t.clientX; sy=t.clientY; startPanX=lbPanX; startPanY=lbPanY;
+      }
+    }, {passive:true});
+
+    el.addEventListener("touchmove", (e) => {
+      if(e.touches.length===2){
+        e.preventDefault();
+        const d = dist(e.touches);
+        lbScale = Math.min(4, Math.max(1, pinchStartScale * (d/pinchStartDist)));
+        lbApplyTransform();
+      } else if(e.touches.length===1 && lbScale>1.02){
+        e.preventDefault();
+        const t=e.touches[0];
+        lbPanX = startPanX + (t.clientX-sx);
+        lbPanY = startPanY + (t.clientY-sy);
+        lbApplyTransform();
+      }
+    }, {passive:false});
+
     el.addEventListener("touchend", (e) => {
-      const t=e.changedTouches[0]; const dx=t.clientX-tx, dy=t.clientY-ty;
-      if(Math.abs(dx)>50 && Math.abs(dx)>Math.abs(dy)) lightboxStep(dx<0?1:-1);
-      else if(dy>90 && Math.abs(dy)>Math.abs(dx)) closeLightbox();
+      if(e.touches.length>0) return;
+      const t = e.changedTouches[0];
+      const dx = t.clientX-sx, dy = t.clientY-sy;
+      const now = Date.now();
+
+      if(now-lastTapT < 320 && Math.abs(dx)<12 && Math.abs(dy)<12){
+        lastTapT = 0;
+        if(lbScale>1.02) lbResetZoom();
+        else { lbScale = 2.2; lbPanX = 0; lbPanY = 0; lbApplyTransform(); }
+        return;
+      }
+      lastTapT = now;
+
+      if(lbScale<=1.02){
+        if(Math.abs(dx)>50 && Math.abs(dx)>Math.abs(dy)) lightboxStep(dx<0?1:-1);
+        else if(dy>90 && Math.abs(dy)>Math.abs(dx)) closeLightbox();
+      }
     }, {passive:true});
   }
   return el;
@@ -402,6 +455,7 @@ function lightboxStep(dir){
   if(!state.lightbox) return;
   const n = state.lightbox.images.length;
   state.lightbox.index = (state.lightbox.index + dir + n) % n;
+  lbResetZoom();
   updateLightboxUI();
 }
 function updateLightboxUI(){
@@ -409,11 +463,18 @@ function updateLightboxUI(){
   if(!state.lightbox){ el.style.display = "none"; return; }
   const {images, index} = state.lightbox;
   el.style.display = "flex";
+  lbResetZoom();
   document.getElementById("lightboxImg").src = images[index];
   document.getElementById("lightboxCounter").textContent = images.length>1 ? (index+1)+" / "+images.length : "";
   const multi = images.length>1;
   document.getElementById("lightboxPrev").style.display = multi?"flex":"none";
   document.getElementById("lightboxNext").style.display = multi?"flex":"none";
+  const hint = document.getElementById("lightboxHint");
+  if(hint){
+    hint.style.transition = "none"; hint.style.opacity = "1";
+    clearTimeout(hint._fadeTimer);
+    hint._fadeTimer = setTimeout(() => { hint.style.transition = "opacity .5s"; hint.style.opacity = "0"; }, 2200);
+  }
 }
 function openLightbox(images, index){
   if(!images || images.length===0) return;
@@ -1056,7 +1117,7 @@ function renderAccount(){
     '</div>'+
     '<div class="card">'+
       '<div class="disp" style="font-weight:600;font-size:14.5px;margin-bottom:10px;">Appearance</div>'+
-      '<div style="display:flex;flex-wrap:wrap;gap:6px;">'+
+      '<div style="display:grid;grid-template-columns:repeat(auto-fill, minmax(76px,1fr));gap:10px;">'+
         Object.keys(THEMES).map(key => {
           const t = THEMES[key];
           const active = (state.theme||"indigo")===key;
@@ -1095,8 +1156,9 @@ function renderModal(){
   if(state.modal.type==="catpicker") return renderCatalogPickerModal();
   return "";
 }
-function modalShell(title, bodyHtml, wide){
-  return '<div class="modalwrap" data-action="modal-backdrop"><div class="modal '+(wide?"wide":"")+'" data-stop="1">'+
+function modalShell(title, bodyHtml, variant){
+  const cls = variant==="full" ? "full" : (variant ? "wide" : "");
+  return '<div class="modalwrap" data-action="modal-backdrop"><div class="modal '+cls+'" data-stop="1">'+
     '<div class="modal-head"><h2 class="modal-title">'+esc(title)+'</h2>'+
       '<button class="iconbtn" data-action="close-modal" aria-label="Close">'+icon("close",16)+'</button></div>'+
     bodyHtml+
@@ -1242,19 +1304,36 @@ function renderCatItemView(){
   const business = state.business;
   const images = it.images||[];
   const cat = state.catalogue.categories.find(c=>c.id===it.categoryId);
-  return modalShell(it.name,
-    (images.length ? '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;">'+
-        images.map((s,i)=>'<img src="'+s+'" style="width:140px;height:140px;object-fit:cover;border-radius:10px;border:1px solid var(--line);cursor:pointer;" data-action="open-lightbox" data-target="modal.item.images" data-index="'+i+'">').join("")+
-      '</div>' :
-      '<div style="width:100%;height:160px;background:var(--line);border-radius:10px;display:flex;align-items:center;justify-content:center;color:var(--ink-soft);margin-bottom:14px;">'+icon("image",26)+'</div>')+
-    (cat ? '<div style="font-size:11.5px;color:var(--ink-soft);margin-bottom:4px;">'+esc(cat.name)+'</div>' : '')+
-    '<div class="mono" style="font-weight:700;font-size:18px;margin-bottom:8px;">'+money(it.price,business.currency)+'</div>'+
-    (it.description ? '<div style="font-size:13px;color:var(--ink-soft);white-space:pre-wrap;margin-bottom:16px;">'+esc(it.description)+'</div>' : '')+
+  const hero = images[0] || null;
+  const actionButtons =
     '<div style="display:flex;gap:8px;flex-wrap:wrap;">'+
-      '<button class="btn wa sm" data-action="share-catitem-whatsapp" data-id="'+it.id+'">'+icon("chat",14)+' Share to WhatsApp</button>'+
+      '<button class="btn wa sm" data-action="share-catitem-whatsapp" data-id="'+it.id+'">'+icon("chat",14)+' Share</button>'+
       '<button class="btn gold sm" data-action="add-catitem-to-new-order" data-id="'+it.id+'">'+icon("plus",14)+' Add to new order</button>'+
+    '</div>';
+
+  const heroBlock = hero ?
+    '<div style="position:relative;border-radius:14px;overflow:hidden;margin-bottom:14px;">'+
+      '<img src="'+hero+'" style="width:100%;height:38vh;object-fit:cover;display:block;cursor:zoom-in;" data-action="open-lightbox" data-target="modal.item.images" data-index="0">'+
+      '<div style="position:absolute;left:0;right:0;bottom:0;padding:14px;background:linear-gradient(to top, rgba(0,0,0,.68), rgba(0,0,0,0));">'+actionButtons+'</div>'+
+    '</div>' :
+    '<div style="position:relative;width:100%;height:32vh;background:var(--line);border-radius:14px;display:flex;align-items:center;justify-content:center;color:var(--ink-soft);margin-bottom:14px;">'+
+      icon("image",30)+
+      '<div style="position:absolute;left:0;right:0;bottom:0;padding:14px;">'+actionButtons+'</div>'+
+    '</div>';
+
+  const thumbRow = images.length>1 ? (
+    '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;">'+
+      images.map((s,i)=>'<img src="'+s+'" style="width:64px;height:64px;object-fit:cover;border-radius:8px;border:1px solid var(--line);cursor:pointer;" data-action="open-lightbox" data-target="modal.item.images" data-index="'+i+'">').join("")+
     '</div>'
-  );
+  ) : "";
+
+  return modalShell(it.name,
+    heroBlock+
+    thumbRow+
+    (cat ? '<div style="font-size:11.5px;color:var(--ink-soft);margin-bottom:4px;">'+esc(cat.name)+'</div>' : '')+
+    '<div class="mono" style="font-weight:700;font-size:20px;margin-bottom:8px;">'+money(it.price,business.currency)+'</div>'+
+    (it.description ? '<div style="font-size:13.5px;color:var(--ink-soft);white-space:pre-wrap;">'+esc(it.description)+'</div>' : '')
+  , "full");
 }
 
 function renderCatalogPickerModal(){
@@ -1832,6 +1911,71 @@ document.addEventListener("change", (e) => {
     return;
   }
 });
+
+/* ================= PULL TO REFRESH ================= */
+function ensurePullIndicator(){
+  let el = document.getElementById("pullRefreshIndicator");
+  if(!el){
+    el = document.createElement("div");
+    el.id = "pullRefreshIndicator";
+    el.style.cssText = "position:fixed;top:0;left:0;right:0;display:flex;align-items:center;justify-content:center;height:56px;transform:translateY(-56px);z-index:9998;pointer-events:none;";
+    el.innerHTML = '<div style="width:34px;height:34px;border-radius:50%;background:var(--surface);box-shadow:0 4px 14px rgba(0,0,0,.18);display:flex;align-items:center;justify-content:center;color:var(--primary);">'+
+      '<span id="pullArrow" style="display:flex;transition:transform .1s;">'+icon("refresh",16)+'</span></div>';
+    document.body.appendChild(el);
+  }
+  return el;
+}
+function initPullToRefresh(){
+  const THRESHOLD = 70, MAX_PULL = 110;
+  let startY = 0, pulling = false, dragged = 0, refreshing = false;
+
+  function contentEl(){ return document.getElementById("content"); }
+  function blocked(){ return refreshing || state.modal || state.lightbox || state.printing; }
+
+  document.addEventListener("touchstart", (e) => {
+    if(blocked() || e.touches.length!==1){ pulling=false; return; }
+    const sc = contentEl();
+    const atTop = !sc || sc.scrollTop <= 0;
+    pulling = atTop;
+    startY = e.touches[0].clientY;
+    dragged = 0;
+  }, {passive:true});
+
+  document.addEventListener("touchmove", (e) => {
+    if(!pulling || blocked()) return;
+    const sc = contentEl();
+    const atTop = !sc || sc.scrollTop <= 0;
+    const dy = e.touches[0].clientY - startY;
+    if(dy > 0 && atTop){
+      dragged = Math.min(dy*0.5, MAX_PULL);
+      const el = ensurePullIndicator();
+      el.style.transition = "none";
+      el.style.transform = "translateY("+(dragged-56)+"px)";
+      const arrow = document.getElementById("pullArrow");
+      if(arrow) arrow.style.transform = "rotate("+Math.min(dragged/THRESHOLD,1)*220+"deg)";
+    } else {
+      pulling = false;
+    }
+  }, {passive:true});
+
+  document.addEventListener("touchend", () => {
+    if(!pulling) return;
+    pulling = false;
+    const el = ensurePullIndicator();
+    el.style.transition = "transform .2s";
+    if(dragged >= THRESHOLD){
+      refreshing = true;
+      el.style.transform = "translateY(8px)";
+      const arrow = document.getElementById("pullArrow");
+      if(arrow) arrow.style.animation = "spin .6s linear infinite";
+      setTimeout(() => { window.location.reload(); }, 200);
+    } else {
+      el.style.transform = "translateY(-56px)";
+    }
+    dragged = 0;
+  }, {passive:true});
+}
+initPullToRefresh();
 
 loadAll();
 </script>
