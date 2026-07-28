@@ -585,6 +585,17 @@ history.pushState({guard:true}, "", location.href);
    Shown only the first time the app is opened, before a real account
    exists — gives the demo login something realistic to look at.
    Signing up with the SIGNUP_KEY wipes all of this permanently. */
+function demoSwatch(label, bg, fg){
+  const svg =
+    '<svg xmlns="http://www.w3.org/2000/svg" width="480" height="620" viewBox="0 0 480 620">'+
+      '<rect width="480" height="620" fill="'+bg+'"/>'+
+      '<circle cx="240" cy="215" r="85" fill="'+fg+'" opacity="0.16"/>'+
+      '<path d="M180 300 L240 235 L300 300 L314 470 L166 470 Z" fill="'+fg+'" opacity="0.92"/>'+
+      '<rect x="150" y="470" width="180" height="18" rx="4" fill="'+fg+'" opacity="0.5"/>'+
+      '<text x="240" y="545" font-family="Georgia, serif" font-size="24" fill="'+fg+'" text-anchor="middle">'+label+'</text>'+
+    '</svg>';
+  return "data:image/svg+xml;utf8,"+encodeURIComponent(svg);
+}
 function seedDemoData(doPersist){
   if(doPersist === undefined) doPersist = true;
   state.business = Object.assign({}, state.business, {
@@ -616,13 +627,15 @@ function seedDemoData(doPersist){
   ];
   state.catalogue = {
     categories: [
-      { id:"demo-cat-1", name:"Native wear", gallery:[] },
-      { id:"demo-cat-2", name:"Suits", gallery:[] },
-      { id:"demo-cat-3", name:"Casual", gallery:[] },
+      { id:"demo-cat-1", name:"Native wear", gallery:[ demoSwatch("Native wear","#F0DAB0","#8A5F1F"), demoSwatch("Native wear","#E7D2A4","#6B4718") ] },
+      { id:"demo-cat-2", name:"Suits", gallery:[ demoSwatch("Suits","#1E3A3A","#E7E1D3"), demoSwatch("Suits","#122626","#D6CDB6") ] },
+      { id:"demo-cat-3", name:"Casual", gallery:[ demoSwatch("Casual","#F0DAD1","#A2432B") ] },
     ],
     items: [
-      { id:"demo-item-1", name:"Senator wear", categoryId:"demo-cat-1", price:35000, description:"Classic senator style, made to measure.", images:[] },
-      { id:"demo-item-2", name:"Two-piece suit", categoryId:"demo-cat-2", price:95000, description:"Slim-fit two-piece suit.", images:[] },
+      { id:"demo-item-1", name:"Senator wear", categoryId:"demo-cat-1", price:35000, description:"Classic senator style, made to measure.",
+        images:[ demoSwatch("Senator wear","#F0DAB0","#8A5F1F"), demoSwatch("Senator wear","#E7D2A4","#6B4718") ] },
+      { id:"demo-item-2", name:"Two-piece suit", categoryId:"demo-cat-2", price:95000, description:"Slim-fit two-piece suit.",
+        images:[ demoSwatch("Two-piece suit","#1E3A3A","#E7E1D3"), demoSwatch("Two-piece suit","#122626","#D6CDB6") ] },
     ],
   };
   if(doPersist){ persistBusiness(); persistClients(); persistOrders(); persistCatalogue(); }
