@@ -733,6 +733,7 @@ function buildInvoiceCardHtml(order, client, business, kind){
       '<div><div style="font-size:18px;font-weight:700;color:'+ink+';">'+esc(business.name||"")+'</div>'+
       (business.address?'<div style="font-size:11.5px;color:'+inkSoft+';">'+esc(business.address)+'</div>':'')+
       (business.phone?'<div style="font-size:11.5px;color:'+inkSoft+';">'+esc(business.phone)+'</div>':'')+
+      (business.regNumber?'<div style="font-size:11.5px;color:'+inkSoft+';">RC: '+esc(business.regNumber)+'</div>':'')+
       '</div></div>'+
     '<div style="height:3px;background:'+gold+';border-radius:2px;margin-bottom:16px;"></div>'+
     '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;">'+
@@ -1254,13 +1255,19 @@ function modalShell(title, bodyHtml, variant){
 function renderClientModal(){
   const c = state.modal.draft;
   return modalShell(state.modal.isNew?"New client":"Edit client",
+    '<div style="display:flex;gap:14px;align-items:flex-end;margin-bottom:12px;">'+
+      '<div style="flex:1;"><label>Full name</label><input data-bind="modal.draft.name" value="'+esc(c.name)+'" placeholder="Amaka Obi"></div>'+
+      clientAvatarPickerHtml(c.styleImages, "modal.draft.styleImages")+
+    '</div>'+
     '<div class="grid-form2">'+
-      '<div><label>Full name</label><input data-bind="modal.draft.name" value="'+esc(c.name)+'" placeholder="Amaka Obi"></div>'+
-      '<div><label>Phone (WhatsApp)</label><input data-bind="modal.draft.phone" value="'+esc(c.phone)+'" placeholder="2348012345678"></div>'+
+      '<div><label>Phone (WhatsApp)</label><div style="display:flex;gap:6px;">'+
+        '<input style="flex:1;" data-bind="modal.draft.phone" value="'+esc(c.phone)+'" placeholder="2348012345678">'+
+        '<button type="button" class="iconbtn" data-action="pick-contact-phone" title="Pick from contacts" aria-label="Pick from contacts">'+icon("users",15)+'</button>'+
+      '</div></div>'+
       '<div><label>Gender</label><select data-bind="modal.draft.gender" data-rerender="1">'+
         ['','Female','Male','Other'].map(g=>'<option value="'+g+'" '+(c.gender===g?"selected":"")+'>'+(g||"Select")+'</option>').join("")+
       '</select></div>'+
-      '<div><label>Address</label><input data-bind="modal.draft.address" value="'+esc(c.address)+'" placeholder="Lekki, Lagos"></div>'+
+      '<div style="grid-column:1/-1;"><label>Address</label><input data-bind="modal.draft.address" value="'+esc(c.address)+'" placeholder="Lekki, Lagos"></div>'+
     '</div>'+
     '<div style="margin-top:12px;"><label>Notes</label><textarea rows="2" data-bind="modal.draft.notes" placeholder="Preferences, fabric notes, etc.">'+esc(c.notes)+'</textarea></div>'+
     '<div class="divider"></div>'+
@@ -1270,8 +1277,6 @@ function renderClientModal(){
         '<div><label>'+l+'</label><input class="mono" type="number" step="0.1" data-bind="modal.draft.measurements.'+k+'" value="'+esc(c.measurements[k]||"")+'" placeholder="0.0"></div>'
       )).join("")+
     '</div>'+
-    '<div class="divider"></div>'+
-    imagePickerHtml("Client photo (for identification)", c.styleImages, "modal.draft.styleImages", 1)+
     '<div style="display:flex;justify-content:flex-end;gap:8px;margin-top:20px;">'+
       '<button class="btn ghost" data-action="close-modal">Cancel</button>'+
       '<button class="btn" id="modalSaveBtn" '+(!c.name.trim()?"disabled":"")+' data-action="save-client">'+icon("check",15)+' Save client</button>'+
@@ -1487,6 +1492,18 @@ function imagePickerHtml(label, images, targetPath, max){
       '<input type="file" accept="image/*" '+(max===1?"":"multiple ")+'data-action="upload-images" data-target="'+targetPath+'" style="display:none;"></label>') : '')+
   '</div></div>';
 }
+function clientAvatarPickerHtml(images, targetPath){
+  const img = images && images[0];
+  return '<div style="flex-shrink:0;">'+
+    (img ?
+      '<div class="thumbwrap"><img src="'+img+'" class="thumb" alt="Client photo" style="width:64px;height:64px;border-radius:50%;cursor:pointer;" data-action="open-lightbox" data-target="'+targetPath+'" data-index="0">'+
+      '<button class="thumb-x" data-action="remove-image" data-target="'+targetPath+'" data-index="0">×</button></div>'
+      :
+      '<label class="btn ghost sm addthumb" style="width:64px;height:64px;border-radius:50%;">'+icon("camera",16)+'<span style="font-size:8.5px;">Photo</span>'+
+        '<input type="file" accept="image/*" data-action="upload-images" data-target="'+targetPath+'" style="display:none;"></label>'
+    )+
+  '</div>';
+}
 
 /* ================= WELCOME / SHOWCASE ================= */
 function welcomeSlidesData(){
@@ -1590,6 +1607,26 @@ function openClientModal(existing){
   pushNav();
   render();
 }
+async function pickContactPhone(){
+  if(!(navigator.contacts && navigator.contacts.select)){
+    alert("Picking from contacts isn't supported on this browser/device. You can still type the number in manually.");
+    return;
+  }
+  try{
+    const picked = await navigator.contacts.select(["name","tel"], {multiple:false});
+    if(!picked || !picked[0]) return;
+    const contact = picked[0];
+    const rawPhone = (contact.tel && contact.tel[0]) || "";
+    const phone = rawPhone.replace(/[^0-9+]/g,"");
+    if(phone && state.modal && state.modal.type==="client"){
+      state.modal.draft.phone = phone;
+      if(!state.modal.draft.name.trim() && contact.name && contact.name[0]){
+        state.modal.draft.name = contact.name[0];
+      }
+      render();
+    }
+  }catch(e){ /* user cancelled the picker, or permission was denied */ }
+}
 function openOrderModal(existing, prefillClientId){
   state.modal = { type:"order", isNew: !existing, isExisting: !!existing, payAmt:"", payMethod:"Cash",
     draft: existing ? JSON.parse(JSON.stringify(existing)) : {
@@ -1670,6 +1707,7 @@ document.addEventListener("click", (e) => {
     case "delete-client": if(confirm("Delete this client? This cannot be undone.")){ state.clients = state.clients.filter(c=>c.id!==id); if(state.selectedClientId===id){ state.selectedClientId=null; collapseNav(1); } persistClients(); render(); } break;
     case "open-client-modal-new": openClientModal(null); break;
     case "open-client-modal": openClientModal(findClient(id)); break;
+    case "pick-contact-phone": pickContactPhone(); break;
     case "save-client": {
       const c = state.modal.draft;
       if(!c.name.trim()) return;
