@@ -1443,7 +1443,7 @@ function renderAccount(){
         '<div style="font-size:12px;color:var(--ink-soft);margin-top:2px;">Replay the guided tour of the app anytime.</div></div>'+
       '<button class="btn ghost sm" data-action="start-tour">'+icon("help",14)+' Take the tour</button>'+
     '</div>'+
-    '<div class="card" style="margin-bottom:16px;">'+
+    '<div class="card" style="margin-bottom:16px;" data-tour-target="business-profile">'+
       '<div class="disp" style="font-weight:600;font-size:14.5px;margin-bottom:12px;">Business profile</div>'+
       '<div style="display:flex;gap:16px;align-items:center;margin-bottom:16px;flex-wrap:wrap;">'+
         '<label class="logo-upload">'+logoHtml+'<input type="file" accept="image/*" data-action="upload-logo" style="display:none;"></label>'+
@@ -1458,7 +1458,7 @@ function renderAccount(){
         '<div><label>Registration number (CAC / RC no.)</label><input data-bind="business.regNumber" value="'+esc(b.regNumber)+'" placeholder="RC 1234567"></div>'+
       '</div>'+
     '</div>'+
-    '<div class="card" style="margin-bottom:16px;">'+
+    '<div class="card" style="margin-bottom:16px;" data-tour-target="bank-details">'+
       '<div class="disp" style="font-weight:600;font-size:14.5px;margin-bottom:4px;">Bank account details</div>'+
       '<div style="font-size:12px;color:var(--ink-soft);margin-bottom:12px;">Shown on invoices so clients know where to pay. Add more than one if you use several banks.</div>'+
       (b.bankAccounts||[]).map((acc,i) => (
@@ -1475,12 +1475,12 @@ function renderAccount(){
       ((b.bankAccounts||[]).length===0 ? '<div class="empty" style="margin-bottom:10px;">No bank accounts added yet.</div>' : '')+
       '<button class="btn ghost sm" data-action="add-bank-account">'+icon("plus",14)+' Add another account</button>'+
     '</div>'+
-    '<div class="card" style="margin-bottom:16px;">'+
+    '<div class="card" style="margin-bottom:16px;" data-tour-target="manage-catalogue">'+
       '<div class="disp" style="font-weight:600;font-size:14.5px;margin-bottom:4px;">Manage catalogue</div>'+
       '<div style="font-size:12px;color:var(--ink-soft);margin-bottom:12px;">Add categories, priced items and photos here. Clients browse and get sent these from the Catalogue tab.</div>'+
       renderCatalogueManager()+
     '</div>'+
-    '<div class="card">'+
+    '<div class="card" data-tour-target="appearance">'+
       '<div class="disp" style="font-weight:600;font-size:14.5px;margin-bottom:10px;">Appearance</div>'+
       '<div style="display:grid;grid-template-columns:repeat(auto-fill, minmax(76px,1fr));gap:10px;">'+
         Object.keys(THEMES).map(key => {
@@ -1493,7 +1493,7 @@ function renderAccount(){
         }).join("")+
       '</div>'+
     '</div>'+
-    '<div class="card" style="margin-top:16px;">'+
+    '<div class="card" style="margin-top:16px;" data-tour-target="backup-transfer">'+
       '<div class="disp" style="font-weight:600;font-size:14.5px;margin-bottom:4px;">Backup &amp; transfer</div>'+
       '<div style="font-size:12px;color:var(--ink-soft);margin-bottom:12px;">Your data is stored only on this device. Export a backup file regularly, or use it to move your clients, orders and catalogue to another device.</div>'+
       '<div style="display:flex;gap:8px;flex-wrap:wrap;">'+
@@ -2093,19 +2093,19 @@ const TOUR_STEPS = [
   { tab:"catalogue", getTarget:()=>document.querySelector('#content [data-action="share-pricelist-image"]'),
     title:"Share your price list",
     body:"Send your whole catalogue as a neat image straight to WhatsApp, or download it to share anywhere." },
-  { tab:"account", getTarget:()=>{ const c=document.querySelectorAll("#content .card"); return c[1]||null; },
+  { tab:"account", getTarget:()=>document.querySelector('[data-tour-target="business-profile"]'),
     title:"Business profile",
     body:"Your shop name, logo, phone, address and registration number — used on every invoice, receipt and shared price list." },
-  { tab:"account", getTarget:()=>{ const c=document.querySelectorAll("#content .card"); return c[2]||null; },
+  { tab:"account", getTarget:()=>document.querySelector('[data-tour-target="bank-details"]'),
     title:"Bank details",
     body:"Add one or more bank accounts here so clients know exactly where to pay — they'll appear automatically on invoices with a balance due." },
-  { tab:"account", getTarget:()=>{ const c=document.querySelectorAll("#content .card"); return c[3]||null; },
+  { tab:"account", getTarget:()=>document.querySelector('[data-tour-target="manage-catalogue"]'),
     title:"Manage catalogue",
     body:"This is where you build what shows up in the Catalogue tab — add categories, upload gallery photos, and create priced items." },
-  { tab:"account", getTarget:()=>{ const c=document.querySelectorAll("#content .card"); return c[4]||null; },
+  { tab:"account", getTarget:()=>document.querySelector('[data-tour-target="appearance"]'),
     title:"Appearance",
     body:"Pick a color theme for the whole app — including dark mode." },
-  { tab:"account", getTarget:()=>{ const c=document.querySelectorAll("#content .card"); return c[5]||null; },
+  { tab:"account", getTarget:()=>document.querySelector('[data-tour-target="backup-transfer"]'),
     title:"Backup & transfer",
     body:"Your data lives only on this device. Export a backup regularly, or turn on automatic backups so you never lose your records." },
   { title:"You're all set",
