@@ -1348,8 +1348,8 @@ function renderCatalogue(){
     '<div style="display:flex;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px;">'+
       categoryFilterHtml+
       '<div style="display:flex;gap:8px;">'+
-        '<button class="iconbtn" data-action="open-full-gallery" title="Browse full gallery">'+icon("gallery",15)+'</button>'+
-        '<button class="btn wa sm" data-action="share-pricelist-image">'+icon("chat",14)+' Share price list</button>'+
+        '<button class="btn ghost sm" data-action="open-full-gallery" title="Browse full gallery">'+icon("gallery",15)+' Gallery</button>'+
+        '<button class="btn wa sm" data-action="share-pricelist-image">'+icon("share",14)+' Share price list</button>'+
         '<button class="btn ghost sm" data-action="download-pricelist-image">'+icon("download",14)+' Download</button>'+
       '</div>'+
     '</div>'+
@@ -1639,13 +1639,13 @@ function renderOrderModal(){
     '<div>'+
       '<div class="rowline"><span style="font-size:13.5px;font-weight:500;">Invoice</span>'+
         '<span style="display:flex;gap:6px;">'+
-          '<button class="iconbtn" style="background:#3fa858;border-color:#3fa858;color:#fff;" data-action="share-invoice-image" data-kind="invoice" title="Share invoice via WhatsApp" aria-label="Share invoice">'+icon("chat",15)+'</button>'+
+          '<button class="iconbtn" style="background:#3fa858;border-color:#3fa858;color:#fff;" data-action="share-invoice-image" data-kind="invoice" title="Share invoice via WhatsApp" aria-label="Share invoice">'+icon("share",15)+'</button>'+
           '<button class="iconbtn" data-action="download-invoice-image" data-kind="invoice" title="Download invoice image" aria-label="Download invoice">'+icon("download",15)+'</button>'+
         '</span>'+
       '</div>'+
       '<div class="rowline"><span style="font-size:13.5px;font-weight:500;">Receipt</span>'+
         '<span style="display:flex;gap:6px;">'+
-          '<button class="iconbtn" style="background:#3fa858;border-color:#3fa858;color:#fff;" data-action="share-invoice-image" data-kind="receipt" title="Share receipt via WhatsApp" aria-label="Share receipt">'+icon("chat",15)+'</button>'+
+          '<button class="iconbtn" style="background:#3fa858;border-color:#3fa858;color:#fff;" data-action="share-invoice-image" data-kind="receipt" title="Share receipt via WhatsApp" aria-label="Share receipt">'+icon("share",15)+'</button>'+
           '<button class="iconbtn" data-action="download-invoice-image" data-kind="receipt" title="Download receipt image" aria-label="Download receipt">'+icon("download",15)+'</button>'+
         '</span>'+
       '</div>'+
@@ -2042,12 +2042,12 @@ async function shareCatalogueItem(id){
   const business = state.business;
   const cat = state.catalogue.categories.find(c=>c.id===it.categoryId);
   
-  // Create preview HTML similar to the modal view
+  // Create preview HTML with full original image (no cropping)
   const heroImg = it.images?.[0];
   const sharePreview = document.createElement("div");
   sharePreview.style.cssText = "width:360px;background:#FBF9F3;padding:20px;font-family:Work Sans,sans-serif;color:#26221B;box-sizing:border-box;";
   sharePreview.innerHTML = 
-    (heroImg ? '<img src="'+heroImg+'" style="width:100%;height:240px;object-fit:cover;border-radius:12px;display:block;margin-bottom:14px;">' : '') +
+    (heroImg ? '<img src="'+heroImg+'" style="width:100%;height:auto;max-height:600px;object-fit:contain;border-radius:12px;display:block;margin-bottom:14px;">' : '') +
     (cat ? '<div style="font-size:11.5px;color:#645E50;margin-bottom:4px;">'+esc(cat.name)+'</div>' : '') +
     '<div style="font-family:IBM Plex Mono,monospace;font-weight:700;font-size:24px;margin-bottom:8px;">'+money(it.price,business.currency)+'</div>'+
     '<div style="font-size:16px;font-weight:600;margin-bottom:8px;">'+esc(it.name)+'</div>'+
