@@ -73,6 +73,13 @@
   .iconbtn:hover{background:rgba(38,34,27,0.05);}
   .iconbtn svg{width:15px;height:15px;}
 
+  .switch{position:relative;display:inline-block;width:40px;height:23px;flex-shrink:0;}
+  .switch input{opacity:0;width:0;height:0;}
+  .switch .slider{position:absolute;inset:0;background:var(--line);border-radius:23px;transition:background .15s;cursor:pointer;}
+  .switch .slider::before{content:"";position:absolute;width:17px;height:17px;left:3px;top:3px;background:#fff;border-radius:50%;transition:transform .15s;box-shadow:0 1px 2px rgba(0,0,0,.2);}
+  .switch input:checked + .slider{background:var(--primary);}
+  .switch input:checked + .slider::before{transform:translateX(17px);}
+
   .card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px;
     box-shadow:0 1px 2px rgba(38,34,27,0.05), 0 6px 16px rgba(38,34,27,0.05);}
   .pill{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:20px;font-size:11.5px;font-weight:600;}
@@ -85,6 +92,8 @@
   .grid-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px;}
   .grid-form2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
   .grid-meas{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:10px;}
+  .grid-stats>.card,.grid-2>.card,.grid-2-even>.card,.grid-cards>.card{min-width:0;}
+  canvas{max-width:100%;}
   @media (max-width:760px){ .grid-2{grid-template-columns:1fr;} .grid-2-even{grid-template-columns:1fr;} }
 
   .chipbar{display:flex;flex-wrap:wrap;gap:6px;}
@@ -109,7 +118,7 @@
     justify-content:center;z-index:50;padding:30px 16px;overflow-y:auto;}
   .modal{background:var(--surface);border-radius:14px;width:100%;max-width:640px;padding:22px;margin-bottom:30px;}
   .modal.wide{max-width:760px;}
-  .modal.full{max-width:960px;width:96vw;min-height:88vh;}
+  .modal.full{max-width:960px;width:96vw;max-height:88vh;overflow-y:auto;}
   .modal-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;}
   .modal-title{font-family:'Fraunces',serif;font-size:19px;font-weight:600;margin:0;}
 
@@ -160,6 +169,33 @@
     font-family:'Fraunces',serif;font-weight:600;font-size:22px;overflow:hidden;}
   .welcome-logo img{width:100%;height:100%;object-fit:cover;}
 @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+  /* ================= GUIDED TOUR ================= */
+  #tourOverlay{position:fixed;inset:0;z-index:9999;}
+  .tour-backdrop{position:fixed;inset:0;background:transparent;transition:background .15s ease;}
+  .tour-backdrop.dim{background:rgba(20,16,10,0.6);}
+  .tour-spot{position:fixed;border:2px solid var(--gold);border-radius:12px;
+    box-shadow:0 0 0 9999px rgba(20,16,10,0.6), 0 0 0 5px rgba(184,132,46,0.25);
+    pointer-events:none;transition:top .2s ease,left .2s ease,width .2s ease,height .2s ease;}
+  .tour-panel{position:fixed;left:12px;right:12px;bottom:12px;background:var(--surface);
+    border:1px solid var(--line);border-radius:16px;padding:16px 18px calc(16px + env(safe-area-inset-bottom,0px));
+    box-shadow:0 -6px 4px rgba(0,0,0,.03), 0 10px 30px rgba(0,0,0,.22);
+    max-width:440px;margin:0 auto;}
+  .tour-panel.centered{position:fixed;top:50%;left:50%;right:auto;bottom:auto;
+    transform:translate(-50%,-50%);width:88%;max-width:360px;text-align:center;}
+  .tour-eyebrow{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+  .tour-step-label{font-size:11px;font-weight:600;color:var(--gold);text-transform:uppercase;letter-spacing:.06em;}
+  .tour-skip{font-size:11.5px;color:var(--ink-soft);cursor:pointer;text-decoration:underline;background:none;border:none;padding:0;font-family:inherit;}
+  .tour-title{font-family:'Fraunces',serif;font-size:16.5px;font-weight:600;margin-bottom:5px;line-height:1.3;}
+  .tour-body{font-size:13px;color:var(--ink-soft);line-height:1.55;margin-bottom:14px;}
+  .tour-actions{display:flex;justify-content:space-between;align-items:center;gap:10px;}
+  .tour-dots{display:flex;gap:4px;align-items:center;}
+  .tour-dot{width:5px;height:5px;border-radius:50%;background:var(--line);flex-shrink:0;}
+  .tour-dot.active{background:var(--gold);width:14px;border-radius:3px;}
+  .tour-panel.centered .tour-actions{justify-content:center;}
+  .tour-banner{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;
+    background:var(--primary);color:#fff;border:none;}
+  .tour-banner .disp{color:#fff;}
 </style>
 </head>
 <body>
@@ -199,6 +235,7 @@ const ICONS = {
   mail:'<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/>',
   bell:'<path d="M6 8a6 6 0 0 1 12 0c0 4 1.5 5.5 2 6.5H4c.5-1 2-2.5 2-6.5z"/><path d="M9.5 17a2.5 2.5 0 0 0 5 0"/>',
   fingerprint:'<path d="M12 2a8 8 0 0 1 8 8c0 2-.3 3.8-.9 5.5"/><path d="M6.1 5.8A8 8 0 0 0 4 10c0 4-1 7-2 8.5"/><path d="M12 6a6 6 0 0 1 6 6c0 3.5-.7 6-1.6 7.7"/><path d="M8 7.6A6 6 0 0 0 6 10c0 5-1.2 7.5-2 8.7"/><path d="M12 10a2 2 0 0 1 2 2c0 3.5-.7 6.2-2 8.3"/><path d="M10 10.3a2 2 0 0 0-1 1.7c0 3-.5 5.5-1.7 7.7"/>',
+  help:'<circle cx="12" cy="12" r="9"/><path d="M9.2 9.3a2.8 2.8 0 0 1 5.4.9c0 1.8-2.6 2.3-2.6 4"/><circle cx="12" cy="17" r=".35" fill="currentColor"/>',
 };
 function icon(name,size){ size=size||16; return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="'+size+'" height="'+size+'" aria-hidden="true">'+(ICONS[name]||'')+'</svg>'; }
 
@@ -225,6 +262,23 @@ function applyTheme(key){
 }
 
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2,7);
+// Nigerian banks (commercial, merchant, non-interest) and popular fintechs,
+// used to power a dropdown/autocomplete on the bank account form.
+const NIGERIA_BANKS = [
+  "Access Bank","Citibank Nigeria","Ecobank Nigeria","Fidelity Bank","First Bank of Nigeria",
+  "First City Monument Bank (FCMB)","Globus Bank","Guaranty Trust Bank (GTBank)","Heritage Bank",
+  "Keystone Bank","Polaris Bank","Premium Trust Bank","Providus Bank","Stanbic IBTC Bank",
+  "Standard Chartered Bank","Sterling Bank","Suntrust Bank","Titan Trust Bank","Union Bank of Nigeria",
+  "United Bank for Africa (UBA)","Unity Bank","Wema Bank","Zenith Bank",
+  "Jaiz Bank","TAJ Bank","Lotus Bank",
+  "Coronation Merchant Bank","FBNQuest Merchant Bank","FSDH Merchant Bank","Greenwich Merchant Bank",
+  "Nova Merchant Bank","Rand Merchant Bank Nigeria","Signature Bank",
+  "Opay","PalmPay","Moniepoint (Moniepoint MFB)","Kuda Bank","VFD Microfinance Bank (VBank)",
+  "ALAT by Wema","Carbon","FairMoney Microfinance Bank","Paga","Sparkle Microfinance Bank",
+  "Mint Finex MFB","Rubies Bank","Eyowo","GoMoney","Renmoney Microfinance Bank","Cowrywise",
+  "Chipper Cash","PiggyVest","9Payment Service Bank (9PSB)","Airtel SmartCash PSB",
+  "Hope Payment Service Bank","MoMo PSB (MTN)"
+];
 const DEMO_EMAIL = "demo@tailorstudio.com";
 const DEMO_PASSWORD = "demo1234";
 // Access key required to create a real (non-demo) account. Change this string
@@ -240,7 +294,7 @@ const MUTATING_ACTIONS = new Set([
   "add-catitem-to-new-order","pick-catalog-item","save-catitem","delete-catitem",
   "remove-gallery-image","remove-image","select-theme","add-bank-account","remove-bank-account",
 ]);
-const MUTATING_CHANGE_ACTIONS = new Set(["upload-logo","upload-images","upload-gallery-images","import-data-file"]);
+const MUTATING_CHANGE_ACTIONS = new Set(["upload-logo","upload-images","upload-gallery-images","import-data-file","toggle-auto-backup"]);
 const DEV_NAME = "Morris Okereke";
 const DEV_STUDIO = "VersaX CS";
 const DEV_EMAIL = "info.versax@gmail.com";
@@ -251,6 +305,7 @@ const SUPPORT_ACCOUNT_NO = "9642608094";
 const todayISO = () => new Date().toISOString().slice(0,10);
 const addDaysISO = (n) => { const d=new Date(); d.setDate(d.getDate()+n); return d.toISOString().slice(0,10); };
 const fmtDate = (iso) => { if(!iso) return "—"; const d=new Date(iso+"T00:00:00"); return d.toLocaleDateString(undefined,{day:"numeric",month:"short",year:"numeric"}); };
+const fmtDateTime = (d) => { d = d||new Date(); return d.toLocaleDateString(undefined,{day:"numeric",month:"short",year:"numeric"})+", "+d.toLocaleTimeString(undefined,{hour:"numeric",minute:"2-digit"}); };
 const daysUntil = (iso) => { if(!iso) return null; const d=new Date(iso+"T00:00:00"); const t=new Date(); t.setHours(0,0,0,0); return Math.round((d-t)/86400000); };
 const money = (n,cur) => (cur||"")+Number(n||0).toLocaleString(undefined,{maximumFractionDigits:0});
 const greeting = () => { const h=new Date().getHours(); return h<12?"Good morning":h<17?"Good afternoon":"Good evening"; };
@@ -365,6 +420,7 @@ const state = {
   orders: [],
   catalogue: { categories: [], items: [] },
   business: { name:"My Tailor Shop", phone:"", address:"", currency:"₦", regNumber:"", bankAccounts:[], logo:null },
+  backupSettings: { enabled:false, frequency:"weekly", lastBackupAt:null },
   loaded: false,
   selectedClientId: null,
   activeCategoryId: null,
@@ -664,8 +720,10 @@ async function loadAll(){
     const b = localStorage.getItem("business");
     const th = localStorage.getItem("theme");
     const acc = localStorage.getItem("account");
+    const bkS = localStorage.getItem("backupSettings");
     if(acc) state.account = JSON.parse(acc);
     if(th) applyTheme(JSON.parse(th));
+    if(bkS){ try{ state.backupSettings = Object.assign({}, state.backupSettings, JSON.parse(bkS)); }catch(e){} }
     if(!state.account && !c && !o && !cat && !b){
       // First-ever run, no real account created yet: seed sample data
       // so the view-only demo login has something to show.
@@ -707,6 +765,7 @@ const persistClients = () => persist("clients", state.clients);
 const persistOrders = () => persist("orders", state.orders);
 const persistCatalogue = () => persist("catalogue", state.catalogue);
 const persistBusiness = () => persist("business", state.business);
+const persistBackupSettings = () => persist("backupSettings", state.backupSettings);
 const persistAccount = () => persist("account", state.account);
 
 /* ================= FINGERPRINT (WEBAUTHN) SIGN-IN ================= */
@@ -760,10 +819,11 @@ function render(){
   const app = document.getElementById("app");
   if(!state.loaded){ app.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100vh;color:var(--ink-soft)">Loading…</div>'; return; }
 
-  if(state.showWelcome){ app.innerHTML = renderWelcomeView(); startWelcomeCarousel(); return; }
+  if(state.showWelcome){ state.tour = null; renderTourOverlay(); app.innerHTML = renderWelcomeView(); startWelcomeCarousel(); return; }
   clearWelcomeTimer();
 
   if(!state.authed){
+    state.tour = null; renderTourOverlay();
     app.innerHTML = renderAuthView() + renderModal();
     if(!biometricAutoAttempted && (state.authMode||"signin")==="signin" && hasBiometricForAccount()){
       biometricAutoAttempted = true;
@@ -774,12 +834,14 @@ function render(){
 
   const contentScroll = document.getElementById("content") ? document.getElementById("content").scrollTop : 0;
 
+  checkAutoBackup();
+
   const initials = (state.business.name||"T S").trim().split(/\s+/).slice(0,2).map(w=>w[0]).join("").toUpperCase();
   const logoHtml = state.business.logo ? '<img src="'+state.business.logo+'" alt="">' : esc(initials);
   const alerts = buildAlerts();
 
   const NAV = [
-    {key:"dashboard", label:"Home", icon:"dashboard"},
+    {key:"dashboard", label:"Overview", icon:"dashboard"},
     {key:"clients", label:"Clients", icon:"users"},
     {key:"orders", label:"Orders", icon:"bag"},
     {key:"catalogue", label:"Catalogue", icon:"image"},
@@ -794,6 +856,7 @@ function render(){
           '<div class="brand-text"><div class="brand-name">'+esc(state.business.name)+'</div><div class="brand-greet">'+greeting()+'</div></div>'+
         '</div>'+
         '<div style="display:flex;gap:8px;align-items:center;">'+
+          '<button class="iconbtn" data-action="start-tour" aria-label="Take a tour">'+icon("help",16)+'</button>'+
           '<button class="iconbtn" style="position:relative;" data-action="open-notifications" aria-label="Notifications">'+icon("bell",16)+
             (alerts.total>0 ? '<span style="position:absolute;top:-5px;right:-5px;background:var(--rust);color:#fff;font-size:10px;font-weight:700;min-width:16px;height:16px;border-radius:8px;display:flex;align-items:center;justify-content:center;padding:0 3px;line-height:1;">'+(alerts.total>9?"9+":alerts.total)+'</span>' : '')+
           '</button>'+
@@ -819,6 +882,7 @@ function render(){
   if(contentEl) contentEl.scrollTop = contentScroll;
 
   if(state.tab === "dashboard") renderDashboardCharts();
+  renderTourOverlay();
 }
 
 function renderTabContent(){
@@ -848,6 +912,16 @@ function renderDashboard(){
     .filter(x=>x.client).sort((a,b)=>b.total-a.total).slice(0,5);
 
   return (
+    (tourSeen() ? '' :
+      '<div class="card tour-banner" style="margin-bottom:16px;">'+
+        '<div><div class="disp" style="font-weight:600;font-size:14.5px;">New here? Take a 2-minute tour</div>'+
+          '<div style="font-size:12px;opacity:.85;margin-top:2px;">We\'ll walk you through the dashboard, clients, orders, catalogue and settings.</div></div>'+
+        '<div style="display:flex;gap:8px;flex-shrink:0;">'+
+          '<button class="btn gold sm" data-action="start-tour">'+icon("help",13)+' Take the tour</button>'+
+          '<button class="iconbtn" style="background:transparent;border-color:rgba(255,255,255,.4);color:#fff;" data-action="dismiss-tour-banner" aria-label="Dismiss">'+icon("x",13)+'</button>'+
+        '</div>'+
+      '</div>'
+    )+
     '<div style="margin-bottom:18px;"><div class="disp" style="font-size:21px;font-weight:600;">'+greeting()+'</div>'+
       '<div style="font-size:13px;color:var(--ink-soft);margin-top:2px;">Here\'s how the shop is doing today.</div></div>'+
     '<div class="grid-stats">'+
@@ -857,10 +931,10 @@ function renderDashboard(){
       statCard("Total clients", clients.length, "users", "#8A5F1F", "var(--gold-soft)")+
     '</div>'+
     '<div class="grid-2-even">'+
-      '<div class="card"><div class="disp" style="font-weight:600;margin-bottom:10px;">Revenue, last 6 months</div>'+
-        '<div style="position:relative;height:220px;"><canvas id="revChart" role="img" aria-label="Bar chart of revenue over the last six months"></canvas></div></div>'+
-      '<div class="card"><div class="disp" style="font-weight:600;margin-bottom:10px;">Orders by status</div>'+
-        '<div style="position:relative;height:220px;"><canvas id="statusChart" role="img" aria-label="Doughnut chart of orders grouped by status"></canvas></div></div>'+
+      '<div class="card" style="min-width:0;"><div class="disp" style="font-weight:600;margin-bottom:10px;">Revenue, last 6 months</div>'+
+        '<div style="position:relative;height:220px;width:100%;min-width:0;"><canvas id="revChart" role="img" aria-label="Bar chart of revenue over the last six months"></canvas></div></div>'+
+      '<div class="card" style="min-width:0;"><div class="disp" style="font-weight:600;margin-bottom:10px;">Orders by status</div>'+
+        '<div style="position:relative;height:220px;width:100%;min-width:0;"><canvas id="statusChart" role="img" aria-label="Doughnut chart of orders grouped by status"></canvas></div></div>'+
     '</div>'+
     '<div class="grid-2">'+
       '<div class="card"><div class="disp" style="font-weight:600;margin-bottom:10px;">Due soon &amp; overdue</div>'+
@@ -889,6 +963,13 @@ function reminderText(o, client, bal, business){
 }
 
 /* ================= ARRANGED IMAGE CARDS (share / download) ================= */
+// These cards always render on a solid white background (for sharing/printing/
+// screenshotting), so their ink/line/surface colors are fixed neutrals rather
+// than pulled from the active in-app theme — otherwise a theme like Dark Mode
+// (whose "ink" is a near-white color meant for a dark UI) would make text
+// nearly invisible here. Brand accent colors (primary/gold/rust/green) still
+// follow the shop's chosen theme so the card keeps its branded look.
+const CARD_INK = "#26221B", CARD_INK_SOFT = "#645E50", CARD_LINE = "#D6CDB6", CARD_SURFACE = "#FBF9F3";
 function themeColor(name){
   const v = getComputedStyle(document.documentElement).getPropertyValue("--"+name);
   return (v && v.trim()) || "#222";
@@ -898,9 +979,16 @@ function cardLogoHtml(business, size){
   return business.logo ? '<img src="'+business.logo+'" style="width:'+size+'px;height:'+size+'px;border-radius:12px;object-fit:cover;">' :
     '<div style="width:'+size+'px;height:'+size+'px;border-radius:12px;background:'+themeColor("primary")+';color:#fff;display:flex;align-items:center;justify-content:center;font-size:'+Math.round(size*0.38)+'px;font-weight:700;font-family:Georgia,serif;">'+esc((business.name||"T").trim()[0].toUpperCase())+'</div>';
 }
+function cardBaseFooterHtml(inkSoft, line){
+  return '<div style="margin-top:18px;padding-top:12px;border-top:1px solid '+line+';text-align:center;">'+
+    '<div style="font-size:10.5px;color:'+inkSoft+';">Powered by <strong>Tailor Studio</strong></div>'+
+    '<div style="font-size:9.5px;color:'+inkSoft+';margin-top:2px;">Generated '+fmtDateTime()+'</div>'+
+  '</div>';
+}
 function buildInvoiceCardHtml(order, client, business, kind){
   const total = orderTotal(order), paid = orderPaid(order), bal = total-paid;
-  const primary=themeColor("primary"), gold=themeColor("gold"), ink=themeColor("ink"), inkSoft=themeColor("ink-soft"), line=themeColor("line"), surface=themeColor("surface"), green=themeColor("green"), rust=themeColor("rust");
+  const primary=themeColor("primary"), gold=themeColor("gold"), green=themeColor("green"), rust=themeColor("rust");
+  const ink=CARD_INK, inkSoft=CARD_INK_SOFT, line=CARD_LINE, surface=CARD_SURFACE;
   const rows = (order.items||[]).map(it=>
     '<tr><td style="padding:7px 0;border-bottom:1px solid '+line+';font-size:13px;color:'+ink+';">'+esc(it.desc||"Item")+'</td>'+
     '<td style="padding:7px 0;border-bottom:1px solid '+line+';font-size:13px;color:'+ink+';text-align:right;white-space:nowrap;">'+money(it.price,business.currency)+'</td></tr>'
@@ -911,18 +999,21 @@ function buildInvoiceCardHtml(order, client, business, kind){
       business.bankAccounts.map(acc=>'<div style="font-size:12.5px;color:'+ink+';margin-bottom:4px;">'+esc(acc.accountName)+' · '+esc(acc.bankName)+' · '+esc(acc.accountNumber)+'</div>').join("")+
     '</div>' : '';
   return '<div style="width:480px;padding:32px;background:#ffffff;font-family:Georgia,serif;box-sizing:border-box;">'+
-    '<div style="display:flex;align-items:center;gap:12px;margin-bottom:18px;">'+cardLogoHtml(business,52)+
-      '<div><div style="font-size:18px;font-weight:700;color:'+ink+';">'+esc(business.name||"")+'</div>'+
-      (business.address?'<div style="font-size:11.5px;color:'+inkSoft+';">'+esc(business.address)+'</div>':'')+
-      (business.phone?'<div style="font-size:11.5px;color:'+inkSoft+';">'+esc(business.phone)+'</div>':'')+
-      '</div></div>'+
+    '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:18px;">'+
+      '<div style="display:flex;align-items:center;gap:12px;min-width:0;">'+cardLogoHtml(business,52)+
+        '<div><div style="font-size:18px;font-weight:700;color:'+ink+';">'+esc(business.name||"")+'</div>'+
+        (business.address?'<div style="font-size:11.5px;color:'+inkSoft+';">'+esc(business.address)+'</div>':'')+
+        (business.phone?'<div style="font-size:11.5px;color:'+inkSoft+';">'+esc(business.phone)+'</div>':'')+
+        '</div>'+
+      '</div>'+
+      (business.regNumber?'<div style="font-size:11px;color:'+inkSoft+';text-align:right;white-space:nowrap;flex-shrink:0;">RC: '+esc(business.regNumber)+'</div>':'')+
+    '</div>'+
     '<div style="height:3px;background:'+gold+';border-radius:2px;margin-bottom:16px;"></div>'+
     '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;">'+
       '<div><div style="font-size:20px;font-weight:700;letter-spacing:.06em;color:'+primary+';">'+(kind==="receipt"?"RECEIPT":"INVOICE")+'</div>'+
       '<div style="font-size:12px;color:'+inkSoft+';margin-top:2px;">'+fmtDate(todayISO())+'</div></div>'+
       '<div style="text-align:right;"><div style="font-size:11px;color:'+inkSoft+';">Billed to</div>'+
       '<div style="font-size:14px;font-weight:600;color:'+ink+';">'+esc(client?client.name:"—")+'</div>'+
-      (business.regNumber?'<div style="font-size:11px;color:'+inkSoft+';margin-top:2px;">RC: '+esc(business.regNumber)+'</div>':'')+
       '</div>'+
     '</div>'+
     '<div style="font-size:12.5px;color:'+inkSoft+';margin-bottom:10px;">'+esc(order.title||"Untitled order")+'</div>'+
@@ -935,13 +1026,18 @@ function buildInvoiceCardHtml(order, client, business, kind){
     (order.dueDate?'<div style="font-size:12px;color:'+inkSoft+';margin-top:8px;">Due date: '+fmtDate(order.dueDate)+'</div>':'')+
     bankHtml+
     '<div style="margin-top:22px;text-align:center;font-size:12px;color:'+inkSoft+';font-style:italic;">Thank you for your patronage!</div>'+
+    cardBaseFooterHtml(inkSoft, line)+
   '</div>';
 }
 function buildReminderCardHtml(order, client, bal, business){
-  const primary=themeColor("primary"), gold=themeColor("gold"), ink=themeColor("ink"), inkSoft=themeColor("ink-soft"), rust=themeColor("rust"), line=themeColor("line"), surface=themeColor("surface");
+  const primary=themeColor("primary"), gold=themeColor("gold"), rust=themeColor("rust");
+  const ink=CARD_INK, inkSoft=CARD_INK_SOFT, line=CARD_LINE, surface=CARD_SURFACE;
   return '<div style="width:420px;padding:30px;background:#ffffff;font-family:Georgia,serif;box-sizing:border-box;text-align:center;">'+
-    '<div style="display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:14px;">'+cardLogoHtml(business,48)+
-      '<div style="font-size:16px;font-weight:700;color:'+ink+';text-align:left;">'+esc(business.name||"")+'</div></div>'+
+    '<div style="position:relative;">'+
+      (business.regNumber?'<div style="position:absolute;top:0;right:0;font-size:10px;color:'+inkSoft+';">RC: '+esc(business.regNumber)+'</div>':'')+
+      '<div style="display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:14px;">'+cardLogoHtml(business,48)+
+        '<div style="font-size:16px;font-weight:700;color:'+ink+';text-align:left;">'+esc(business.name||"")+'</div></div>'+
+    '</div>'+
     '<div style="height:3px;width:60px;background:'+gold+';border-radius:2px;margin:0 auto 18px;"></div>'+
     '<div style="font-size:12px;letter-spacing:.08em;color:'+inkSoft+';text-transform:uppercase;margin-bottom:6px;">Payment Reminder</div>'+
     '<div style="font-size:15px;color:'+ink+';margin-bottom:16px;">Hi '+esc(client.name)+', a friendly reminder on<br><strong>'+esc(order.title||"your order")+'</strong></div>'+
@@ -952,10 +1048,12 @@ function buildReminderCardHtml(order, client, bal, business){
     '</div>'+
     (business.phone?'<div style="font-size:12px;color:'+inkSoft+';">Contact: '+esc(business.phone)+'</div>':'')+
     '<div style="margin-top:14px;font-size:12px;color:'+inkSoft+';font-style:italic;">Thank you!</div>'+
+    cardBaseFooterHtml(inkSoft, line)+
   '</div>';
 }
 function buildPriceListCardHtml(business){
-  const primary=themeColor("primary"), gold=themeColor("gold"), ink=themeColor("ink"), inkSoft=themeColor("ink-soft"), line=themeColor("line");
+  const primary=themeColor("primary"), gold=themeColor("gold");
+  const ink=CARD_INK, inkSoft=CARD_INK_SOFT, line=CARD_LINE;
   const sections = state.catalogue.categories.map(cat=>{
     const items = state.catalogue.items.filter(i=>i.categoryId===cat.id);
     if(items.length===0) return "";
@@ -965,12 +1063,17 @@ function buildPriceListCardHtml(business){
     '</div>';
   }).join("");
   return '<div style="width:440px;padding:30px;background:#ffffff;font-family:Georgia,serif;box-sizing:border-box;">'+
-    '<div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">'+cardLogoHtml(business,48)+
-      '<div style="font-size:17px;font-weight:700;color:'+ink+';">'+esc(business.name||"")+'</div></div>'+
+    '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:16px;">'+
+      '<div style="display:flex;align-items:center;gap:10px;min-width:0;">'+cardLogoHtml(business,48)+
+        '<div style="font-size:17px;font-weight:700;color:'+ink+';">'+esc(business.name||"")+'</div>'+
+      '</div>'+
+      (business.regNumber?'<div style="font-size:11px;color:'+inkSoft+';text-align:right;white-space:nowrap;flex-shrink:0;">RC: '+esc(business.regNumber)+'</div>':'')+
+    '</div>'+
     '<div style="height:3px;background:'+gold+';border-radius:2px;margin-bottom:16px;"></div>'+
     '<div style="font-size:15px;font-weight:700;color:'+primary+';margin-bottom:14px;">Price List</div>'+
     (sections || '<div style="font-size:12.5px;color:'+inkSoft+';">No priced items yet.</div>')+
     (business.phone?'<div style="margin-top:6px;font-size:12px;color:'+inkSoft+';">Contact us: '+esc(business.phone)+'</div>':'')+
+    cardBaseFooterHtml(inkSoft, line)+
   '</div>';
 }
 async function cardToFile(html, filenameBase, widthPx){
@@ -1031,12 +1134,12 @@ async function sharePriceListImage(mode){
   await shareImageFile(file, (business.name||"")+" — Price List", "");
 }
 function statCard(label, value, iconName, tone, bg){
-  return '<div class="card" style="display:flex;flex-direction:column;gap:10px;">'+
-    '<div style="display:flex;align-items:center;gap:9px;">'+
+  return '<div class="card" style="display:flex;flex-direction:column;gap:10px;min-width:0;">'+
+    '<div style="display:flex;align-items:center;gap:9px;min-width:0;">'+
       '<div class="icon-badge" style="background:'+bg+';color:'+tone+';">'+icon(iconName,16)+'</div>'+
-      '<span style="font-size:12.5px;font-weight:500;color:var(--ink-soft);">'+label+'</span>'+
+      '<span style="font-size:12.5px;font-weight:500;color:var(--ink-soft);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+label+'</span>'+
     '</div>'+
-    '<div class="disp" style="font-size:24px;font-weight:600;color:'+tone+';">'+value+'</div>'+
+    '<div class="disp" style="font-size:clamp(16px,4.2vw,24px);font-weight:600;color:'+tone+';line-height:1.15;overflow-wrap:anywhere;word-break:break-word;min-width:0;">'+value+'</div>'+
   '</div>';
 }
 function renderDashboardCharts(){
@@ -1335,6 +1438,11 @@ function renderAccount(){
   const logoHtml = b.logo ? '<img src="'+b.logo+'" alt="Business logo">' : icon("upload",20);
   return (
     '<div class="disp" style="font-size:19px;font-weight:600;margin-bottom:16px;">Account</div>'+
+    '<div class="card" style="margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;">'+
+      '<div><div class="disp" style="font-weight:600;font-size:14.5px;">Need a refresher?</div>'+
+        '<div style="font-size:12px;color:var(--ink-soft);margin-top:2px;">Replay the guided tour of the app anytime.</div></div>'+
+      '<button class="btn ghost sm" data-action="start-tour">'+icon("help",14)+' Take the tour</button>'+
+    '</div>'+
     '<div class="card" style="margin-bottom:16px;">'+
       '<div class="disp" style="font-weight:600;font-size:14.5px;margin-bottom:12px;">Business profile</div>'+
       '<div style="display:flex;gap:16px;align-items:center;margin-bottom:16px;flex-wrap:wrap;">'+
@@ -1357,12 +1465,13 @@ function renderAccount(){
         '<div class="bank-entry">'+
           '<button class="iconbtn" data-action="remove-bank-account" data-index="'+i+'" style="position:absolute;top:10px;right:10px;" aria-label="Remove">'+icon("x",13)+'</button>'+
           '<div class="grid-form2">'+
-            '<div style="grid-column:1/-1;"><label>Bank name</label><input data-bind="business.bankAccounts.'+i+'.bankName" value="'+esc(acc.bankName)+'" placeholder="GTBank"></div>'+
+            '<div style="grid-column:1/-1;"><label>Bank / fintech name</label><input list="nigeriaBanksList" data-bind="business.bankAccounts.'+i+'.bankName" value="'+esc(acc.bankName)+'" placeholder="Start typing e.g. GTBank, Kuda, Opay…"></div>'+
             '<div><label>Account name</label><input data-bind="business.bankAccounts.'+i+'.accountName" value="'+esc(acc.accountName)+'"></div>'+
             '<div><label>Account number</label><input class="mono" data-bind="business.bankAccounts.'+i+'.accountNumber" value="'+esc(acc.accountNumber)+'"></div>'+
           '</div>'+
         '</div>'
       )).join("")+
+      '<datalist id="nigeriaBanksList">'+ NIGERIA_BANKS.map(n=>'<option value="'+esc(n)+'">').join("") +'</datalist>'+
       ((b.bankAccounts||[]).length===0 ? '<div class="empty" style="margin-bottom:10px;">No bank accounts added yet.</div>' : '')+
       '<button class="btn ghost sm" data-action="add-bank-account">'+icon("plus",14)+' Add another account</button>'+
     '</div>'+
@@ -1393,6 +1502,16 @@ function renderAccount(){
           '<input type="file" accept="application/json" data-action="import-data-file" style="display:none;">'+
         '</label>'+
       '</div>'+
+      '<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:16px;padding-top:14px;border-top:1px solid var(--line);">'+
+        '<div><div style="font-size:13px;font-weight:500;">Automatic backup</div>'+
+        '<div style="font-size:11.5px;color:var(--ink-soft);margin-top:2px;">'+autoBackupStatusText()+'</div></div>'+
+        '<label class="switch"><input type="checkbox" data-action="toggle-auto-backup" '+(state.backupSettings.enabled?"checked":"")+'><span class="slider"></span></label>'+
+      '</div>'+
+      (state.backupSettings.enabled ?
+        '<div style="margin-top:10px;"><label>Backup frequency</label><select data-bind="backupSettings.frequency" data-rerender="1">'+
+          [["daily","Daily"],["weekly","Weekly"],["monthly","Monthly"]].map(([v,l])=>'<option value="'+v+'" '+(state.backupSettings.frequency===v?"selected":"")+'>'+l+'</option>').join("")+
+        '</select></div>'
+      : '')+
     '</div>'+
     '<div class="card" style="margin-top:16px;">'+
       '<div class="disp" style="font-weight:600;font-size:14.5px;margin-bottom:4px;">Session</div>'+
@@ -1509,13 +1628,27 @@ function renderOrderModal(){
 
   const invoiceSection = state.modal.isExisting && client ? (
     '<div class="divider"></div>'+
-    '<div class="disp" style="font-weight:600;font-size:15px;margin-bottom:8px;">Invoice &amp; reminders</div>'+
-    '<div style="display:flex;flex-wrap:wrap;gap:8px;">'+
-      '<button class="btn wa sm" data-action="share-invoice-image" data-kind="invoice">'+icon("chat",14)+' Share invoice</button>'+
-      '<button class="btn ghost sm" data-action="download-invoice-image" data-kind="invoice">'+icon("download",14)+' Download</button>'+
-      '<button class="btn wa sm" data-action="share-invoice-image" data-kind="receipt">'+icon("chat",14)+' Share receipt</button>'+
-      '<button class="btn ghost sm" data-action="download-invoice-image" data-kind="receipt">'+icon("download",14)+' Download</button>'+
-      (bal>0 ? '<button class="btn wa sm" data-action="share-reminder-image">'+icon("send",14)+' Send payment reminder</button>' : '')+
+    '<div class="disp" style="font-weight:600;font-size:15px;margin-bottom:6px;">Invoice &amp; reminders</div>'+
+    '<div>'+
+      '<div class="rowline"><span style="font-size:13.5px;font-weight:500;">Invoice</span>'+
+        '<span style="display:flex;gap:6px;">'+
+          '<button class="iconbtn" style="background:#3fa858;border-color:#3fa858;color:#fff;" data-action="share-invoice-image" data-kind="invoice" title="Share invoice via WhatsApp" aria-label="Share invoice">'+icon("chat",15)+'</button>'+
+          '<button class="iconbtn" data-action="download-invoice-image" data-kind="invoice" title="Download invoice image" aria-label="Download invoice">'+icon("download",15)+'</button>'+
+        '</span>'+
+      '</div>'+
+      '<div class="rowline"><span style="font-size:13.5px;font-weight:500;">Receipt</span>'+
+        '<span style="display:flex;gap:6px;">'+
+          '<button class="iconbtn" style="background:#3fa858;border-color:#3fa858;color:#fff;" data-action="share-invoice-image" data-kind="receipt" title="Share receipt via WhatsApp" aria-label="Share receipt">'+icon("chat",15)+'</button>'+
+          '<button class="iconbtn" data-action="download-invoice-image" data-kind="receipt" title="Download receipt image" aria-label="Download receipt">'+icon("download",15)+'</button>'+
+        '</span>'+
+      '</div>'+
+      (bal>0 ?
+        '<div class="rowline"><span style="font-size:13.5px;font-weight:500;">Payment reminder</span>'+
+          '<span style="display:flex;gap:6px;">'+
+            '<button class="iconbtn" style="background:#3fa858;border-color:#3fa858;color:#fff;" data-action="share-reminder-image" title="Send payment reminder via WhatsApp" aria-label="Send payment reminder">'+icon("send",15)+'</button>'+
+          '</span>'+
+        '</div>'
+      : '')+
     '</div>'
   ) : "";
 
@@ -1917,6 +2050,156 @@ async function shareCatalogueItem(id){
   window.open(waLink("", text), "_blank", "noreferrer");
 }
 
+/* ================= GUIDED TOUR ================= */
+function tourSeen(){ try{ return localStorage.getItem("ts_tour_seen")==="1"; }catch(e){ return false; } }
+function markTourSeen(){ try{ localStorage.setItem("ts_tour_seen","1"); }catch(e){} }
+
+const TOUR_STEPS = [
+  { title:"Welcome to Tailor Studio",
+    body:"A quick, 60-second tour of the essentials — how to manage clients, orders, your catalogue and your shop settings. Tap Next to begin, or Skip tour at any time." },
+  { tab:"dashboard", getTarget:()=>document.querySelector(".brand"),
+    title:"Your shop identity",
+    body:"Your business name and logo, top-left, everywhere in the app. Tap it any time to preview the public welcome screen clients see." },
+  { tab:"dashboard", getTarget:()=>document.querySelector('.topbar [data-action="open-notifications"]'),
+    title:"Alerts",
+    body:"The bell flags orders that are due soon, due today, or overdue — plus any order with an unpaid balance." },
+  { tab:"dashboard", getTarget:()=>document.querySelector('.topbar [data-action="open-order-modal-new"]'),
+    title:"Start a new order",
+    body:"Create an order for any client from anywhere in the app — pick items from your catalogue, set a due date, and record payments as they come in." },
+  { tab:"dashboard", getTarget:()=>document.querySelector("#content .grid-stats"),
+    title:"Overview at a glance",
+    body:"Total revenue, outstanding balance, active orders and total clients — updated automatically as you work." },
+  { tab:"dashboard", getTarget:()=>document.querySelector("#content .grid-2-even"),
+    title:"Charts",
+    body:"See revenue over the last six months, and how your orders are spread across each stage of production." },
+  { tab:"dashboard", getTarget:()=>document.querySelector("#content .grid-2"),
+    title:"Due soon & top clients",
+    body:"Orders that need attention soon, plus the clients who've spent the most with you — with a one-tap WhatsApp reminder button." },
+  { tab:"clients", getTarget:()=>document.querySelector('#content [data-action="open-client-modal-new"]'),
+    title:"Clients",
+    body:"Search your client list, or add a new client here — name, phone, address, measurements and style photos all live on their profile." },
+  { tab:"clients", getTarget:()=>document.querySelector("#content .grid-cards, #content #clientsGrid"),
+    title:"Client profiles",
+    body:"Tap any client card to open their full profile: body measurements, style photos, and their complete order history." },
+  { tab:"orders", getTarget:()=>document.querySelector("#content .chipbar"),
+    title:"Order status filters",
+    body:"Filter orders by stage — Pending, Cutting, Sewing, Fitting, Ready, Delivered — or Cancelled." },
+  { tab:"orders", getTarget:()=>document.querySelector('#content [data-action="open-order-modal-new"]'),
+    title:"Order tracker",
+    body:"Every order shows a progress tape through each stage, plus its total, balance and due date, right on the card. Tap a card to update it." },
+  { tab:"catalogue", getTarget:()=>document.querySelector("#content .chipbar"),
+    title:"Catalogue",
+    body:"Browse your priced styles by category — this is what you'd show a client browsing your work." },
+  { tab:"catalogue", getTarget:()=>document.querySelector('#content [data-action="share-pricelist-image"]'),
+    title:"Share your price list",
+    body:"Send your whole catalogue as a neat image straight to WhatsApp, or download it to share anywhere." },
+  { tab:"account", getTarget:()=>{ const c=document.querySelectorAll("#content .card"); return c[1]||null; },
+    title:"Business profile",
+    body:"Your shop name, logo, phone, address and registration number — used on every invoice, receipt and shared price list." },
+  { tab:"account", getTarget:()=>{ const c=document.querySelectorAll("#content .card"); return c[2]||null; },
+    title:"Bank details",
+    body:"Add one or more bank accounts here so clients know exactly where to pay — they'll appear automatically on invoices with a balance due." },
+  { tab:"account", getTarget:()=>{ const c=document.querySelectorAll("#content .card"); return c[3]||null; },
+    title:"Manage catalogue",
+    body:"This is where you build what shows up in the Catalogue tab — add categories, upload gallery photos, and create priced items." },
+  { tab:"account", getTarget:()=>{ const c=document.querySelectorAll("#content .card"); return c[4]||null; },
+    title:"Appearance",
+    body:"Pick a color theme for the whole app — including dark mode." },
+  { tab:"account", getTarget:()=>{ const c=document.querySelectorAll("#content .card"); return c[5]||null; },
+    title:"Backup & transfer",
+    body:"Your data lives only on this device. Export a backup regularly, or turn on automatic backups so you never lose your records." },
+  { title:"You're all set",
+    body:"That's the tour! Explore at your own pace — tap the ? icon in the top bar anytime to run through this again." },
+];
+
+let tourResizeBound = false;
+function startTour(){
+  if(!state.authed || state.showWelcome) return;
+  collapseNav(navDepth);
+  state.modal = null; state.selectedClientId = null; state.lightbox = null; state.tab = "dashboard";
+  markTourSeen();
+  state.tour = { step: 0 };
+  goToTourStep(0);
+  if(!tourResizeBound){
+    tourResizeBound = true;
+    window.addEventListener("resize", () => { if(state.tour) renderTourOverlay(); });
+  }
+}
+function goToTourStep(i){
+  if(!state.tour) return;
+  if(i < 0){ return; }
+  if(i >= TOUR_STEPS.length){ endTour(); return; }
+  state.tour.step = i;
+  const step = TOUR_STEPS[i];
+  if(step.tab && state.tab !== step.tab){
+    const wasHome = state.tab === "dashboard";
+    state.tab = step.tab; state.selectedClientId = null;
+    if(wasHome && step.tab !== "dashboard") pushNav();
+    else if(!wasHome && step.tab === "dashboard") collapseNav(1);
+  }
+  render();
+}
+function nextTour(){ if(state.tour) goToTourStep(state.tour.step + 1); }
+function prevTour(){ if(state.tour) goToTourStep(state.tour.step - 1); }
+function endTour(){
+  state.tour = null;
+  const ov = document.getElementById("tourOverlay");
+  if(ov) ov.remove();
+  render();
+}
+function renderTourOverlay(){
+  let overlay = document.getElementById("tourOverlay");
+  if(!state.tour){ if(overlay) overlay.remove(); return; }
+  if(!overlay){
+    overlay = document.createElement("div");
+    overlay.id = "tourOverlay";
+    document.body.appendChild(overlay);
+    overlay.addEventListener("click", (e) => {
+      const el = e.target.closest("[data-tour-action]");
+      if(!el) return;
+      const act = el.getAttribute("data-tour-action");
+      if(act === "next") nextTour();
+      else if(act === "prev") prevTour();
+      else if(act === "skip" || act === "finish") endTour();
+    });
+  }
+  const idx = state.tour.step;
+  const step = TOUR_STEPS[idx];
+  let target = null;
+  if(step && step.getTarget){ try{ target = step.getTarget(); }catch(e){ target = null; } }
+  if(target && target.scrollIntoView) target.scrollIntoView({block:"center", behavior:"auto"});
+  requestAnimationFrame(() => { paintTourOverlay(overlay, step, target, idx, TOUR_STEPS.length); });
+}
+function paintTourOverlay(overlay, step, target, idx, total){
+  if(!state.tour) return;
+  const rect = target ? target.getBoundingClientRect() : null;
+  const pad = 6;
+  const dots = TOUR_STEPS.map((_,i)=>'<span class="tour-dot '+(i===idx?"active":"")+'"></span>').join("");
+  const isFirst = idx === 0, isLast = idx === total - 1;
+  const panelClass = rect ? "tour-panel" : "tour-panel centered";
+  const panelHtml =
+    '<div class="'+panelClass+'">'+
+      '<div class="tour-eyebrow"><span class="tour-step-label">Step '+(idx+1)+' of '+total+'</span>'+
+        (isLast ? '' : '<button class="tour-skip" data-tour-action="skip">Skip tour</button>')+
+      '</div>'+
+      '<div class="tour-title">'+esc(step.title)+'</div>'+
+      '<div class="tour-body">'+esc(step.body)+'</div>'+
+      '<div class="tour-actions">'+
+        (isFirst ? '<span></span>' : '<button class="btn ghost sm" data-tour-action="prev">'+icon("back",13)+' Back</button>')+
+        '<div class="tour-dots">'+dots+'</div>'+
+        (isLast ?
+          '<button class="btn gold sm" data-tour-action="finish">'+icon("check",13)+' Done</button>' :
+          '<button class="btn gold sm" data-tour-action="next">Next '+icon("forward",13)+'</button>')+
+      '</div>'+
+    '</div>';
+  overlay.innerHTML =
+    '<div class="tour-backdrop '+(rect ? "" : "dim")+'"></div>'+
+    (rect ?
+      '<div class="tour-spot" style="top:'+(rect.top-pad)+'px;left:'+(rect.left-pad)+'px;width:'+(rect.width+pad*2)+'px;height:'+(rect.height+pad*2)+'px;"></div>'
+      : '')+
+    panelHtml;
+}
+
 document.addEventListener("click", (e) => {
   const stop = e.target.closest('[data-stop]');
   const backdrop = e.target.closest('[data-action="modal-backdrop"]');
@@ -1933,6 +2216,8 @@ document.addEventListener("click", (e) => {
   }
 
   switch(action){
+    case "start-tour": startTour(); break;
+    case "dismiss-tour-banner": markTourSeen(); render(); break;
     case "set-tab": {
       const newTab = el.getAttribute("data-tab");
       const wasHome = state.tab === "dashboard";
@@ -2254,6 +2539,37 @@ function exportBackup(){
   a.href = url; a.download = "tailor-studio-backup-"+stamp+".json";
   document.body.appendChild(a); a.click(); a.remove();
   setTimeout(() => URL.revokeObjectURL(url), 2000);
+}
+const AUTO_BACKUP_INTERVALS = { daily:1, weekly:7, monthly:30 };
+function nextAutoBackupDate(){
+  const bs = state.backupSettings;
+  if(!bs || !bs.enabled) return null;
+  const days = AUTO_BACKUP_INTERVALS[bs.frequency] || 7;
+  const base = bs.lastBackupAt ? new Date(bs.lastBackupAt) : new Date();
+  return new Date(base.getTime() + days*24*60*60*1000);
+}
+function autoBackupStatusText(){
+  const bs = state.backupSettings;
+  if(!bs || !bs.enabled) return "Off — a backup file will only be created when you tap Export.";
+  const next = nextAutoBackupDate();
+  const freqLabel = {daily:"Daily",weekly:"Weekly",monthly:"Monthly"}[bs.frequency] || "Weekly";
+  return freqLabel+" · next backup around "+fmtDateTime(next)+(bs.lastBackupAt ? " (last: "+fmtDateTime(new Date(bs.lastBackupAt))+")" : "");
+}
+// Runs on every render while signed in. Cheap date comparison; only does real
+// work (an export + persist) on the rare render where a backup is actually due,
+// and updates lastBackupAt in memory immediately so it won't re-trigger on the
+// next render before the debounced persist() write lands.
+function checkAutoBackup(){
+  const bs = state.backupSettings;
+  if(!bs || !bs.enabled || state.viewOnly || !state.authed) return;
+  const days = AUTO_BACKUP_INTERVALS[bs.frequency] || 7;
+  const last = bs.lastBackupAt ? new Date(bs.lastBackupAt) : null;
+  const now = new Date();
+  if(!last || (now - last) >= days*24*60*60*1000){
+    try{ exportBackup(); }catch(e){}
+    bs.lastBackupAt = now.toISOString();
+    persistBackupSettings();
+  }
 }
 
 function downloadUserGuide(){
@@ -2603,11 +2919,22 @@ function updateOrderTotalsInline(){
 }
 
 document.addEventListener("change", (e) => {
+  if(e.target.matches('[data-action="toggle-auto-backup"]')){
+    if(state.viewOnly){ showViewOnlyToast(); e.target.checked = state.backupSettings.enabled; return; }
+    state.backupSettings.enabled = e.target.checked;
+    // Start the interval fresh from now rather than immediately firing a
+    // backup the moment it's turned on.
+    state.backupSettings.lastBackupAt = new Date().toISOString();
+    persistBackupSettings();
+    render();
+    return;
+  }
   const bindEl = e.target.closest("[data-bind]");
   if(bindEl && bindEl.hasAttribute("data-rerender")){
     const path = bindEl.getAttribute("data-bind");
     if(state.viewOnly && !path.startsWith("authForm.")){ showViewOnlyToast(); render(); return; }
     setPath(state, path, e.target.value);
+    if(path.startsWith("backupSettings.")) persistBackupSettings();
     render();
     return;
   }
@@ -2667,7 +2994,7 @@ function initPullToRefresh(){
   let startY = 0, pulling = false, dragged = 0, refreshing = false;
 
   function contentEl(){ return document.getElementById("content"); }
-  function blocked(){ return refreshing || state.modal || state.lightbox; }
+  function blocked(){ return refreshing || state.modal || state.lightbox || state.tour; }
 
   document.addEventListener("touchstart", (e) => {
     if(blocked() || e.touches.length!==1){ pulling=false; return; }
