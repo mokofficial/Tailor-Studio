@@ -2400,14 +2400,24 @@ function downloadUserGuide(){
     doc.text(aLines, marginX, y);
     y += aLines.length*15 + 14;
   }
-  function contactRow(label, value){
-    ensureSpace(18);
+  function contactRow(label, value, url){
+    ensureSpace(20);
     doc.setFont("times","bold"); doc.setFontSize(11); doc.setTextColor(...inkRGB);
     doc.text(label+":", marginX, y);
     doc.setFont("times","normal"); doc.setTextColor(...softRGB);
-    doc.text(value, marginX + 110, y);
-    y += 18;
+    if(url) doc.textWithLink(value, marginX + 118, y, { url });
+    else doc.text(value, marginX + 118, y);
+    y += 20;
   }
+  function digitsOnly(s){ return (s||"").replace(/[^\d]/g,""); }
+  function linkButton(label, x, yTop, w, h, url, bg){
+    doc.setFillColor(bg[0],bg[1],bg[2]);
+    doc.roundedRect(x, yTop, w, h, 7, 7, "F");
+    doc.setFont("times","bold"); doc.setFontSize(11); doc.setTextColor(255,255,255);
+    doc.text(label, x+w/2, yTop+h/2+4, { align:"center" });
+    doc.link(x, yTop, w, h, { url });
+  }
+  function sectionGap(){ y += 22; }
 
   // ---- Cover ----
   doc.setFillColor(...primaryRGB);
@@ -2429,7 +2439,7 @@ function downloadUserGuide(){
     "1. Getting started", "2. Dashboard", "3. Clients", "4. Orders",
     "5. Receipts & invoices", "6. Catalogue", "7. Account & business settings",
     "8. Backup & restore your data", "9. Fingerprint sign-in", "10. Demo mode",
-    "11. Support & contact the developer", "12. Frequently asked questions",
+    "11. Frequently asked questions", "12. Support & contact the developer",
   ];
   doc.setFont("times","normal"); doc.setFontSize(11); doc.setTextColor(...softRGB);
   toc.forEach(t => { doc.text(t, marginX+8, y); y += 16; });
@@ -2441,70 +2451,92 @@ function downloadUserGuide(){
   bullet("Tap Sign up on the sign-in screen to create your own account. You will need the access key from whoever set up your app.");
   bullet("Creating an account permanently clears the demo data on this device and unlocks full editing.");
   tip("if you're just exploring, stay in the demo as long as you like before creating a real account.");
+  sectionGap();
 
   heading("2. Dashboard", "dashboard");
   bullet("See total revenue, outstanding balance, active orders and total clients at a glance in the KPI cards.");
   bullet("The revenue chart shows the last 6 months, and the status chart breaks down your orders by stage.");
   bullet("Due soon & overdue lists any order with a balance due within 5 days, so nothing slips through.");
   bullet("Top clients ranks who has spent the most with you.");
+  sectionGap();
 
   heading("3. Clients", "clients");
   bullet("Add a client with their name, phone, address, gender and notes.");
   bullet("Record body measurements once and reuse them for every future order.");
   bullet("Attach reference photos to a client's profile so you remember their preferred styles.");
   bullet("Open a client to see their full order history in one place.");
+  sectionGap();
 
   heading("4. Orders", "orders");
   bullet("Create a new order from the Orders tab or directly from a client's profile.");
   bullet("Add line items with prices, record part-payments as they come in, and set a due date.");
   bullet("Update the status — Pending, Cutting, Sewing, Fitting, Ready, Delivered — as work progresses.");
   bullet("Filter the orders list by status to quickly find what needs attention.");
+  sectionGap();
 
   heading("5. Receipts & invoices", "invoice");
   bullet("Generate a receipt or invoice image straight from any order.");
   bullet("Your logo, business name, address and RC number appear automatically at the top.");
   bullet("Share the image directly on WhatsApp or download it to send however you like.");
+  sectionGap();
 
   heading("6. Catalogue", "catalogue");
   bullet("Organise your styles into categories, each with its own photo gallery.");
   bullet("Add items with photos, prices and a short description.");
   bullet("Share an individual item on WhatsApp, or share your entire price list as one image.");
+  sectionGap();
 
   heading("7. Account & business settings", "settings");
   bullet("Update your business name, logo, phone, address, RC number and currency.");
   bullet("Add one or more bank accounts so clients know where to pay.");
   bullet("Choose a colour theme for the whole app.");
+  sectionGap();
 
   heading("8. Backup & restore your data", "backup");
   bullet("Your data is stored only on this device.");
   bullet("Export a backup file regularly, and use it to move your data to a new device or restore after reinstalling.");
   tip("export a backup before switching phones — it only takes a second and could save all your records.");
+  sectionGap();
 
   heading("9. Fingerprint sign-in", "security");
   bullet("After signing in with your password, you'll be asked if you want to enable fingerprint sign-in on that device.");
   bullet("Once enabled, the fingerprint prompt opens automatically the next time you open the sign-in screen.");
   bullet("Requires a device with Touch ID, Face ID, Windows Hello or a fingerprint sensor.");
+  sectionGap();
 
   heading("10. Demo mode", "demo");
   bullet("The demo account is view-only and safe to explore freely.");
   bullet("Once you've created a real account, you can still tap View demo account on the sign-in screen to look at the sample data again — your own data is never affected.");
+  sectionGap();
 
-  heading("11. Support & contact the developer", "support");
-  paragraph("Need help, spotted a bug, or want a feature added? Reach out any time.");
-  contactRow("Developer", DEV_NAME);
-  contactRow("Studio", DEV_STUDIO);
-  contactRow("Email", DEV_EMAIL);
-  contactRow("Phone / WhatsApp", DEV_PHONE);
-  y += 4;
-  paragraph("You can also tap \"Contact developer\" on the sign-up screen at any time to reach out directly from the app.");
-
-  heading("12. Frequently asked questions", "faq");
-  faqItem("I forgot my password — what do I do?", "Contact the developer using the details above to help you regain access.");
+  heading("11. Frequently asked questions", "faq");
+  faqItem("I forgot my password — what do I do?", "Contact the developer using the details on the last page to help you regain access.");
   faqItem("Can I use the app on more than one device?", "Data is stored per device. Export a backup on one device and import it on the other to move your data across.");
   faqItem("What is the access key for signing up?", "It's provided by whoever set up your copy of the app. Contact the developer if you don't have it.");
   faqItem("Will creating an account delete anything important?", "It clears the sample demo data only. If you already have real data saved, that stays intact.");
   faqItem("Is my data sent to a server?", "No — everything is stored locally on your device. Back up regularly to avoid losing it.");
   faqItem("Fingerprint sign-in isn't showing up — why?", "It only appears on devices with a supported biometric sensor, and after you've enabled it once from a password sign-in.");
+
+  // ---- Support & contact — always last, with live clickable buttons ----
+  doc.addPage(); y = 56;
+  heading("12. Support & contact the developer", "support");
+  paragraph("Need help, spotted a bug, or want a feature added? Tap a button below, or use the details underneath.");
+  y += 6;
+
+  const gap = 10, btnW = (maxW - gap*2)/3, btnH = 36;
+  ensureSpace(btnH + 24);
+  const phoneDigits = digitsOnly(DEV_PHONE);
+  linkButton("Email", marginX, y, btnW, btnH, "mailto:"+DEV_EMAIL, primaryRGB);
+  linkButton("Call", marginX+btnW+gap, y, btnW, btnH, "tel:+"+phoneDigits, primaryRGB);
+  linkButton("WhatsApp", marginX+(btnW+gap)*2, y, btnW, btnH, "https://wa.me/"+phoneDigits, [62,107,79]);
+  y += btnH + 26;
+
+  contactRow("Developer", DEV_NAME);
+  contactRow("Studio", DEV_STUDIO);
+  contactRow("Email", DEV_EMAIL, "mailto:"+DEV_EMAIL);
+  contactRow("Phone / WhatsApp", DEV_PHONE, "tel:+"+phoneDigits);
+  y += 8;
+  paragraph("You can also tap \"Contact developer\" on the sign-up screen at any time to reach out directly from the app.");
 
   doc.save("tailor-studio-user-guide.pdf");
 }
