@@ -1345,11 +1345,19 @@ function renderCatalogue(){
       ).join("") +'</div>';
 
   return (
-    '<div style="display:flex;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px;">'+
-      categoryFilterHtml+
-      '<div style="display:flex;gap:8px;">'+
+    '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;gap:10px;flex-wrap:nowrap;overflow-x:auto;">'+
+      (cats.length > 4 ? 
+        '<select data-action="select-browse-category" data-id="dummy" style="flex-shrink:0;"><option value="__all__" '+(isAll?'selected':'')+'>All Categories</option>'+
+          cats.map(c=>'<option value="'+c.id+'" '+(state.browseCategoryId===c.id?'selected':'')+'>'+esc(c.name)+'</option>').join("")+
+        '</select>' :
+        '<div class="chipbar" style="flex-shrink:0;white-space:nowrap;">'+
+          '<button class="btn '+(isAll?'gold':'ghost')+' sm" data-action="select-browse-category" data-id="__all__">All</button>'+
+          cats.map(c=>
+            '<button class="btn '+(state.browseCategoryId===c.id?'gold':'ghost')+' sm" data-action="select-browse-category" data-id="'+c.id+'">'+esc(c.name)+'</button>'
+          ).join("") +'</div>') +
+      '<div style="display:flex;gap:8px;flex-shrink:0;">'+
         '<button class="btn ghost sm" data-action="open-full-gallery" title="Browse full gallery">'+icon("gallery",15)+' Gallery</button>'+
-        '<button class="btn wa sm" data-action="share-pricelist-image">'+icon("share",14)+' Share price list</button>'+
+        '<button class="btn wa sm" data-action="share-pricelist-image">'+icon("send",14)+' Share</button>'+
         '<button class="btn ghost sm" data-action="download-pricelist-image">'+icon("download",14)+' Download</button>'+
       '</div>'+
     '</div>'+
@@ -1639,13 +1647,13 @@ function renderOrderModal(){
     '<div>'+
       '<div class="rowline"><span style="font-size:13.5px;font-weight:500;">Invoice</span>'+
         '<span style="display:flex;gap:6px;">'+
-          '<button class="iconbtn" style="background:#3fa858;border-color:#3fa858;color:#fff;" data-action="share-invoice-image" data-kind="invoice" title="Share invoice via WhatsApp" aria-label="Share invoice">'+icon("share",15)+'</button>'+
+          '<button class="iconbtn" style="background:#3fa858;border-color:#3fa858;color:#fff;" data-action="share-invoice-image" data-kind="invoice" title="Share invoice via WhatsApp" aria-label="Share invoice">'+icon("send",15)+'</button>'+
           '<button class="iconbtn" data-action="download-invoice-image" data-kind="invoice" title="Download invoice image" aria-label="Download invoice">'+icon("download",15)+'</button>'+
         '</span>'+
       '</div>'+
       '<div class="rowline"><span style="font-size:13.5px;font-weight:500;">Receipt</span>'+
         '<span style="display:flex;gap:6px;">'+
-          '<button class="iconbtn" style="background:#3fa858;border-color:#3fa858;color:#fff;" data-action="share-invoice-image" data-kind="receipt" title="Share receipt via WhatsApp" aria-label="Share receipt">'+icon("share",15)+'</button>'+
+          '<button class="iconbtn" style="background:#3fa858;border-color:#3fa858;color:#fff;" data-action="share-invoice-image" data-kind="receipt" title="Share receipt via WhatsApp" aria-label="Share receipt">'+icon("send",15)+'</button>'+
           '<button class="iconbtn" data-action="download-invoice-image" data-kind="receipt" title="Download receipt image" aria-label="Download receipt">'+icon("download",15)+'</button>'+
         '</span>'+
       '</div>'+
@@ -1757,7 +1765,7 @@ function renderCatItemView(){
     '<div class="mono" style="font-weight:700;font-size:20px;margin-bottom:8px;">'+money(it.price,business.currency)+'</div>'+
     (it.description ? '<div style="font-size:13.5px;color:var(--ink-soft);white-space:pre-wrap;margin-bottom:14px;">'+esc(it.description)+'</div>' : '')+
     '<div style="display:flex;gap:8px;flex-wrap:wrap;">'+
-      '<button class="btn wa sm" data-action="share-catitem-whatsapp" data-id="'+it.id+'">'+icon("share",14)+' Share</button>'+
+      '<button class="btn wa sm" data-action="share-catitem-whatsapp" data-id="'+it.id+'">'+icon("send",14)+' Share</button>'+
       '<button class="btn gold sm" data-action="add-catitem-to-new-order" data-id="'+it.id+'">'+icon("plus",14)+' Add to new order</button>'+
     '</div>'
   , "full");
@@ -2057,7 +2065,7 @@ async function shareCatalogueItem(id){
   document.body.appendChild(sharePreview);
   
   try{
-    const canvas = await html2canvas(sharePreview, {useCORS: true, scale: 1, backgroundColor: '#FBF9F3'});
+    const canvas = await html2canvas(sharePreview, {useCORS: true, scale: 2, backgroundColor: '#FBF9F3'});
     document.body.removeChild(sharePreview);
     
     canvas.toBlob(async (blob) => {
