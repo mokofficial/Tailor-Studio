@@ -3,9 +3,12 @@
 <head>
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#1E3A3A">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Bizrail</title>
+<title>BizHub</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -53,15 +56,15 @@
     border-radius:12px;color:var(--ink-soft);cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;user-select:none;}
   .navtab svg{width:21px;height:21px;}
   .navtab .navlabel{font-size:10px;font-weight:500;}
-  .navtab.active{color:var(--primary);}
+  .navtab.active{color:var(--primary-text);}
   .navtab.active svg{color:var(--gold);}
   .navtab:hover{background:rgba(38,34,27,0.04);}
 
   .btn{border:1px solid var(--primary);background:var(--primary);color:#fff;border-radius:8px;
     padding:9px 14px;font-size:13.5px;font-weight:500;display:inline-flex;align-items:center;gap:6px;}
   .btn:hover{background:var(--primary-dark);}
-  .btn.ghost{background:transparent;color:var(--primary);}
-  .btn.ghost:hover{background:rgba(30,58,58,0.08);}
+  .btn.ghost{background:transparent;color:var(--primary-text);}
+  .btn.ghost:hover{background:rgba(var(--primary-text-rgb),0.08);}
   .btn.gold{background:var(--gold);border-color:var(--gold);color:#fff;}
   .btn.gold:hover{background:#a1751f;}
   .btn.rust{background:var(--rust);border-color:var(--rust);color:#fff;}
@@ -290,6 +293,16 @@ function applyTheme(key){
   if(key==="custom") ensureCustomTheme();
   const t = THEMES[key] ? key : "indigo";
   const vars = Object.assign({}, THEMES[t].vars, state.darkMode ? DARK_NEUTRALS : {});
+  // --primary is often a near-black ink tone, which reads fine as a solid
+  // button background (with white text) but becomes nearly invisible when
+  // used as *foreground* text/icon color once the page background flips
+  // dark. --primary-text is the readable stand-in for that role: identical
+  // to --primary in light mode, lightened enough to stay legible in dark
+  // mode. --primary-text-rgb lets rgba() tints (hover states, soft badges)
+  // follow the same swap.
+  const primaryText = state.darkMode ? lighten(vars.primary, 0.55) : vars.primary;
+  vars["primary-text"] = primaryText;
+  vars["primary-text-rgb"] = hexToRgbArr(primaryText).join(",");
   Object.keys(vars).forEach(k => document.documentElement.style.setProperty("--"+k, vars[k]));
   state.theme = t;
 }
@@ -356,7 +369,7 @@ const NIGERIA_BANKS = [
   "Chipper Cash","PiggyVest","9Payment Service Bank (9PSB)","Airtel SmartCash PSB",
   "Hope Payment Service Bank","MoMo PSB (MTN)"
 ];
-const DEMO_EMAIL = "demo@bizrail.app";
+const DEMO_EMAIL = "demo@bizhub.app";
 const DEMO_PASSWORD = "demo1234";
 // Access key required to create a real (non-demo) account. Change this string
 // to whatever key you want people to need when they tap "Sign up".
@@ -1194,7 +1207,7 @@ async function registerBiometric(){
     const challenge = crypto.getRandomValues(new Uint8Array(32));
     const userId = crypto.getRandomValues(new Uint8Array(16));
     const cred = await navigator.credentials.create({ publicKey: {
-      challenge, rp:{ name:"Bizrail" },
+      challenge, rp:{ name:"BizHub" },
       user:{ id:userId, name: state.account.email, displayName: state.account.name || state.account.email },
       pubKeyCredParams:[{type:"public-key",alg:-7},{type:"public-key",alg:-257}],
       authenticatorSelection:{ authenticatorAttachment:"platform", userVerification:"required" },
@@ -1385,7 +1398,7 @@ function renderDashboard(){
     '<div class="grid-stats">'+
       statCard("Total revenue", money(totalRevenue, business.currency), "cash", "var(--green)", "var(--green-soft)", {sub:momText})+
       statCard("Outstanding balance", money(outstanding, business.currency), "alert", "var(--rust)", "var(--rust-soft)", {action:"dash-kpi-outstanding"})+
-      statCard("Active "+nounFor("recordPlural").toLowerCase(), activeOrders, "scissors", "var(--primary)", "rgba(30,58,58,0.08)", {action:"dash-kpi-active"})+
+      statCard("Active "+nounFor("recordPlural").toLowerCase(), activeOrders, "scissors", "var(--primary-text)", "rgba(var(--primary-text-rgb),0.08)", {action:"dash-kpi-active"})+
       statCard("Total "+nounFor("clientPlural").toLowerCase(), clients.length, "users", "#8A5F1F", "var(--gold-soft)", {action:"set-tab", tab:"clients"})+
     '</div>'+
     '<div class="grid-2-even">'+
@@ -1439,7 +1452,7 @@ function cardLogoHtml(business, size){
 }
 function cardBaseFooterHtml(inkSoft, line){
   return '<div style="margin-top:18px;padding-top:12px;border-top:1px solid '+line+';text-align:center;">'+
-    '<div style="font-size:10.5px;color:'+inkSoft+';">Powered by <strong>Bizrail</strong></div>'+
+    '<div style="font-size:10.5px;color:'+inkSoft+';">Powered by <strong>BizHub</strong></div>'+
     '<div style="font-size:9.5px;color:'+inkSoft+';margin-top:2px;">Generated '+fmtDateTime()+'</div>'+
   '</div>';
 }
@@ -1615,16 +1628,25 @@ function renderDashboardCharts(){
   const sLabels = Object.keys(statusBy); const sData = sLabels.map(k=>statusBy[k]);
   const palette = ["#1E3A3A","#B8842E","#A2432B","#3E6B4F","#8C7B5A","#645E50","#C79A4B"];
 
+  // Read the live theme colors instead of hardcoding light-mode hex values,
+  // so chart labels/grid/legend stay legible against a dark card in dark mode.
+  const rootStyle = getComputedStyle(document.documentElement);
+  const cssVar = (name, fallback) => (rootStyle.getPropertyValue(name)||"").trim() || fallback;
+  const inkSoftColor = cssVar("--ink-soft", "#645E50");
+  const lineColor = cssVar("--line", "#D6CDB6");
+  const surfaceColor = cssVar("--surface", "#FBF9F3");
+  const primaryTextColor = cssVar("--primary-text", "#1E3A3A");
+
   const revCanvas = document.getElementById("revChart");
   if(revCanvas && window.Chart){
     if(dashCharts.bar) dashCharts.bar.destroy();
     dashCharts.bar = new Chart(revCanvas, {
       type:"bar",
-      data:{ labels, datasets:[{ label:"Revenue", data, backgroundColor:"#1E3A3A", borderRadius:4, maxBarThickness:36 }] },
+      data:{ labels, datasets:[{ label:"Revenue", data, backgroundColor:primaryTextColor, borderRadius:4, maxBarThickness:36 }] },
       options:{ responsive:true, maintainAspectRatio:false,
         plugins:{ legend:{display:false}, tooltip:{ callbacks:{ label:(ctx)=> money(ctx.parsed.y, business.currency) } } },
-        scales:{ y:{ beginAtZero:true, grid:{color:"#D6CDB6"}, ticks:{color:"#645E50", font:{size:11}} },
-                 x:{ grid:{display:false}, ticks:{color:"#645E50", font:{size:12}} } } }
+        scales:{ y:{ beginAtZero:true, grid:{color:lineColor}, ticks:{color:inkSoftColor, font:{size:11}} },
+                 x:{ grid:{display:false}, ticks:{color:inkSoftColor, font:{size:12}} } } }
     });
   }
   const statusCanvas = document.getElementById("statusChart");
@@ -1632,8 +1654,8 @@ function renderDashboardCharts(){
     if(dashCharts.pie) dashCharts.pie.destroy();
     dashCharts.pie = new Chart(statusCanvas, {
       type:"doughnut",
-      data:{ labels:sLabels, datasets:[{ data:sData, backgroundColor: sLabels.map((_,i)=>palette[i%palette.length]), borderColor:"#FBF9F3", borderWidth:2 }] },
-      options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{ position:"bottom", labels:{ boxWidth:10, font:{size:11}, color:"#26221B" } } } }
+      data:{ labels:sLabels, datasets:[{ data:sData, backgroundColor: sLabels.map((_,i)=>palette[i%palette.length]), borderColor:surfaceColor, borderWidth:2 }] },
+      options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{ position:"bottom", labels:{ boxWidth:10, font:{size:11}, color:inkSoftColor } } } }
     });
   }
 }
@@ -2029,7 +2051,7 @@ function renderAccount(){
         '<div style="position:absolute;top:-20px;right:-20px;width:80px;height:80px;background:var(--gold);opacity:0.08;border-radius:50%;"></div>'+
         '<div class="disp" style="font-weight:700;font-size:14.5px;margin-bottom:4px;color:var(--gold);">🚀 Upgrade to Premium</div>'+
         '<div style="font-size:12px;color:var(--ink-soft);margin-bottom:12px;">You\'re currently limited to <strong style="color:var(--ink);">'+esc(activeCatCfg().label)+'</strong> only.</div>'+
-        '<div style="font-size:13px;color:var(--ink);margin-bottom:12px;background:rgba(255,255,255,0.5);padding:10px;border-radius:8px;">'+
+        '<div style="font-size:13px;color:var(--ink);margin-bottom:12px;background:var(--surface);padding:10px;border-radius:8px;">'+
           '<strong>Premium Access includes:</strong><br>'+
           '✓ Access all 8 business modules<br>'+
           '✓ Switch between modules anytime<br>'+
@@ -2148,7 +2170,7 @@ function renderAccount(){
       '<div class="disp" style="font-weight:600;font-size:14.5px;margin-bottom:4px;">Contact the developer</div>'+
       '<div style="font-size:12px;color:var(--ink-soft);margin-bottom:12px;">Got a query, complaint, or bug to report? Reach out directly.</div>'+
       '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">'+
-        '<a class="btn wa sm" href="'+waLink(DEV_PHONE, "Hi "+DEV_STUDIO+", I have a query/complaint about "+esc(b.name||"Bizrail")+": ")+'" target="_blank" rel="noopener">'+icon("chat",14)+' WhatsApp</a>'+
+        '<a class="btn wa sm" href="'+waLink(DEV_PHONE, "Hi "+DEV_STUDIO+", I have a query/complaint about "+esc(b.name||"BizHub")+": ")+'" target="_blank" rel="noopener">'+icon("chat",14)+' WhatsApp</a>'+
         '<a class="btn ghost sm" href="tel:'+DEV_PHONE.replace(/[^0-9+]/g,"")+'">'+icon("phone",14)+' Call</a>'+
         '<a class="btn ghost sm" href="mailto:'+DEV_EMAIL+'">'+icon("mail",14)+' Email</a>'+
       '</div>'+
@@ -2208,7 +2230,7 @@ function renderContactDevModal(){
   return modalShell("Contact the developer",
     '<div style="font-size:13px;color:var(--ink-soft);margin-bottom:14px;">Need help signing up, or spotted an issue? Reach out directly.</div>'+
     '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;">'+
-      '<a class="btn wa sm" href="'+waLink(DEV_PHONE, "Hi "+DEV_STUDIO+", I need help with Bizrail: ")+'" target="_blank" rel="noopener">'+icon("chat",14)+' WhatsApp</a>'+
+      '<a class="btn wa sm" href="'+waLink(DEV_PHONE, "Hi "+DEV_STUDIO+", I need help with BizHub: ")+'" target="_blank" rel="noopener">'+icon("chat",14)+' WhatsApp</a>'+
       '<a class="btn ghost sm" href="tel:'+DEV_PHONE.replace(/[^0-9+]/g,"")+'">'+icon("phone",14)+' Call</a>'+
       '<a class="btn ghost sm" href="mailto:'+DEV_EMAIL+'">'+icon("mail",14)+' Email</a>'+
     '</div>'+
@@ -2224,7 +2246,7 @@ function renderUpgradeAccessModal(){
   return modalShell("🚀 Upgrade to Premium Access",
     '<div style="font-size:13px;color:var(--ink-soft);margin-bottom:16px;">'+
       '<p style="margin:0 0 10px;">Currently, you have access to <strong style="color:var(--ink);">'+esc(activeCatCfg().label)+'</strong> only.</p>'+
-      '<p style="margin:0 0 10px;"><strong style="color:var(--primary);">Upgrade to Premium</strong> and unlock all business modules:</p>'+
+      '<p style="margin:0 0 10px;"><strong style="color:var(--primary-text);">Upgrade to Premium</strong> and unlock all business modules:</p>'+
       '<ul style="margin:8px 0 10px;padding-left:18px;font-size:12.5px;">'+
         '<li style="margin-bottom:4px;">📦 Access <strong>ALL 8 business modules</strong> (Tailoring, Restaurant, Salon, Retail, Real Estate, Events, Laundry, Other)</li>'+
         '<li style="margin-bottom:4px;">🔄 <strong>Switch between modules</strong> anytime from Account settings</li>'+
@@ -2238,6 +2260,7 @@ function renderUpgradeAccessModal(){
     '<div style="margin-bottom:14px;">'+
       '<label>Premium Access Key</label>'+
       '<input id="upgradeKeyInput" data-bind="upgradeForm.key" value="'+esc(upgradeForm.key)+'" placeholder="Enter your universal key (e.g., MASTERKEY-ALL)" style="font-weight:500;">'+
+      '<div style="font-size:11px;color:var(--ink-soft);margin-top:4px;">Access keys are valid for 5 minutes after being issued — if yours has expired, request a new one.</div>'+
     '</div>'+
     '<div style="display:flex;gap:8px;flex-wrap:wrap;">'+
       '<button class="btn gold" style="flex:1;min-width:120px;justify-content:center;" data-action="validate-upgrade-key">'+icon("check",15)+' Unlock Premium</button>'+
@@ -2245,7 +2268,7 @@ function renderUpgradeAccessModal(){
     '</div>'+
     '<div style="border-top:1px solid var(--line);margin-top:16px;padding-top:12px;font-size:11.5px;color:var(--ink-soft);text-align:center;">'+
       'Don\'t have a premium key yet?<br>'+
-      '<span data-action="open-contact-dev-modal" style="color:var(--primary);font-weight:600;cursor:pointer;text-decoration:underline;">Contact the developer</span>'+
+      '<span data-action="open-contact-dev-modal" style="color:var(--primary-text);font-weight:600;cursor:pointer;text-decoration:underline;">Contact the developer</span>'+
     '</div>'
   );
 }
@@ -2254,7 +2277,7 @@ function renderContactDevModal(){
   return modalShell("Contact the developer",
     '<div style="font-size:13px;color:var(--ink-soft);margin-bottom:14px;">Need help signing up, or spotted an issue? Reach out directly.</div>'+
     '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;">'+
-      '<a class="btn wa sm" href="'+waLink(DEV_PHONE, "Hi "+DEV_STUDIO+", I need help with Bizrail: ")+'" target="_blank" rel="noopener">'+icon("chat",14)+' WhatsApp</a>'+
+      '<a class="btn wa sm" href="'+waLink(DEV_PHONE, "Hi "+DEV_STUDIO+", I need help with BizHub: ")+'" target="_blank" rel="noopener">'+icon("chat",14)+' WhatsApp</a>'+
       '<a class="btn ghost sm" href="tel:'+DEV_PHONE.replace(/[^0-9+]/g,"")+'">'+icon("phone",14)+' Call</a>'+
       '<a class="btn ghost sm" href="mailto:'+DEV_EMAIL+'">'+icon("mail",14)+' Email</a>'+
     '</div>'+
@@ -2338,6 +2361,7 @@ function renderOrderModal(){
         '<div class="rowline"><span style="font-size:13.5px;font-weight:500;">Payment reminder</span>'+
           '<span style="display:flex;gap:6px;">'+
             '<button class="iconbtn" style="background:#3fa858;border-color:#3fa858;color:#fff;" data-action="share-reminder-image" title="Send payment reminder via WhatsApp" aria-label="Send payment reminder">'+icon("send",15)+'</button>'+
+            '<button class="iconbtn" data-action="download-reminder-image" title="Download payment reminder image" aria-label="Download payment reminder">'+icon("download",15)+'</button>'+
           '</span>'+
         '</div>'
       : '')+
@@ -2585,7 +2609,7 @@ function renderCustomThemeModal(){
   const d = state.modal.draft;
   const preview = buildCustomTheme(d.primary, d.gold).vars;
   const body =
-    '<div style="font-size:12.5px;color:var(--ink-soft);margin-bottom:16px;">Pick two colours — Bizrail builds a full, balanced colour scheme around them.</div>'+
+    '<div style="font-size:12.5px;color:var(--ink-soft);margin-bottom:16px;">Pick two colours — BizHub builds a full, balanced colour scheme around them.</div>'+
     '<div class="grid-form2">'+
       '<div><label>Primary colour</label><div style="display:flex;gap:8px;align-items:center;">'+
         '<input type="color" data-bind="modal.draft.primary" data-rerender="1" value="'+esc(d.primary)+'" style="width:44px;height:38px;padding:2px;">'+
@@ -2638,6 +2662,28 @@ function clientAvatarPickerHtml(images, targetPath){
 }
 
 /* ================= WELCOME / SHOWCASE ================= */
+// Predefined illustrated backgrounds for the onboarding welcome carousel —
+// generated as inline SVG (no network fetch needed, works offline in the
+// PWA) so every business vertical has a real picture behind its slide
+// instead of a flat color, before any real catalogue photos exist.
+const VERTICAL_SLIDE_ACCENTS = {
+  admin:"#2B2A28", tailoring:"#1E3A3A", restaurant:"#A2432B", salon:"#7A2E44",
+  retail:"#8A5F1F", real_estate:"#233A5E", events:"#5B2E52", laundry:"#1F5C6B", others:"#33502E",
+};
+function verticalSlideImage(cfg){
+  const c1 = VERTICAL_SLIDE_ACCENTS[cfg.id] || "#1E3A3A";
+  const c2 = darken(c1, 0.4);
+  const svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 500">'+
+    '<defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1">'+
+      '<stop offset="0" stop-color="'+c1+'"/><stop offset="1" stop-color="'+c2+'"/>'+
+    '</linearGradient></defs>'+
+    '<rect width="400" height="500" fill="url(#g)"/>'+
+    '<circle cx="335" cy="55" r="150" fill="rgba(255,255,255,0.06)"/>'+
+    '<circle cx="30" cy="470" r="120" fill="rgba(255,255,255,0.05)"/>'+
+    '<g transform="translate(112,168) scale(6.5)" stroke="rgba(255,255,255,0.32)" fill="none" stroke-width="1" stroke-linecap="round" stroke-linejoin="round">'+(ICONS[cfg.icon]||'')+'</g>'+
+  '</svg>';
+  return "data:image/svg+xml;utf8,"+encodeURIComponent(svg);
+}
 function welcomeSlidesData(){
   const catNames = {};
   state.catalogue.categories.forEach(c => { catNames[c.id] = c.name; });
@@ -2665,16 +2711,17 @@ function renderWelcomeView(){
   if(onboarding){
     const slides = verticalSlidesData();
     logoHtml = "B";
-    titleHtml = "Bizrail";
+    titleHtml = "BizHub";
     subtitleHtml = "One app, tailored to your business. Browse the verticals it supports, then step inside to set yours up.";
     heroHtml =
       '<div class="welcome-track" id="welcomeTrack">'+
         slides.map(cfg => (
-          '<div class="welcome-slide"><div class="welcome-vslide">'+
-            '<div class="vicon">'+icon(cfg.icon,26)+'</div>'+
-            '<div class="vname">'+esc(cfg.label)+'</div>'+
-            '<div class="vblurb">'+esc(cfg.blurb)+'</div>'+
-          '</div></div>'
+          '<div class="welcome-slide"><img src="'+verticalSlideImage(cfg)+'" alt="'+esc(cfg.label)+'">'+
+            '<div class="welcome-caption">'+
+              '<div class="wname" style="display:flex;align-items:center;gap:8px;">'+icon(cfg.icon,17)+' '+esc(cfg.label)+'</div>'+
+              '<div class="wcat" style="opacity:.85;margin-top:3px;">'+esc(cfg.blurb)+'</div>'+
+            '</div>'+
+          '</div>'
         )).join("")+
       '</div>'+
       (slides.length > 1 ? (
@@ -2798,10 +2845,10 @@ function renderAuthView(){
       '</div>'
     ) : '')+
     '<div style="text-align:center;margin-top:16px;font-size:12.5px;color:var(--ink-soft);">Don\u2019t have an account? '+
-      '<span data-action="toggle-auth-mode" style="color:var(--primary);font-weight:600;cursor:pointer;text-decoration:underline;">Sign up</span></div>'+
+      '<span data-action="toggle-auth-mode" style="color:var(--primary-text);font-weight:600;cursor:pointer;text-decoration:underline;">Sign up</span></div>'+
     (state.account ? (
       '<div style="text-align:center;margin-top:10px;font-size:12.5px;color:var(--ink-soft);">'+
-        '<span data-action="view-demo-account" style="color:var(--primary);font-weight:600;cursor:pointer;text-decoration:underline;">View demo account</span></div>'
+        '<span data-action="view-demo-account" style="color:var(--primary-text);font-weight:600;cursor:pointer;text-decoration:underline;">View demo account</span></div>'
     ) : '');
 
   const signUpBody =
@@ -2809,28 +2856,30 @@ function renderAuthView(){
       '<div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;padding:9px 12px;background:var(--surface);border:1px solid var(--line);border-radius:9px;font-size:12px;">'+
         '<span class="icon-badge" style="width:26px;height:26px;background:var(--gold-soft);color:#8A5F1F;">'+icon(activeCatCfg().icon,13)+'</span>'+
         '<span style="flex:1;font-weight:500;">'+esc(activeCatCfg().label)+'</span>'+
-        '<span data-action="back-to-category-picker" style="color:var(--primary);font-weight:600;cursor:pointer;text-decoration:underline;white-space:nowrap;">Change</span>'+
+        '<span data-action="back-to-category-picker" style="color:var(--primary-text);font-weight:600;cursor:pointer;text-decoration:underline;white-space:nowrap;">Change</span>'+
       '</div>'
     ) : '')+
     '<div style="margin-bottom:10px;"><label>Business name</label><input data-bind="authForm.name" value="'+esc(f.name||"")+'" placeholder="'+esc(activeCatCfg().namePlaceholder)+'"></div>'+
     '<div style="margin-bottom:10px;"><label>Email</label><input data-bind="authForm.email" value="'+esc(f.email||"")+'" placeholder="you@example.com"></div>'+
     '<div style="margin-bottom:10px;"><label>Password</label><input type="password" data-bind="authForm.password" value="'+esc(f.password||"")+'" placeholder="Create a password"></div>'+
     '<div style="margin-bottom:10px;"><label>Confirm password</label><input type="password" data-bind="authForm.confirm" value="'+esc(f.confirm||"")+'" placeholder="Confirm password"></div>'+
-    '<div style="margin-bottom:14px;"><label>Access key</label><input data-bind="authForm.key" value="'+esc(f.key||"")+'" placeholder="Enter your access key"></div>'+
+    '<div style="margin-bottom:14px;"><label>Access key</label><input data-bind="authForm.key" value="'+esc(f.key||"")+'" placeholder="Enter your access key">'+
+      '<div style="font-size:11px;color:var(--ink-soft);margin-top:4px;">Access keys are valid for 5 minutes after being issued — if yours has expired, request a new one.</div>'+
+    '</div>'+
     '<div style="text-align:center;margin-bottom:14px;font-size:11px;color:var(--ink-soft);">Have a universal key instead? Enter it above — it works for any module and lets you switch between them later in Account.</div>'+
     '<button class="btn gold" style="width:100%;justify-content:center;" data-action="sign-up">'+icon("plus",15)+' Create account</button>'+
     '<div style="text-align:center;margin-top:16px;font-size:11.5px;color:var(--ink-soft);">Creating an account permanently clears the demo data on this device and unlocks full editing.</div>'+
     '<div style="text-align:center;margin-top:10px;font-size:12.5px;color:var(--ink-soft);">Already have an account? '+
-      '<span data-action="toggle-auth-mode" style="color:var(--primary);font-weight:600;cursor:pointer;text-decoration:underline;">Sign in</span></div>'+
+      '<span data-action="toggle-auth-mode" style="color:var(--primary-text);font-weight:600;cursor:pointer;text-decoration:underline;">Sign in</span></div>'+
     '<div style="text-align:center;margin-top:6px;font-size:12.5px;color:var(--ink-soft);">'+
-      '<span data-action="open-contact-dev-modal" style="color:var(--primary);font-weight:600;cursor:pointer;text-decoration:underline;">Contact developer</span></div>';
+      '<span data-action="open-contact-dev-modal" style="color:var(--primary-text);font-weight:600;cursor:pointer;text-decoration:underline;">Contact developer</span></div>';
 
   return (
     '<div id="authScroll" style="position:fixed;inset:0;overflow-y:auto;-webkit-overflow-scrolling:touch;display:flex;align-items:center;justify-content:center;padding:30px 16px;box-sizing:border-box;background:var(--bg);">'+
       '<div class="card" style="max-width:380px;width:100%;margin-bottom:30px;">'+
         '<div style="display:flex;flex-direction:column;align-items:center;margin-bottom:20px;">'+
           logoHtml+
-          '<div class="disp" style="font-weight:700;font-size:19px;margin-top:12px;">'+esc(state.businessCategory ? (business.name||"Bizrail") : activeCatCfg().defaultBusinessName)+'</div>'+
+          '<div class="disp" style="font-weight:700;font-size:19px;margin-top:12px;">'+esc(state.businessCategory ? (business.name||"BizHub") : activeCatCfg().defaultBusinessName)+'</div>'+
           '<div style="font-size:12.5px;color:var(--ink-soft);margin-top:2px;">'+(mode==="signup"?"Create your account":"Sign in to continue")+'</div>'+
         '</div>'+
         (state.authError ? '<div style="background:var(--rust-soft);color:var(--rust);font-size:12.5px;padding:8px 12px;border-radius:8px;margin-bottom:12px;">'+esc(state.authError)+'</div>' : '')+
@@ -2992,7 +3041,7 @@ function getTourSteps(){
   const measurementsBit = cfg.hasMeasurements ? ", measurements and style photos" : " and photos";
   const measurementsBit2 = cfg.hasMeasurements ? "body measurements, style photos, and their complete " : "their complete ";
   return [
-    { title:"Welcome to Bizrail",
+    { title:"Welcome to BizHub",
       body:"A quick, 60-second tour of the essentials — how to manage "+clientsWord+", "+recordsWord+", your "+catalogueWord.toLowerCase()+" and your business settings. Tap Next to begin, or Skip tour at any time." },
     { tab:"dashboard", getTarget:()=>document.querySelector(".brand"),
       title:"Your business identity",
@@ -3329,6 +3378,12 @@ document.addEventListener("click", (e) => {
       shareReminderImage(o, client, bal, "share");
       break;
     }
+    case "download-reminder-image": {
+      const o = state.modal.draft; const client = findClient(o.clientId);
+      const bal = orderTotal(o) - orderPaid(o);
+      shareReminderImage(o, client, bal, "download");
+      break;
+    }
     case "share-pricelist-image": sharePriceListImage("share"); break;
     case "download-pricelist-image": sharePriceListImage("download"); break;
     case "open-catitem-modal-new": openCatItemModal(null, el.getAttribute("data-cat")); break;
@@ -3650,7 +3705,7 @@ function exportClientsCsv(){
     const total = clientOrders.reduce((s,o)=>s+orderTotal(o),0);
     rows.push([c.name, c.phone||"", c.address||"", c.gender||"", c.notes||"", total, clientOrders.length]);
   });
-  downloadCsv("bizrail-"+nounFor("clientPlural").toLowerCase()+"-"+todayISO()+".csv", rows);
+  downloadCsv("bizhub-"+nounFor("clientPlural").toLowerCase()+"-"+todayISO()+".csv", rows);
 }
 function exportOrdersCsv(){
   const rows = [["Client","Title","Status","Total","Paid","Balance","Due date","Created"]];
@@ -3659,23 +3714,23 @@ function exportOrdersCsv(){
     const total = orderTotal(o), paid = orderPaid(o);
     rows.push([client?client.name:"Unknown", o.title||"", o.status, total, paid, total-paid, o.dueDate||"", o.createdAt||""]);
   });
-  downloadCsv("bizrail-"+nounFor("recordPlural").toLowerCase()+"-"+todayISO()+".csv", rows);
+  downloadCsv("bizhub-"+nounFor("recordPlural").toLowerCase()+"-"+todayISO()+".csv", rows);
 }
 function shareBackupFile(){
   const backup = {
-    app: "Bizrail", version: 1, exportedAt: new Date().toISOString(),
+    app: "BizHub", version: 1, exportedAt: new Date().toISOString(),
     clients: state.clients, orders: state.orders, catalogue: state.catalogue,
     business: state.business, theme: state.theme || "indigo", darkMode: state.darkMode||false, customThemeColors: state.customThemeColors||null,
   };
   const stamp = new Date().toISOString().slice(0,10);
-  const file = new File([JSON.stringify(backup, null, 2)], "bizrail-backup-"+stamp+".json", {type:"application/json"});
+  const file = new File([JSON.stringify(backup, null, 2)], "bizhub-backup-"+stamp+".json", {type:"application/json"});
   if(navigator.canShare && !navigator.canShare({files:[file]})){ exportBackup(); return; }
-  navigator.share({ files:[file], title:"Bizrail backup" }).catch(()=>{});
+  navigator.share({ files:[file], title:"BizHub backup" }).catch(()=>{});
 }
 
 function exportBackup(){
   const backup = {
-    app: "Bizrail", version: 1, exportedAt: new Date().toISOString(),
+    app: "BizHub", version: 1, exportedAt: new Date().toISOString(),
     clients: state.clients, orders: state.orders, catalogue: state.catalogue,
     business: state.business, theme: state.theme || "indigo", darkMode: state.darkMode||false, customThemeColors: state.customThemeColors||null,
   };
@@ -3683,7 +3738,7 @@ function exportBackup(){
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   const stamp = new Date().toISOString().slice(0,10);
-  a.href = url; a.download = "bizrail-backup-"+stamp+".json";
+  a.href = url; a.download = "bizhub-backup-"+stamp+".json";
   document.body.appendChild(a); a.click(); a.remove();
   setTimeout(() => URL.revokeObjectURL(url), 2000);
 }
@@ -3949,7 +4004,7 @@ function downloadUserGuide(){
   doc.setFillColor(...goldRGB);
   doc.rect(0,150,pageW,4,"F");
   doc.setFont("times","bold"); doc.setFontSize(30); doc.setTextColor(255,255,255);
-  doc.text("Bizrail", marginX, 90);
+  doc.text("BizHub", marginX, 90);
   doc.setFont("times","normal"); doc.setFontSize(13); doc.setTextColor(231,226,211);
   doc.text("Complete User Guide", marginX, 118);
   y = 190;
@@ -3971,7 +4026,7 @@ function downloadUserGuide(){
   doc.addPage(); y = 56;
 
   heading("1. Getting started", "start");
-  paragraph("Bizrail adapts itself to how you work. Every screen, label and workflow below reflects the business type this copy of the app is configured for: "+cfg.label+".");
+  paragraph("BizHub adapts itself to how you work. Every screen, label and workflow below reflects the business type this copy of the app is configured for: "+cfg.label+".");
   subheading("Your first five minutes");
   numStep(1, "Open the app — it launches straight into a demo account pre-loaded with sample "+clientPl+", "+recordPl+" and "+catWordLower+" items so you can explore safely.");
   numStep(2, "The demo is view-only. Nothing you tap, add or edit in it is ever saved — try everything without worrying.");
@@ -4006,7 +4061,7 @@ function downloadUserGuide(){
   sectionGap();
 
   heading("4. "+recordPlCap, "orders");
-  paragraph("Every "+recordWord+" moves through a set of stages built for "+cfg.label.split(" / ")[0].toLowerCase()+" — here's the exact flow this copy of Bizrail uses:");
+  paragraph("Every "+recordWord+" moves through a set of stages built for "+cfg.label.split(" / ")[0].toLowerCase()+" — here's the exact flow this copy of BizHub uses:");
   statusChain(statusNames.concat(["Cancelled"]));
   numStep(1, "Tap New "+recordWord+" from the top bar, the "+recordPlCap+" tab, or directly from a "+nounFor("client").toLowerCase()+"'s profile.");
   numStep(2, "Add line items with prices — the total updates live as you go.");
@@ -4051,7 +4106,7 @@ function downloadUserGuide(){
   sectionGap();
 
   heading("8. Backup & restore your data", "backup");
-  paragraph("Bizrail stores everything locally on this device only — nothing is sent to a server, which means backups are entirely in your hands.");
+  paragraph("BizHub stores everything locally on this device only — nothing is sent to a server, which means backups are entirely in your hands.");
   numStep(1, "Open Account and tap Export backup — this saves a single file containing every "+nounFor("client").toLowerCase()+", "+recordWord+" and "+catWordLower+" item.");
   numStep(2, "Store that file somewhere safe — email it to yourself, save it to cloud storage, or keep it on a computer.");
   numStep(3, "On a new or reinstalled device, tap Import backup and select the file to restore everything exactly as it was.");
@@ -4067,7 +4122,7 @@ function downloadUserGuide(){
   sectionGap();
 
   heading("10. Demo mode", "demo");
-  paragraph("The demo account never goes away — it's always there as a safe space to explore, test, or show someone how Bizrail works.");
+  paragraph("The demo account never goes away — it's always there as a safe space to explore, test, or show someone how BizHub works.");
   twoCol(
     "Before you have an account",
     ["Loads automatically on first open", "Pre-filled with sample "+clientPl+" and "+recordPl, "Fully interactive but nothing saves"],
@@ -4110,7 +4165,7 @@ function downloadUserGuide(){
   y += 8;
   paragraph("You can also tap \"Contact developer\" on the sign-up screen at any time to reach out directly from the app.");
 
-  doc.save("bizrail-user-guide.pdf");
+  doc.save("bizhub-user-guide.pdf");
 }
 
 function importBackup(file){
@@ -4135,7 +4190,7 @@ function importBackup(file){
       render();
       alert("Backup imported successfully.");
     }catch(e){
-      alert("Couldn't read that file. Make sure it's a Bizrail backup exported from this app.");
+      alert("Couldn't read that file. Make sure it's a BizHub backup exported from this app.");
     }
   };
   reader.readAsText(file);
@@ -4293,7 +4348,7 @@ function ensurePullIndicator(){
     el = document.createElement("div");
     el.id = "pullRefreshIndicator";
     el.style.cssText = "position:fixed;top:0;left:0;right:0;display:flex;align-items:center;justify-content:center;height:56px;transform:translateY(-56px);z-index:9998;pointer-events:none;";
-    el.innerHTML = '<div style="width:34px;height:34px;border-radius:50%;background:var(--surface);box-shadow:0 4px 14px rgba(0,0,0,.18);display:flex;align-items:center;justify-content:center;color:var(--primary);">'+
+    el.innerHTML = '<div style="width:34px;height:34px;border-radius:50%;background:var(--surface);box-shadow:0 4px 14px rgba(0,0,0,.18);display:flex;align-items:center;justify-content:center;color:var(--primary-text);">'+
       '<span id="pullArrow" style="display:flex;transition:transform .1s;">'+icon("refresh",16)+'</span></div>';
     document.body.appendChild(el);
   }
