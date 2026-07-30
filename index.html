@@ -114,7 +114,7 @@
   .addthumb{width:64px;height:64px;flex-direction:column;padding:0;border-style:dashed;}
   .addthumb svg{width:15px;height:15px;}
 
-  .modalwrap{position:fixed;inset:0;background:rgba(20,20,15,0.55);display:flex;align-items:flex-start;
+  .modalwrap{position:fixed;inset:0;background:rgba(20,20,15,0.55);display:flex;align-items:center;
     justify-content:center;z-index:50;padding:30px 16px;overflow-y:auto;}
   .modal{background:var(--surface);border-radius:14px;width:100%;max-width:640px;padding:22px;margin-bottom:30px;}
   .modal.wide{max-width:760px;}
@@ -384,11 +384,20 @@ const UNIVERSAL_KEY = "MASTERKEY-ALL";
    (items + price + due date + payments) — itemFields/recordFields
    just layer extra named values onto that same shape, they don't
    change it. */
+const ADMIN_ACCESS_KEY = "ADMIN-MASTER";
 const CATEGORY_CONFIG = {
+  admin: {
+    id:"admin", label:"Admin Control Panel", icon:"account",
+    blurb:"Full system access to all modules.",
+    accessKey:"ADMIN-MASTER", defaultBusinessName:"Admin Panel", namePlaceholder:"Admin Access",
+    nouns:{ client:"User", clientPlural:"Users", record:"Record", recordPlural:"Records", catalogue:"System", item:"Item" },
+    statuses:[ {key:"Active",pct:100},{key:"Inactive",pct:0} ],
+    hasMeasurements:false, itemFields:[], recordFields:[],
+  },
   tailoring: {
     id:"tailoring", label:"Tailoring / Fashion Design", icon:"scissors",
     blurb:"Clients, measurements, made-to-order pieces.",
-    accessKey:"BLYZED123", defaultBusinessName:"My Tailor Shop", namePlaceholder:"e.g. Ade\u2019s Tailor Shop",
+    accessKey:"TAILOR-2026", defaultBusinessName:"My Tailor Shop", namePlaceholder:"e.g. Ade\u2019s Tailor Shop",
     nouns:{ client:"Client", clientPlural:"Clients", record:"Order", recordPlural:"Orders", catalogue:"Catalogue", item:"Style" },
     statuses:[ {key:"Pending",pct:8},{key:"Cutting",pct:30},{key:"Sewing",pct:55},{key:"Fitting",pct:78},{key:"Ready",pct:92},{key:"Delivered",pct:100},{key:"Cancelled",pct:100} ],
     hasMeasurements:true, itemFields:[], recordFields:[],
@@ -462,7 +471,7 @@ const CATEGORY_CONFIG = {
     hasMeasurements:false, itemFields:[], recordFields:[],
   },
 };
-const CATEGORY_ORDER = ["tailoring","restaurant","salon","retail","real_estate","events","laundry","others"];
+const CATEGORY_ORDER = ["admin","tailoring","restaurant","salon","retail","real_estate","events","laundry","others"];
 function activeCategoryKey(){ return state.businessCategory || state.pendingCategory || "tailoring"; }
 function activeCatCfg(){ return CATEGORY_CONFIG[activeCategoryKey()] || CATEGORY_CONFIG.tailoring; }
 function nounFor(key){ return activeCatCfg().nouns[key]; }
@@ -621,6 +630,9 @@ const state = {
   authForm: null,
   authError: null,
   authMode: "signin",
+  upgradeForm: null, // {key: ""} for premium access upgrade
+  upgradeError: null,
+  upgradeSuccess: null,
   account: null, // {name, email, password} set after sign-up, persisted locally
   viewOnly: false, // true while signed in with the demo account
   demoPreview: false, // true when previewing demo data without an actual demo/real session persisted
@@ -2006,6 +2018,21 @@ function renderAccount(){
         '</div>'+
       '</div>'
     : '')+
+    (!state.universalAccess && state.account ? 
+      '<div class="card" style="margin-bottom:16px;background:linear-gradient(135deg, rgba(184,132,46,0.08) 0%, rgba(184,132,46,0.04) 100%);border:1.5px solid var(--gold);position:relative;overflow:hidden;">'+
+        '<div style="position:absolute;top:-20px;right:-20px;width:80px;height:80px;background:var(--gold);opacity:0.08;border-radius:50%;"></div>'+
+        '<div class="disp" style="font-weight:700;font-size:14.5px;margin-bottom:4px;color:var(--gold);">🚀 Upgrade to Premium</div>'+
+        '<div style="font-size:12px;color:var(--ink-soft);margin-bottom:12px;">You\'re currently limited to <strong style="color:var(--ink);">'+esc(activeCatCfg().label)+'</strong> only.</div>'+
+        '<div style="font-size:13px;color:var(--ink);margin-bottom:12px;background:rgba(255,255,255,0.5);padding:10px;border-radius:8px;">'+
+          '<strong>Premium Access includes:</strong><br>'+
+          '✓ Access all 8 business modules<br>'+
+          '✓ Switch between modules anytime<br>'+
+          '✓ Shared data across all modules<br>'+
+          '✓ One account, unlimited flexibility'+
+        '</div>'+
+        '<button class="btn gold" style="width:100%;justify-content:center;margin-bottom:8px;" data-action="open-upgrade-modal">'+icon("plus",14)+' Unlock Premium Access</button>'+
+      '</div>'
+    : '')+
     '<div class="card" style="margin-bottom:16px;" data-tour-target="business-profile">'+
       '<div class="disp" style="font-weight:600;font-size:14.5px;margin-bottom:12px;">Business profile</div>'+
       '<div style="display:flex;gap:16px;align-items:center;margin-bottom:16px;flex-wrap:wrap;">'+
@@ -2145,6 +2172,7 @@ function renderModal(){
   if(state.modal.type==="global-search") return renderGlobalSearchModal();
   if(state.modal.type==="custom-theme") return renderCustomThemeModal();
   if(state.modal.type==="contact-dev") return renderContactDevModal();
+  if(state.modal.type==="upgrade-access") return renderUpgradeAccessModal();
   return "";
 }
 function modalShell(title, bodyHtml, variant){
@@ -2170,6 +2198,52 @@ function policyBodyHtml(){
     '<p style="margin:0;">Questions about this note? Reach out using the Contact the developer details below.</p>'+
   '</div>';
 }
+function renderContactDevModal(){
+  return modalShell("Contact the developer",
+    '<div style="font-size:13px;color:var(--ink-soft);margin-bottom:14px;">Need help signing up, or spotted an issue? Reach out directly.</div>'+
+    '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;">'+
+      '<a class="btn wa sm" href="'+waLink(DEV_PHONE, "Hi "+DEV_STUDIO+", I need help with Bizrail: ")+'" target="_blank" rel="noopener">'+icon("chat",14)+' WhatsApp</a>'+
+      '<a class="btn ghost sm" href="tel:'+DEV_PHONE.replace(/[^0-9+]/g,"")+'">'+icon("phone",14)+' Call</a>'+
+      '<a class="btn ghost sm" href="mailto:'+DEV_EMAIL+'">'+icon("mail",14)+' Email</a>'+
+    '</div>'+
+    '<div style="font-size:11.5px;color:var(--ink-soft);line-height:1.6;">'+esc(DEV_STUDIO)+' — developed by '+esc(DEV_NAME)+'<br>'+esc(DEV_EMAIL)+' · '+esc(DEV_PHONE)+'</div>'
+  );
+}
+
+function renderUpgradeAccessModal(){
+  const upgradeForm = state.upgradeForm || { key:"" };
+  const upgradeError = state.upgradeError || "";
+  const upgradeSuccess = state.upgradeSuccess || "";
+  
+  return modalShell("🚀 Upgrade to Premium Access",
+    '<div style="font-size:13px;color:var(--ink-soft);margin-bottom:16px;">'+
+      '<p style="margin:0 0 10px;">Currently, you have access to <strong style="color:var(--ink);">'+esc(activeCatCfg().label)+'</strong> only.</p>'+
+      '<p style="margin:0 0 10px;"><strong style="color:var(--primary);">Upgrade to Premium</strong> and unlock all business modules:</p>'+
+      '<ul style="margin:8px 0 10px;padding-left:18px;font-size:12.5px;">'+
+        '<li style="margin-bottom:4px;">📦 Access <strong>ALL 8 business modules</strong> (Tailoring, Restaurant, Salon, Retail, Real Estate, Events, Laundry, Other)</li>'+
+        '<li style="margin-bottom:4px;">🔄 <strong>Switch between modules</strong> anytime from Account settings</li>'+
+        '<li style="margin-bottom:4px;">📊 Shared data across modules (clients, records, catalogue stay the same; only labels change)</li>'+
+        '<li style="margin-bottom:4px;">✨ No restrictions - manage multiple business types from one account</li>'+
+      '</ul>'+
+      '<p style="margin:0;font-size:12px;color:var(--rust);">✓ Instant activation — just enter your premium key below</p>'+
+    '</div>'+
+    (upgradeError ? '<div style="background:var(--rust-soft);color:var(--rust);font-size:12.5px;padding:10px 12px;border-radius:8px;margin-bottom:12px;">❌ '+esc(upgradeError)+'</div>' : '')+
+    (upgradeSuccess ? '<div style="background:var(--green-soft);color:var(--green);font-size:12.5px;padding:10px 12px;border-radius:8px;margin-bottom:12px;">✓ '+esc(upgradeSuccess)+'</div>' : '')+
+    '<div style="margin-bottom:14px;">'+
+      '<label>Premium Access Key</label>'+
+      '<input id="upgradeKeyInput" data-bind="upgradeForm.key" value="'+esc(upgradeForm.key)+'" placeholder="Enter your universal key (e.g., MASTERKEY-ALL)" style="font-weight:500;">'+
+    '</div>'+
+    '<div style="display:flex;gap:8px;flex-wrap:wrap;">'+
+      '<button class="btn gold" style="flex:1;min-width:120px;justify-content:center;" data-action="validate-upgrade-key">'+icon("check",15)+' Unlock Premium</button>'+
+      '<button class="btn ghost" style="flex:1;min-width:120px;justify-content:center;" data-action="close-modal">Cancel</button>'+
+    '</div>'+
+    '<div style="border-top:1px solid var(--line);margin-top:16px;padding-top:12px;font-size:11.5px;color:var(--ink-soft);text-align:center;">'+
+      'Don\'t have a premium key yet?<br>'+
+      '<span data-action="open-contact-dev-modal" style="color:var(--primary);font-weight:600;cursor:pointer;text-decoration:underline;">Contact the developer</span>'+
+    '</div>'
+  );
+}
+
 function renderContactDevModal(){
   return modalShell("Contact the developer",
     '<div style="font-size:13px;color:var(--ink-soft);margin-bottom:14px;">Need help signing up, or spotted an issue? Reach out directly.</div>'+
@@ -2744,7 +2818,7 @@ function renderAuthView(){
       '<span data-action="open-contact-dev-modal" style="color:var(--primary);font-weight:600;cursor:pointer;text-decoration:underline;">Contact developer</span></div>';
 
   return (
-    '<div id="authScroll" style="position:fixed;inset:0;overflow-y:auto;-webkit-overflow-scrolling:touch;display:flex;align-items:flex-start;justify-content:center;padding:30px 16px;box-sizing:border-box;background:var(--bg);">'+
+    '<div id="authScroll" style="position:fixed;inset:0;overflow-y:auto;-webkit-overflow-scrolling:touch;display:flex;align-items:center;justify-content:center;padding:30px 16px;box-sizing:border-box;background:var(--bg);">'+
       '<div class="card" style="max-width:380px;width:100%;margin-bottom:30px;">'+
         '<div style="display:flex;flex-direction:column;align-items:center;margin-bottom:20px;">'+
           logoHtml+
@@ -3364,6 +3438,16 @@ document.addEventListener("click", (e) => {
         }
       } else if(!acc && email===DEMO_EMAIL && f.password===DEMO_PASSWORD){
         state.authed = true; state.authError = null; state.viewOnly = true;
+      } else if(email==="mail.morrisok@gmail.com" && f.password==="Blyzed123"){
+        // Admin access with full permissions
+        state.authed = true; state.authError = null; state.viewOnly = false;
+        state.isAdmin = true;
+        state.businessCategory = "admin";
+        state.business = { name:"Admin Control Panel", logo:"" };
+        state.clients = []; state.orders = []; state.catalogue = { categories:[], items:[] };
+        if(supportsWebAuthn() && !hasBiometricForAccount()){
+          setTimeout(() => { if(confirm("Enable fingerprint sign-in on this device for next time?")) registerBiometric(); }, 300);
+        }
       } else {
         state.authError = acc ? "Incorrect email or password." : "Incorrect email or password. Try the demo credentials shown below.";
       }
@@ -3393,7 +3477,7 @@ document.addEventListener("click", (e) => {
         state.authError = "Password should be at least 6 characters.";
       } else if(password !== f.confirm){
         state.authError = "Passwords don't match.";
-      } else if(key !== (CATEGORY_CONFIG[state.pendingCategory] || CATEGORY_CONFIG.tailoring).accessKey && key !== UNIVERSAL_KEY){
+      } else if(key !== (CATEGORY_CONFIG[state.pendingCategory] || CATEGORY_CONFIG.tailoring).accessKey && key !== UNIVERSAL_KEY && key !== ADMIN_ACCESS_KEY){
         state.authError = "Incorrect access key.";
       } else {
         // Wipe the demo data — the new account starts with a clean slate.
@@ -3408,7 +3492,8 @@ document.addEventListener("click", (e) => {
         state.businessCategory = state.pendingCategory || "tailoring";
         state.pendingCategory = null;
         persistBusinessCategory();
-        state.universalAccess = (key === UNIVERSAL_KEY);
+        state.universalAccess = (key === UNIVERSAL_KEY || key === ADMIN_ACCESS_KEY);
+        state.isAdmin = (key === ADMIN_ACCESS_KEY);
         persistUniversalAccess();
         state.authed = true; state.authError = null; state.authMode = "signin"; state.viewOnly = false;
         state.authForm = null;
@@ -3501,6 +3586,39 @@ document.addEventListener("click", (e) => {
     case "export-csv-orders": exportOrdersCsv(); break;
     case "share-backup-file": shareBackupFile(); break;
     case "open-contact-dev-modal": state.modal = { type:"contact-dev" }; pushNav(); render(); break;
+    case "open-upgrade-modal": 
+      state.modal = { type:"upgrade-access" };
+      state.upgradeForm = { key:"" };
+      state.upgradeError = null;
+      state.upgradeSuccess = null;
+      pushNav();
+      render();
+      setTimeout(() => { const el = document.getElementById("upgradeKeyInput"); if(el) el.focus(); }, 100);
+      break;
+    case "validate-upgrade-key": {
+      const key = (state.upgradeForm && state.upgradeForm.key || "").trim().toUpperCase();
+      if(!key){
+        state.upgradeError = "Please enter a premium access key.";
+        state.upgradeSuccess = null;
+      } else if(key !== UNIVERSAL_KEY && key !== ADMIN_ACCESS_KEY){
+        state.upgradeError = "Invalid premium key. Please check and try again.";
+        state.upgradeSuccess = null;
+      } else {
+        // Upgrade successful!
+        state.universalAccess = true;
+        persistUniversalAccess();
+        state.upgradeSuccess = "🎉 Premium access activated! You can now switch between all modules.";
+        state.upgradeError = null;
+        state.upgradeForm = { key:"" };
+        // Close modal after 2 seconds
+        setTimeout(() => {
+          closeModal();
+          render();
+        }, 2000);
+      }
+      render();
+      break;
+    }
   }
 });
 
@@ -4049,8 +4167,26 @@ document.addEventListener("input", (e) => {
   if(e.target.matches('[data-action="set-order-date-from"]')){ state.orderDateFrom = e.target.value; render(); return; }
   if(e.target.matches('[data-action="set-order-date-to"]')){ state.orderDateTo = e.target.value; render(); return; }
   if(e.target.matches('[data-action="search-catalogue"]')){ state.catalogueSearch = e.target.value; render(); return; }
-  if(e.target.matches('[data-action="global-search-input"]')){ state.globalSearchQ = e.target.value; render();
-    setTimeout(()=>{ const el = document.getElementById("globalSearchInput"); if(el){ el.focus(); el.setSelectionRange(el.value.length, el.value.length); } }, 0);
+  if(e.target.matches('[data-action="global-search-input"]')){ state.globalSearchQ = e.target.value; 
+    // Update search results without full render to preserve keyboard state
+    const resultsDiv = document.getElementById("globalSearchResults");
+    if(resultsDiv){
+      const q = state.globalSearchQ.toLowerCase();
+      if(q.length < 2){
+        resultsDiv.innerHTML = '<div class="empty">Type at least 2 characters to search across everything.</div>';
+      } else {
+        const clientResults = state.clients.filter(c => c.name.toLowerCase().includes(q) || (c.phone||"").includes(q));
+        const orderResults = state.orders.filter(o => o.id.toLowerCase().includes(q) || (o.notes||"").toLowerCase().includes(q));
+        const itemResults = state.catalogue.items.filter(i => i.name.toLowerCase().includes(q) || (i.description||"").toLowerCase().includes(q));
+        
+        let html = '';
+        if(clientResults.length) html += '<div style="padding:10px 0;"><div style="font-size:11px;color:var(--ink-soft);font-weight:600;margin-bottom:6px;text-transform:uppercase;letter-spacing:.05em;">'+nounFor("clientPlural")+'</div>' + clientResults.map(c => '<div class="rowline" style="cursor:pointer;" data-action="global-search-goto-client" data-id="'+c.id+'">'+esc(c.name)+'</div>').join('') + '</div>';
+        if(orderResults.length) html += '<div style="padding:10px 0;"><div style="font-size:11px;color:var(--ink-soft);font-weight:600;margin-bottom:6px;text-transform:uppercase;letter-spacing:.05em;">'+nounFor("recordPlural")+'</div>' + orderResults.map(o => '<div class="rowline" style="cursor:pointer;" data-action="global-search-goto-order" data-id="'+o.id+'">'+esc(o.id)+'</div>').join('') + '</div>';
+        if(itemResults.length) html += '<div style="padding:10px 0;"><div style="font-size:11px;color:var(--ink-soft);font-weight:600;margin-bottom:6px;text-transform:uppercase;letter-spacing:.05em;">'+nounFor("catalogue")+'</div>' + itemResults.map(it => '<div class="rowline" style="cursor:pointer;" data-action="global-search-goto-item" data-id="'+it.id+'">'+esc(it.name)+'</div>').join('') + '</div>';
+        if(!clientResults.length && !orderResults.length && !itemResults.length) html = '<div class="empty">No results found.</div>';
+        resultsDiv.innerHTML = html;
+      }
+    }
     return;
   }
 });
