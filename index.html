@@ -189,7 +189,7 @@
   .tour-title{font-family:'Fraunces',serif;font-size:16.5px;font-weight:600;margin-bottom:5px;line-height:1.3;}
   .tour-body{font-size:13px;color:var(--ink-soft);line-height:1.55;margin-bottom:14px;}
   .tour-actions{display:flex;justify-content:space-between;align-items:center;gap:10px;}
-  .tour-dots{display:flex;gap:4px;align-items:center;}
+  .tour-dots{display:flex;gap:4px;align-items:center;justify-content:center;flex:1;min-width:0;}
   .tour-dot{width:5px;height:5px;border-radius:50%;background:var(--line);flex-shrink:0;}
   .tour-dot.active{background:var(--gold);width:14px;border-radius:3px;}
   .tour-panel.centered .tour-actions{justify-content:center;}
@@ -1345,17 +1345,19 @@ function renderCatalogue(){
       ).join("") +'</div>';
 
   return (
-    '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;gap:10px;flex-wrap:nowrap;overflow-x:auto;">'+
-      (cats.length > 4 ? 
-        '<select data-action="select-browse-category" data-id="dummy" style="flex-shrink:0;"><option value="__all__" '+(isAll?'selected':'')+'>All Categories</option>'+
-          cats.map(c=>'<option value="'+c.id+'" '+(state.browseCategoryId===c.id?'selected':'')+'>'+esc(c.name)+'</option>').join("")+
-        '</select>' :
-        '<div class="chipbar" style="flex-shrink:0;white-space:nowrap;">'+
-          '<button class="btn '+(isAll?'gold':'ghost')+' sm" data-action="select-browse-category" data-id="__all__">All</button>'+
-          cats.map(c=>
-            '<button class="btn '+(state.browseCategoryId===c.id?'gold':'ghost')+' sm" data-action="select-browse-category" data-id="'+c.id+'">'+esc(c.name)+'</button>'
-          ).join("") +'</div>') +
-      '<div style="display:flex;gap:8px;flex-shrink:0;">'+
+    '<div>'+
+      '<div style="display:flex;align-items:center;margin-bottom:10px;gap:10px;flex-wrap:nowrap;overflow-x:auto;">'+
+        (cats.length > 4 ? 
+          '<select data-action="select-browse-category" data-id="dummy" style="flex-shrink:0;"><option value="__all__" '+(isAll?'selected':'')+'>All Categories</option>'+
+            cats.map(c=>'<option value="'+c.id+'" '+(state.browseCategoryId===c.id?'selected':'')+'>'+esc(c.name)+'</option>').join("")+
+          '</select>' :
+          '<div class="chipbar" style="flex-shrink:0;white-space:nowrap;">'+
+            '<button class="btn '+(isAll?'gold':'ghost')+' sm" data-action="select-browse-category" data-id="__all__">All</button>'+
+            cats.map(c=>
+              '<button class="btn '+(state.browseCategoryId===c.id?'gold':'ghost')+' sm" data-action="select-browse-category" data-id="'+c.id+'">'+esc(c.name)+'</button>'
+            ).join("") +'</div>') +
+      '</div>'+
+      '<div style="display:flex;gap:8px;margin-bottom:14px;">'+
         '<button class="btn ghost sm" data-action="open-full-gallery" title="Browse full gallery">'+icon("gallery",15)+' Gallery</button>'+
         '<button class="btn wa sm" data-action="share-pricelist-image">'+icon("send",14)+' Share</button>'+
         '<button class="btn ghost sm" data-action="download-pricelist-image">'+icon("download",14)+' Download</button>'+
@@ -2065,7 +2067,7 @@ async function shareCatalogueItem(id){
   document.body.appendChild(sharePreview);
   
   try{
-    const canvas = await html2canvas(sharePreview, {useCORS: true, scale: 2, backgroundColor: '#FBF9F3'});
+    const canvas = await html2canvas(sharePreview, {useCORS: true, scale: 8, backgroundColor: '#FBF9F3'});
     document.body.removeChild(sharePreview);
     
     canvas.toBlob(async (blob) => {
