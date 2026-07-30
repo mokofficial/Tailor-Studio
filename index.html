@@ -507,6 +507,7 @@ const MUTATING_ACTIONS = new Set([
   "add-category","delete-category","open-catitem-modal-new","open-catitem-modal",
   "add-catitem-to-new-order","pick-catalog-item","save-catitem","delete-catitem",
   "remove-gallery-image","remove-image","select-theme","open-custom-theme-modal","save-custom-theme","add-bank-account","remove-bank-account",
+  "reset-app-data",
 ]);
 const MUTATING_CHANGE_ACTIONS = new Set(["upload-logo","upload-images","upload-gallery-images","import-data-file","toggle-auto-backup","toggle-dark-mode"]);
 const DEV_NAME = "Morris Okereke";
@@ -2157,6 +2158,14 @@ function renderAccount(){
         '</select></div>'
       : '')+
     '</div>'+
+    '<div class="card" style="margin-top:16px;border-color:var(--rust);" data-tour-target="danger-zone">'+
+      '<div class="disp" style="font-weight:600;font-size:14.5px;margin-bottom:4px;color:var(--rust);">Reset app</div>'+
+      '<div style="font-size:12px;color:var(--ink-soft);margin-bottom:12px;">Permanently erase every '+nounFor("client").toLowerCase()+', '+nounFor("record").toLowerCase()+', '+nounFor("catalogue").toLowerCase()+' item, business profile and setting stored on this device, and return the app to its default, freshly-installed state. Export a backup first if you might need this data again — you can restore it with Import backup above.</div>'+
+      '<div style="display:flex;gap:8px;flex-wrap:wrap;">'+
+        '<button class="btn ghost sm" data-action="export-data">'+icon("download",14)+' Export backup first</button>'+
+        '<button class="btn rust sm" data-action="reset-app-data">'+icon("trash",14)+' Reset app to default</button>'+
+      '</div>'+
+    '</div>'+
     '<div class="card" style="margin-top:16px;">'+
       '<div class="disp" style="font-weight:600;font-size:14.5px;margin-bottom:4px;">Session</div>'+
       '<div style="font-size:12px;color:var(--ink-soft);margin-bottom:12px;">Signed in with '+esc((state.account&&state.account.email)||DEMO_EMAIL)+'.</div>'+
@@ -3644,6 +3653,14 @@ document.addEventListener("click", (e) => {
       break;
     }
     case "export-data": exportBackup(); break;
+    case "reset-app-data": {
+      const ok1 = confirm("Reset BizHub to its default state? This permanently deletes every "+nounFor("client").toLowerCase()+", "+nounFor("record").toLowerCase()+", "+nounFor("catalogue").toLowerCase()+" item, business profile, and setting stored on this device. Export a backup first if you might need this data again.");
+      if(!ok1) break;
+      const ok2 = confirm("This can't be undone. Reset the app now?");
+      if(!ok2) break;
+      resetAppToDefault();
+      break;
+    }
     case "download-user-guide": downloadUserGuide(); break;
     case "export-csv-clients": exportClientsCsv(); break;
     case "export-csv-orders": exportOrdersCsv(); break;
@@ -4168,6 +4185,15 @@ function downloadUserGuide(){
   doc.save("bizhub-user-guide.pdf");
 }
 
+// Wipes every persisted key and reloads, so the app comes back up exactly
+// as it would on a brand-new install. Cancels any debounced persist()
+// writes first so nothing re-populates localStorage after it's cleared.
+function resetAppToDefault(){
+  Object.keys(persistTimers).forEach(k => clearTimeout(persistTimers[k]));
+  try{ localStorage.clear(); }catch(e){}
+  try{ sessionStorage.clear(); }catch(e){}
+  window.location.reload();
+}
 function importBackup(file){
   const reader = new FileReader();
   reader.onload = () => {
