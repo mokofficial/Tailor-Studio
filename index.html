@@ -34,15 +34,17 @@
   .shell{display:flex;flex-direction:column;height:100vh;height:100dvh;width:100vw;overflow:hidden;}
   .topbar{display:flex;align-items:center;justify-content:space-between;gap:14px;
     padding:14px 20px;background:var(--surface);border-bottom:1px solid var(--line);flex-shrink:0;}
-  .brand{display:flex;align-items:center;gap:12px;min-width:0;}
+  .brand{display:flex;align-items:center;gap:12px;min-width:0;flex:1 1 auto;overflow:hidden;}
   .brand-badge{width:42px;height:42px;border-radius:12px;background:var(--primary);color:#fff;
     display:flex;align-items:center;justify-content:center;font-family:'Fraunces',serif;font-weight:600;
     font-size:16px;flex-shrink:0;overflow:hidden;}
   .brand-badge img{width:100%;height:100%;object-fit:cover;}
-  .brand-text{min-width:0;}
+  .brand-text{min-width:0;flex:1 1 auto;overflow:hidden;}
   .brand-name{font-family:'Fraunces',serif;font-weight:600;font-size:17px;line-height:1.2;
-    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:46vw;}
-  .brand-greet{font-size:11.5px;color:var(--ink-soft);margin-top:1px;}
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;}
+  .brand-greet{font-size:11.5px;color:var(--ink-soft);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .topbar-actions{display:flex;gap:8px;align-items:center;flex-shrink:0;}
+  @media (max-width:420px){ .topbar-actions .btn-label{display:none;} .topbar-actions .btn.sm{padding:9px 10px;} }
 
   .content{flex:1;min-height:0;overflow-y:auto;padding:20px;}
   .bottomnav{display:flex;background:var(--surface);border-top:1px solid var(--line);flex-shrink:0;
@@ -97,6 +99,9 @@
   @media (max-width:760px){ .grid-2{grid-template-columns:1fr;} .grid-2-even{grid-template-columns:1fr;} }
 
   .chipbar{display:flex;flex-wrap:wrap;gap:6px;}
+  .chipbar.scroll{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:2px;scrollbar-width:none;}
+  .chipbar.scroll::-webkit-scrollbar{display:none;}
+  .chipbar.scroll .btn{flex-shrink:0;}
   .tape-track{position:relative;height:16px;border-radius:3px;
     background-image:repeating-linear-gradient(to right,var(--line) 0 1px,transparent 1px 8px),
       repeating-linear-gradient(to right,var(--line) 0 1.5px,transparent 1.5px 40px);
@@ -114,9 +119,9 @@
   .addthumb{width:64px;height:64px;flex-direction:column;padding:0;border-style:dashed;}
   .addthumb svg{width:15px;height:15px;}
 
-  .modalwrap{position:fixed;inset:0;background:rgba(20,20,15,0.55);display:flex;align-items:center;
+  .modalwrap{position:fixed;inset:0;background:rgba(20,20,15,0.55);display:flex;
     justify-content:center;z-index:50;padding:30px 16px;overflow-y:auto;}
-  .modal{background:var(--surface);border-radius:14px;width:100%;max-width:640px;padding:22px;margin-bottom:30px;}
+  .modal{background:var(--surface);border-radius:14px;width:100%;max-width:640px;padding:22px;margin:auto;}
   .modal.wide{max-width:760px;}
   .modal.full{max-width:960px;width:96vw;max-height:88vh;overflow-y:auto;}
   .modal-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;}
@@ -1276,13 +1281,13 @@ function render(){
           '<div class="brand-badge">'+logoHtml+'</div>'+
           '<div class="brand-text"><div class="brand-name">'+esc(state.business.name)+'</div><div class="brand-greet">'+greeting()+'</div></div>'+
         '</div>'+
-        '<div style="display:flex;gap:8px;align-items:center;">'+
+        '<div class="topbar-actions">'+
           '<button class="iconbtn" data-action="start-tour" aria-label="Take a tour">'+icon("help",16)+'</button>'+
           '<button class="iconbtn" data-action="open-global-search" aria-label="Search">'+icon("search",16)+'</button>'+
           '<button class="iconbtn" style="position:relative;" data-action="open-notifications" aria-label="Notifications">'+icon("bell",16)+
             (alerts.total>0 ? '<span style="position:absolute;top:-5px;right:-5px;background:var(--rust);color:#fff;font-size:10px;font-weight:700;min-width:16px;height:16px;border-radius:8px;display:flex;align-items:center;justify-content:center;padding:0 3px;line-height:1;">'+(alerts.total>9?"9+":alerts.total)+'</span>' : '')+
           '</button>'+
-          '<button class="btn gold sm" data-action="open-order-modal-new"><span>'+icon("plus",14)+'</span> New '+nounFor("record").toLowerCase()+'</button>'+
+          '<button class="btn gold sm" data-action="open-order-modal-new" aria-label="New '+nounFor("record").toLowerCase()+'" title="New '+nounFor("record").toLowerCase()+'"><span>'+icon("plus",14)+'</span><span class="btn-label"> New '+nounFor("record").toLowerCase()+'</span></button>'+
         '</div>'+
       '</div>'+
       (state.viewOnly ? (
@@ -1739,11 +1744,11 @@ function renderOrders(){
           '<button class="btn" data-action="open-order-modal-new"><span>'+icon("plus",15)+'</span> New '+nounFor("record").toLowerCase()+'</button>'+
         '</div>'+
       '</div>'+
-      '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">'+
-        '<div class="chipbar" style="flex:1;">'+ ["All"].concat(currentStatuses().map(s=>s.key)).map(s=>
+      '<div style="display:flex;gap:8px;align-items:center;">'+
+        '<div class="chipbar scroll" style="flex:1;min-width:0;">'+ ["All"].concat(currentStatuses().map(s=>s.key)).map(s=>
           '<button class="btn '+(filter===s?'gold':'ghost')+' sm" data-action="filter-orders" data-status="'+s+'">'+s+'</button>'
         ).join("") +'</div>'+
-        '<button class="btn '+(state.orderBalanceOnly?'gold':'ghost')+' sm" data-action="toggle-balance-filter">'+icon("cash",13)+' Balance due</button>'+
+        '<button class="btn '+(state.orderBalanceOnly?'gold':'ghost')+' sm" style="flex-shrink:0;" data-action="toggle-balance-filter">'+icon("cash",13)+' Balance due</button>'+
       '</div>'+
       '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;font-size:12.5px;color:var(--ink-soft);">'+
         '<span>Due date range:</span>'+
@@ -1837,9 +1842,43 @@ function buildFullGallery(categoryId){
 }
 function renderCatalogue(){
   // Read-only "photo library" browsing view — editing happens in Account > Manage catalogue.
-  const business = state.business;
   const cats = state.catalogue.categories;
   if(state.browseCategoryId===null || state.browseCategoryId===undefined) state.browseCategoryId = "__all__";
+  const isAll = state.browseCategoryId === "__all__";
+
+  return (
+    '<div>'+
+      '<div style="position:relative;margin-bottom:12px;max-width:320px;">'+
+        '<span style="position:absolute;left:10px;top:11px;color:var(--ink-soft);">'+icon("search",14)+'</span>'+
+        '<input id="catalogueSearchInput" style="padding-left:30px;" placeholder="Search '+nounFor("item").toLowerCase()+'s..." data-action="search-catalogue" value="'+esc(state.catalogueSearch||"")+'">'+
+      '</div>'+
+      '<div style="display:flex;align-items:center;margin-bottom:10px;gap:10px;">'+
+        (cats.length > 4 ? 
+          '<select data-action="select-browse-category" data-id="dummy" style="flex-shrink:0;max-width:220px;"><option value="__all__" '+(isAll?'selected':'')+'>All Categories</option>'+
+            cats.map(c=>'<option value="'+c.id+'" '+(state.browseCategoryId===c.id?'selected':'')+'>'+esc(c.name)+'</option>').join("")+
+          '</select>' :
+          '<div class="chipbar scroll">'+
+            '<button class="btn '+(isAll?'gold':'ghost')+' sm" data-action="select-browse-category" data-id="__all__">All</button>'+
+            cats.map(c=>
+              '<button class="btn '+(state.browseCategoryId===c.id?'gold':'ghost')+' sm" data-action="select-browse-category" data-id="'+c.id+'">'+esc(c.name)+'</button>'
+            ).join("") +'</div>') +
+      '</div>'+
+      '<div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;">'+
+        '<button class="btn ghost sm" data-action="open-full-gallery" title="Browse full gallery">'+icon("gallery",15)+' Gallery</button>'+
+        '<button class="btn wa sm" data-action="share-pricelist-image">'+icon("send",14)+' Share</button>'+
+        '<button class="btn ghost sm" data-action="download-pricelist-image">'+icon("download",14)+' Download</button>'+
+      '</div>'+
+    '</div>'+
+    '<div id="catalogueItemsWrap">'+ catalogueResultsHtml() +'</div>'
+  );
+}
+function catalogueResultsHtml(){
+  // Renders the best-sellers strip + item grid for the current category/search
+  // selection. Kept separate from renderCatalogue() so a keystroke in the
+  // search box can update just this region instead of a full re-render,
+  // which would otherwise steal focus and drop the on-screen keyboard.
+  const business = state.business;
+  const cats = state.catalogue.categories;
   const isAll = state.browseCategoryId === "__all__";
   const activeCat = isAll ? null : cats.find(c=>c.id===state.browseCategoryId);
   let items = isAll ? state.catalogue.items.slice() : (activeCat ? state.catalogue.items.filter(i=>i.categoryId===activeCat.id) : []);
@@ -1853,40 +1892,7 @@ function renderCatalogue(){
     .map(it=>({it, count: salesCount[it.name]||0}))
     .filter(x=>x.count>0).sort((a,b)=>b.count-a.count).slice(0,5);
 
-  const useLargeFilterList = cats.length > 5;
-  const categoryFilterHtml = useLargeFilterList ? 
-    '<select data-action="select-browse-category" data-id="dummy" style="flex:1;max-width:280px;"><option value="__all__" '+(isAll?'selected':'')+'>All Categories</option>'+
-      cats.map(c=>'<option value="'+c.id+'" '+(state.browseCategoryId===c.id?'selected':'')+'>'+esc(c.name)+'</option>').join("")+
-    '</select>' :
-    '<div class="chipbar">'+
-      '<button class="btn '+(isAll?'gold':'ghost')+' sm" data-action="select-browse-category" data-id="__all__">All</button>'+
-      cats.map(c=>
-        '<button class="btn '+(state.browseCategoryId===c.id?'gold':'ghost')+' sm" data-action="select-browse-category" data-id="'+c.id+'">'+esc(c.name)+'</button>'
-      ).join("") +'</div>';
-
   return (
-    '<div>'+
-      '<div style="position:relative;margin-bottom:12px;max-width:320px;">'+
-        '<span style="position:absolute;left:10px;top:11px;color:var(--ink-soft);">'+icon("search",14)+'</span>'+
-        '<input style="padding-left:30px;" placeholder="Search '+nounFor("item").toLowerCase()+'s..." data-action="search-catalogue" value="'+esc(state.catalogueSearch||"")+'">'+
-      '</div>'+
-      '<div style="display:flex;align-items:center;margin-bottom:10px;gap:10px;flex-wrap:wrap;">'+
-        (cats.length > 4 ? 
-          '<select data-action="select-browse-category" data-id="dummy" style="flex-shrink:0;"><option value="__all__" '+(isAll?'selected':'')+'>All Categories</option>'+
-            cats.map(c=>'<option value="'+c.id+'" '+(state.browseCategoryId===c.id?'selected':'')+'>'+esc(c.name)+'</option>').join("")+
-          '</select>' :
-          '<div class="chipbar">'+
-            '<button class="btn '+(isAll?'gold':'ghost')+' sm" data-action="select-browse-category" data-id="__all__">All</button>'+
-            cats.map(c=>
-              '<button class="btn '+(state.browseCategoryId===c.id?'gold':'ghost')+' sm" data-action="select-browse-category" data-id="'+c.id+'">'+esc(c.name)+'</button>'
-            ).join("") +'</div>') +
-      '</div>'+
-      '<div style="display:flex;gap:8px;margin-bottom:14px;">'+
-        '<button class="btn ghost sm" data-action="open-full-gallery" title="Browse full gallery">'+icon("gallery",15)+' Gallery</button>'+
-        '<button class="btn wa sm" data-action="share-pricelist-image">'+icon("send",14)+' Share</button>'+
-        '<button class="btn ghost sm" data-action="download-pricelist-image">'+icon("download",14)+' Download</button>'+
-      '</div>'+
-    '</div>'+
     (isAll && !catQ && bestSellers.length>0 ?
       '<div style="margin-bottom:16px;">'+
         '<div class="disp" style="font-weight:600;font-size:13.5px;margin-bottom:8px;">'+icon("cash",13)+' Best sellers</div>'+
@@ -2397,7 +2403,7 @@ function renderOrderModal(){
     ) : '')+
     '<div style="display:flex;gap:8px;margin-top:20px;flex-wrap:wrap;justify-content:flex-end;">'+
       (state.modal.isExisting ? '<button class="btn rust sm" data-action="delete-order">'+icon("trash",14)+' Delete</button>' : '')+
-      (state.modal.isExisting ? '<button class="btn ghost sm" data-action="duplicate-order">'+icon("plus",14)+' Duplicate as new</button>' : '')+
+      (state.modal.isExisting ? '<button class="iconbtn" data-action="duplicate-order" title="Duplicate as new '+nounFor("record").toLowerCase()+'" aria-label="Duplicate as new '+nounFor("record").toLowerCase()+'">'+icon("plus",15)+'</button>' : '')+
       '<button class="btn ghost sm" data-action="close-modal">Cancel</button>'+
       '<button class="btn sm" '+(!o.clientId?"disabled":"")+' data-action="save-order">'+icon("check",15)+' Save</button>'+
     '</div>', true
@@ -2550,6 +2556,7 @@ function renderGlobalSearchModal(){
       '<span style="position:absolute;left:10px;top:11px;color:var(--ink-soft);">'+icon("search",14)+'</span>'+
       '<input id="globalSearchInput" style="padding-left:30px;" placeholder="Search '+nounFor("clientPlural").toLowerCase()+', '+nounFor("recordPlural").toLowerCase()+', '+nounFor("catalogue").toLowerCase()+'..." data-action="global-search-input" value="'+esc(state.globalSearchQ||"")+'">'+
     '</div>'+
+    '<div id="globalSearchResults">'+
     (q.length<2 ? '<div class="empty">Type at least 2 characters to search across everything.</div>' :
       (clientResults.length+orderResults.length+itemResults.length===0 ? '<div class="empty">No matches for "'+esc(state.globalSearchQ)+'".</div>' :
         resultGroup(nounFor("clientPlural"), clientResults, c=>
@@ -2569,7 +2576,8 @@ function renderGlobalSearchModal(){
           '</div>'
         )
       )
-    );
+    )+
+    '</div>';
   return modalShell("Search", body);
 }
 
@@ -4166,7 +4174,12 @@ document.addEventListener("input", (e) => {
   }
   if(e.target.matches('[data-action="set-order-date-from"]')){ state.orderDateFrom = e.target.value; render(); return; }
   if(e.target.matches('[data-action="set-order-date-to"]')){ state.orderDateTo = e.target.value; render(); return; }
-  if(e.target.matches('[data-action="search-catalogue"]')){ state.catalogueSearch = e.target.value; render(); return; }
+  if(e.target.matches('[data-action="search-catalogue"]')){
+    state.catalogueSearch = e.target.value;
+    const wrap = document.getElementById("catalogueItemsWrap");
+    if(wrap) wrap.innerHTML = catalogueResultsHtml();
+    return;
+  }
   if(e.target.matches('[data-action="global-search-input"]')){ state.globalSearchQ = e.target.value; 
     // Update search results without full render to preserve keyboard state
     const resultsDiv = document.getElementById("globalSearchResults");
@@ -4175,13 +4188,16 @@ document.addEventListener("input", (e) => {
       if(q.length < 2){
         resultsDiv.innerHTML = '<div class="empty">Type at least 2 characters to search across everything.</div>';
       } else {
-        const clientResults = state.clients.filter(c => c.name.toLowerCase().includes(q) || (c.phone||"").includes(q));
-        const orderResults = state.orders.filter(o => o.id.toLowerCase().includes(q) || (o.notes||"").toLowerCase().includes(q));
-        const itemResults = state.catalogue.items.filter(i => i.name.toLowerCase().includes(q) || (i.description||"").toLowerCase().includes(q));
+        const clientResults = state.clients.filter(c => c.name.toLowerCase().includes(q) || (c.phone||"").includes(q)).slice(0,8);
+        const orderResults = state.orders.filter(o => {
+          const client = state.clients.find(c=>c.id===o.clientId);
+          return (o.title||"").toLowerCase().includes(q) || (client && client.name.toLowerCase().includes(q)) || (o.notes||"").toLowerCase().includes(q);
+        }).slice(0,8);
+        const itemResults = state.catalogue.items.filter(i => i.name.toLowerCase().includes(q) || (i.description||"").toLowerCase().includes(q)).slice(0,8);
         
         let html = '';
         if(clientResults.length) html += '<div style="padding:10px 0;"><div style="font-size:11px;color:var(--ink-soft);font-weight:600;margin-bottom:6px;text-transform:uppercase;letter-spacing:.05em;">'+nounFor("clientPlural")+'</div>' + clientResults.map(c => '<div class="rowline" style="cursor:pointer;" data-action="global-search-goto-client" data-id="'+c.id+'">'+esc(c.name)+'</div>').join('') + '</div>';
-        if(orderResults.length) html += '<div style="padding:10px 0;"><div style="font-size:11px;color:var(--ink-soft);font-weight:600;margin-bottom:6px;text-transform:uppercase;letter-spacing:.05em;">'+nounFor("recordPlural")+'</div>' + orderResults.map(o => '<div class="rowline" style="cursor:pointer;" data-action="global-search-goto-order" data-id="'+o.id+'">'+esc(o.id)+'</div>').join('') + '</div>';
+        if(orderResults.length) html += '<div style="padding:10px 0;"><div style="font-size:11px;color:var(--ink-soft);font-weight:600;margin-bottom:6px;text-transform:uppercase;letter-spacing:.05em;">'+nounFor("recordPlural")+'</div>' + orderResults.map(o => { const client = state.clients.find(c=>c.id===o.clientId); return '<div class="rowline" style="cursor:pointer;" data-action="global-search-goto-order" data-id="'+o.id+'"><span>'+esc(client?client.name:"Unknown")+' — '+esc(o.title||"Order")+'</span><span class="pill '+statusClass(o.status)+'" style="font-size:10px;">'+o.status+'</span></div>'; }).join('') + '</div>';
         if(itemResults.length) html += '<div style="padding:10px 0;"><div style="font-size:11px;color:var(--ink-soft);font-weight:600;margin-bottom:6px;text-transform:uppercase;letter-spacing:.05em;">'+nounFor("catalogue")+'</div>' + itemResults.map(it => '<div class="rowline" style="cursor:pointer;" data-action="global-search-goto-item" data-id="'+it.id+'">'+esc(it.name)+'</div>').join('') + '</div>';
         if(!clientResults.length && !orderResults.length && !itemResults.length) html = '<div class="empty">No results found.</div>';
         resultsDiv.innerHTML = html;
