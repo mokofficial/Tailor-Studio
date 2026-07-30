@@ -5,7 +5,7 @@
 <meta name="theme-color" content="#1E3A3A">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Tailor Studio</title>
+<title>Bizrail</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -135,12 +135,28 @@
 
   .bank-entry{border:1px solid var(--line);border-radius:10px;padding:12px;margin-bottom:10px;position:relative;}
 
+  .pill[class*="status-"]{background:var(--gold-soft);color:#8A5F1F;} /* default for any status not listed below */
   .status-pending{background:var(--gold-soft);color:#8A5F1F;}
   .status-cutting{background:var(--gold-soft);color:#8A5F1F;}
   .status-sewing{background:var(--gold-soft);color:#8A5F1F;}
   .status-fitting{background:var(--gold-soft);color:#8A5F1F;}
+  .status-preparing{background:var(--gold-soft);color:#8A5F1F;}
+  .status-washing{background:var(--gold-soft);color:#8A5F1F;}
+  .status-dropped-off{background:var(--gold-soft);color:#8A5F1F;}
+  .status-booked{background:var(--gold-soft);color:#8A5F1F;}
+  .status-in-progress{background:var(--gold-soft);color:#8A5F1F;}
+  .status-viewing{background:var(--gold-soft);color:#8A5F1F;}
+  .status-offer{background:var(--gold-soft);color:#8A5F1F;}
+  .status-inquiry{background:var(--gold-soft);color:#8A5F1F;}
+  .status-listed{background:var(--gold-soft);color:#8A5F1F;}
+  .status-paid{background:var(--gold-soft);color:#8A5F1F;}
   .status-ready{background:var(--green-soft);color:var(--green);}
   .status-delivered{background:var(--green-soft);color:var(--green);}
+  .status-served{background:var(--green-soft);color:var(--green);}
+  .status-collected{background:var(--green-soft);color:var(--green);}
+  .status-completed{background:var(--green-soft);color:var(--green);}
+  .status-closed{background:var(--green-soft);color:var(--green);}
+  .status-fulfilled{background:var(--green-soft);color:var(--green);}
   .status-cancelled{background:#EDEAE0;color:var(--ink-soft);}
 
   .empty{color:var(--ink-soft);font-size:13.5px;padding:6px 0;}
@@ -164,7 +180,12 @@
     border:none;width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;z-index:2;}
   .welcome-arrow.prev{left:8px;} .welcome-arrow.next{right:8px;}
   .welcome-empty{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:rgba(255,255,255,0.75);}
-  .welcome-body{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:26px 24px;gap:12px;min-height:0;}
+  .welcome-vslide{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:20px;text-align:center;color:#fff;}
+  .welcome-vslide .vicon{width:56px;height:56px;border-radius:16px;background:rgba(255,255,255,0.16);
+    display:flex;align-items:center;justify-content:center;color:#fff;}
+  .welcome-vslide .vname{font-family:'Fraunces',serif;font-size:18px;font-weight:600;max-width:280px;}
+  .welcome-vslide .vblurb{font-size:12px;opacity:.8;max-width:260px;}
+  .welcome-body{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:26px 24px;gap:12px;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;}
   .welcome-logo{width:60px;height:60px;border-radius:16px;background:var(--primary);color:#fff;display:flex;align-items:center;justify-content:center;
     font-family:'Fraunces',serif;font-weight:600;font-size:22px;overflow:hidden;}
   .welcome-logo img{width:100%;height:100%;object-fit:cover;}
@@ -232,6 +253,8 @@ const ICONS = {
   close:'<path d="M6 6l12 12M18 6L6 18"/>',
   gallery:'<rect x="3" y="3" width="7" height="7" rx="1.3"/><rect x="14" y="3" width="7" height="7" rx="1.3"/><rect x="3" y="14" width="7" height="7" rx="1.3"/><rect x="14" y="14" width="7" height="7" rx="1.3"/>',
   eye:'<path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/>',
+  palette:'<path d="M12 3a9 9 0 1 0 0 18c1.1 0 1.6-.9.9-1.7-.4-.5-.3-1.3.3-1.6.6-.3 1.3-.1 1.7.4.6.7 1.7.6 2-.3A9 9 0 0 0 12 3z"/><circle cx="7.5" cy="11" r="1.3" fill="currentColor" stroke="none"/><circle cx="10.5" cy="7.3" r="1.3" fill="currentColor" stroke="none"/><circle cx="15" cy="7.8" r="1.3" fill="currentColor" stroke="none"/><circle cx="17" cy="11.8" r="1.3" fill="currentColor" stroke="none"/>',
+  moon:'<path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a7 7 0 0 0 10.5 10.5z"/>',
   mail:'<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/>',
   bell:'<path d="M6 8a6 6 0 0 1 12 0c0 4 1.5 5.5 2 6.5H4c.5-1 2-2.5 2-6.5z"/><path d="M9.5 17a2.5 2.5 0 0 0 5 0"/>',
   fingerprint:'<path d="M12 2a8 8 0 0 1 8 8c0 2-.3 3.8-.9 5.5"/><path d="M6.1 5.8A8 8 0 0 0 4 10c0 4-1 7-2 8.5"/><path d="M12 6a6 6 0 0 1 6 6c0 3.5-.7 6-1.6 7.7"/><path d="M8 7.6A6 6 0 0 0 6 10c0 5-1.2 7.5-2 8.7"/><path d="M12 10a2 2 0 0 1 2 2c0 3.5-.7 6.2-2 8.3"/><path d="M10 10.3a2 2 0 0 0-1 1.7c0 3-.5 5.5-1.7 7.7"/>',
@@ -252,14 +275,62 @@ const THEMES = {
   mustard:    { label:"Mustard & Ink",    vars:{ bg:"#EDE6D3", surface:"#FBF8ED", ink:"#221F17", "ink-soft":"#6B6350", primary:"#221F17", "primary-dark":"#100E0A", gold:"#C9A227", "gold-soft":"#EDE0A0", rust:"#9C3B2A", "rust-soft":"#EBD2CB", line:"#DCD1AE", green:"#556B2F", "green-soft":"#E3E9D0" } },
   berry:      { label:"Berry & Cream",    vars:{ bg:"#F0E4E6", surface:"#FEFAFA", ink:"#2E1B20", "ink-soft":"#7A5C63", primary:"#7A2E44", "primary-dark":"#551F2F", gold:"#C9915A", "gold-soft":"#EFD9BE", rust:"#9C3B2A", "rust-soft":"#EBD2CB", line:"#E3CDD1", green:"#4F7A5A", "green-soft":"#DCEBDF" } },
   forest:     { label:"Forest & Rust",    vars:{ bg:"#E2E6DC", surface:"#F8FAF5", ink:"#1E2A1B", "ink-soft":"#5A6B54", primary:"#33502E", "primary-dark":"#20331C", gold:"#B5652E", "gold-soft":"#E8CBAE", rust:"#9C3B2A", "rust-soft":"#EBD2CB", line:"#CBD6C0", green:"#4F7A5A", "green-soft":"#DCEBDF" } },
-  dark:       { label:"Dark Mode",        vars:{ bg:"#121316", surface:"#1C1F23", ink:"#EDEDEE", "ink-soft":"#9AA0A6", primary:"#3E7C6E", "primary-dark":"#2A5850", gold:"#D9A65C", "gold-soft":"#3A2F1C", rust:"#C1583B", "rust-soft":"#3A211A", line:"#2C2F34", green:"#4F9C6E", "green-soft":"#173322" } },
   mono:       { label:"Black & White",    vars:{ bg:"#EDEDED", surface:"#FFFFFF", ink:"#111111", "ink-soft":"#6B6B6B", primary:"#111111", "primary-dark":"#000000", gold:"#4A4A4A", "gold-soft":"#DDDDDD", rust:"#5A5A5A", "rust-soft":"#E4E4E4", line:"#D0D0D0", green:"#2E2E2E", "green-soft":"#E2E2E2" } },
 };
+// Neutral overlay applied on top of whichever accent theme is active when
+// Dark mode is switched on — keeps the chosen primary/gold/rust/green accent
+// colors but swaps the background/surface/text neutrals for dark equivalents.
+const DARK_NEUTRALS = { bg:"#121316", surface:"#1C1F23", ink:"#EDEDEE", "ink-soft":"#9AA0A6", line:"#2C2F34" };
 function applyTheme(key){
+  if(key==="custom") ensureCustomTheme();
   const t = THEMES[key] ? key : "indigo";
-  const vars = THEMES[t].vars;
+  const vars = Object.assign({}, THEMES[t].vars, state.darkMode ? DARK_NEUTRALS : {});
   Object.keys(vars).forEach(k => document.documentElement.style.setProperty("--"+k, vars[k]));
   state.theme = t;
+}
+function toggleDarkMode(on){
+  state.darkMode = on;
+  applyTheme(state.theme || "indigo");
+  persist("darkMode", state.darkMode);
+}
+// ---- Simple hex color math for building a personalized theme from two picked colors ----
+function hexToRgbArr(hex){
+  hex = (hex||"#888888").replace("#","");
+  if(hex.length===3) hex = hex.split("").map(c=>c+c).join("");
+  const num = parseInt(hex,16);
+  return [(num>>16)&255, (num>>8)&255, num&255];
+}
+function rgbArrToHex(rgb){
+  return "#"+rgb.map(v => Math.max(0,Math.min(255,Math.round(v))).toString(16).padStart(2,"0")).join("");
+}
+function lighten(hex, amt){
+  const [r,g,b] = hexToRgbArr(hex);
+  return rgbArrToHex([r+(255-r)*amt, g+(255-g)*amt, b+(255-b)*amt]);
+}
+function darken(hex, amt){
+  const [r,g,b] = hexToRgbArr(hex);
+  return rgbArrToHex([r*(1-amt), g*(1-amt), b*(1-amt)]);
+}
+function buildCustomTheme(primary, gold){
+  return {
+    label: "My colours",
+    vars: {
+      bg: lighten(gold, 0.88), surface: lighten(gold, 0.97),
+      ink: darken(primary, 0.82), "ink-soft": darken(primary, 0.45),
+      primary: primary, "primary-dark": darken(primary, 0.3),
+      gold: gold, "gold-soft": lighten(gold, 0.78),
+      rust: "#A2432B", "rust-soft": "#F0DAD1",
+      line: lighten(gold, 0.68),
+      green: "#3E6B4F", "green-soft": "#DCE9DD",
+    }
+  };
+}
+function ensureCustomTheme(){
+  if(!THEMES.custom){
+    const c = state.customThemeColors || { primary:"#1E3A3A", gold:"#B8842E" };
+    THEMES.custom = buildCustomTheme(c.primary, c.gold);
+  }
+  return THEMES.custom;
 }
 
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2,7);
@@ -280,22 +351,137 @@ const NIGERIA_BANKS = [
   "Chipper Cash","PiggyVest","9Payment Service Bank (9PSB)","Airtel SmartCash PSB",
   "Hope Payment Service Bank","MoMo PSB (MTN)"
 ];
-const DEMO_EMAIL = "demo@tailorstudio.com";
+const DEMO_EMAIL = "demo@bizrail.app";
 const DEMO_PASSWORD = "demo1234";
 // Access key required to create a real (non-demo) account. Change this string
 // to whatever key you want people to need when they tap "Sign up".
 const SIGNUP_KEY = "BLYZED123";
+// Universal key: works at signup no matter which vertical is picked, and
+// flags the account as "universalAccess" — such accounts get a module
+// switcher in Account so they can flip between every vertical's vocab,
+// statuses, and extra fields on the same device/data instead of being
+// locked to the one they first chose. Change this to whatever you want
+// a master/reseller key to be.
+const UNIVERSAL_KEY = "MASTERKEY-ALL";
+
+/* ================= BUSINESS CATEGORY REGISTRY =================
+   The app is a bundle: at first run, before any signup, the person
+   picks which kind of business they run. That choice determines the
+   access key required to sign up, the vocabulary used everywhere
+   (Clients vs Customers, Orders vs Bookings, Catalogue vs Menu...),
+   the status pipeline a record moves through, whether the
+   tailoring-specific measurements block shows up, and any extra
+   per-vertical fields (itemFields live on catalogue items, e.g.
+   bedrooms/sqft for a property; recordFields live on the order/
+   booking/appointment record, e.g. which stylist it's assigned to).
+   Once a signup succeeds the category is written to
+   localStorage("businessCategory") and locked permanently for that
+   install — the picker never shows again on that device — UNLESS the
+   account signed up with UNIVERSAL_KEY, in which case a switcher in
+   Account lets it move between verticals freely. To add a new
+   vertical, add an entry here; nothing else in the app needs to know
+   it exists. All verticals share the same underlying record shape
+   (items + price + due date + payments) — itemFields/recordFields
+   just layer extra named values onto that same shape, they don't
+   change it. */
+const CATEGORY_CONFIG = {
+  tailoring: {
+    id:"tailoring", label:"Tailoring / Fashion Design", icon:"scissors",
+    blurb:"Clients, measurements, made-to-order pieces.",
+    accessKey:"BLYZED123", defaultBusinessName:"My Tailor Shop", namePlaceholder:"e.g. Ade\u2019s Tailor Shop",
+    nouns:{ client:"Client", clientPlural:"Clients", record:"Order", recordPlural:"Orders", catalogue:"Catalogue", item:"Style" },
+    statuses:[ {key:"Pending",pct:8},{key:"Cutting",pct:30},{key:"Sewing",pct:55},{key:"Fitting",pct:78},{key:"Ready",pct:92},{key:"Delivered",pct:100},{key:"Cancelled",pct:100} ],
+    hasMeasurements:true, itemFields:[], recordFields:[],
+  },
+  restaurant: {
+    id:"restaurant", label:"Restaurant / Food & Drinks", icon:"bag",
+    blurb:"Customers, menu items, table or delivery orders.",
+    accessKey:"FOOD-2026", defaultBusinessName:"My Restaurant", namePlaceholder:"e.g. Mama\u2019s Kitchen",
+    nouns:{ client:"Customer", clientPlural:"Customers", record:"Order", recordPlural:"Orders", catalogue:"Menu", item:"Dish" },
+    statuses:[ {key:"Pending",pct:15},{key:"Preparing",pct:45},{key:"Ready",pct:80},{key:"Served",pct:100},{key:"Cancelled",pct:100} ],
+    hasMeasurements:false,
+    itemFields:[ {key:"spiceLevel",label:"Spice level",type:"text",placeholder:"Mild, medium, hot"},{key:"prepMinutes",label:"Prep time (mins)",type:"number",placeholder:"20"} ],
+    recordFields:[ {key:"tableOrDelivery",label:"Table no. / Delivery address",type:"text",placeholder:"Table 4, or delivery address"} ],
+  },
+  salon: {
+    id:"salon", label:"Salon & Spa / Barbing", icon:"scissors",
+    blurb:"Clients, services, appointments and stylists.",
+    accessKey:"SALON-2026", defaultBusinessName:"My Salon", namePlaceholder:"e.g. Glow Beauty Lounge",
+    nouns:{ client:"Client", clientPlural:"Clients", record:"Appointment", recordPlural:"Appointments", catalogue:"Services", item:"Service" },
+    statuses:[ {key:"Booked",pct:15},{key:"In progress",pct:55},{key:"Completed",pct:100},{key:"Cancelled",pct:100} ],
+    hasMeasurements:false,
+    itemFields:[ {key:"durationMinutes",label:"Duration (mins)",type:"number",placeholder:"45"} ],
+    recordFields:[ {key:"stylist",label:"Stylist assigned",type:"text",placeholder:"e.g. Chidinma"} ],
+  },
+  retail: {
+    id:"retail", label:"Retail / Boutique Store", icon:"bag",
+    blurb:"Customers, products, sales and stock.",
+    accessKey:"RETAIL-2026", defaultBusinessName:"My Store", namePlaceholder:"e.g. Lagos Boutique",
+    nouns:{ client:"Customer", clientPlural:"Customers", record:"Sale", recordPlural:"Sales", catalogue:"Inventory", item:"Product" },
+    statuses:[ {key:"Pending",pct:15},{key:"Paid",pct:55},{key:"Fulfilled",pct:100},{key:"Cancelled",pct:100} ],
+    hasMeasurements:false,
+    itemFields:[ {key:"sku",label:"SKU / code",type:"text",placeholder:"SKU-0012"},{key:"stockQty",label:"Stock quantity",type:"number",placeholder:"10"} ],
+    recordFields:[ {key:"channel",label:"Sale channel",type:"text",placeholder:"In-store, Instagram, WhatsApp..."} ],
+  },
+  real_estate: {
+    id:"real_estate", label:"Real Estate / Property", icon:"home",
+    blurb:"Clients, listings, viewings and closings.",
+    accessKey:"ESTATE-2026", defaultBusinessName:"My Agency", namePlaceholder:"e.g. Prime Properties",
+    nouns:{ client:"Client", clientPlural:"Clients", record:"Listing", recordPlural:"Listings", catalogue:"Properties", item:"Property" },
+    statuses:[ {key:"Listed",pct:15},{key:"Viewing",pct:40},{key:"Offer",pct:70},{key:"Closed",pct:100},{key:"Cancelled",pct:100} ],
+    hasMeasurements:false,
+    itemFields:[ {key:"propertyType",label:"Property type",type:"text",placeholder:"Duplex, flat, land..."},{key:"bedrooms",label:"Bedrooms",type:"number",placeholder:"3"},{key:"bathrooms",label:"Bathrooms",type:"number",placeholder:"2"},{key:"sqft",label:"Size (sqm)",type:"number",placeholder:"120"} ],
+    recordFields:[ {key:"agent",label:"Listing agent",type:"text",placeholder:"e.g. Tunde"} ],
+  },
+  events: {
+    id:"events", label:"Event Planning / Rentals", icon:"bell",
+    blurb:"Clients, packages, bookings by event date.",
+    accessKey:"EVENTS-2026", defaultBusinessName:"My Events Co", namePlaceholder:"e.g. Grand Events Ng",
+    nouns:{ client:"Client", clientPlural:"Clients", record:"Booking", recordPlural:"Bookings", catalogue:"Packages", item:"Package" },
+    statuses:[ {key:"Inquiry",pct:10},{key:"Booked",pct:35},{key:"In progress",pct:70},{key:"Completed",pct:100},{key:"Cancelled",pct:100} ],
+    hasMeasurements:false,
+    itemFields:[ {key:"guestCapacity",label:"Guest capacity",type:"number",placeholder:"200"} ],
+    recordFields:[ {key:"venue",label:"Event venue",type:"text",placeholder:"e.g. Eko Hotel Hall"} ],
+  },
+  laundry: {
+    id:"laundry", label:"Laundry / Dry Cleaning", icon:"cash",
+    blurb:"Customers, services, drop-off to collection.",
+    accessKey:"LAUNDRY-2026", defaultBusinessName:"My Laundry", namePlaceholder:"e.g. CleanPress Laundry",
+    nouns:{ client:"Customer", clientPlural:"Customers", record:"Order", recordPlural:"Orders", catalogue:"Services", item:"Service" },
+    statuses:[ {key:"Dropped off",pct:10},{key:"Washing",pct:45},{key:"Ready",pct:85},{key:"Collected",pct:100},{key:"Cancelled",pct:100} ],
+    hasMeasurements:false,
+    itemFields:[ {key:"turnaroundHours",label:"Turnaround (hours)",type:"number",placeholder:"24"} ],
+    recordFields:[ {key:"bagTag",label:"Bag / tag number",type:"text",placeholder:"e.g. #A102"} ],
+  },
+  others: {
+    id:"others", label:"Other business", icon:"account",
+    blurb:"A general-purpose setup for any other SME.",
+    accessKey:"OTHERS-2026", defaultBusinessName:"My Business", namePlaceholder:"e.g. My Business Name",
+    nouns:{ client:"Client", clientPlural:"Clients", record:"Record", recordPlural:"Records", catalogue:"Catalogue", item:"Item" },
+    statuses:[ {key:"Pending",pct:15},{key:"In progress",pct:55},{key:"Completed",pct:100},{key:"Cancelled",pct:100} ],
+    hasMeasurements:false, itemFields:[], recordFields:[],
+  },
+};
+const CATEGORY_ORDER = ["tailoring","restaurant","salon","retail","real_estate","events","laundry","others"];
+function activeCategoryKey(){ return state.businessCategory || state.pendingCategory || "tailoring"; }
+function activeCatCfg(){ return CATEGORY_CONFIG[activeCategoryKey()] || CATEGORY_CONFIG.tailoring; }
+function nounFor(key){ return activeCatCfg().nouns[key]; }
+function activeItemFields(){ return activeCatCfg().itemFields || []; }
+function activeRecordFields(){ return activeCatCfg().recordFields || []; }
+function persistBusinessCategory(){ try{ localStorage.setItem("businessCategory", state.businessCategory); }catch(e){} }
+function persistUniversalAccess(){ try{ localStorage.setItem("universalAccess", state.universalAccess ? "1" : ""); }catch(e){} }
 // Actions that create, edit, delete, or save data — blocked while
 // signed in with the demo account (state.viewOnly === true).
 const MUTATING_ACTIONS = new Set([
   "delete-client","open-client-modal-new","open-client-modal","pick-contact-phone","save-client",
   "open-order-modal-new","open-order-modal-new-for-client","open-order-modal",
   "add-order-item","remove-order-item","add-payment","remove-payment","save-order","delete-order",
+  "duplicate-order","bulk-set-status",
   "add-category","delete-category","open-catitem-modal-new","open-catitem-modal",
   "add-catitem-to-new-order","pick-catalog-item","save-catitem","delete-catitem",
-  "remove-gallery-image","remove-image","select-theme","add-bank-account","remove-bank-account",
+  "remove-gallery-image","remove-image","select-theme","open-custom-theme-modal","save-custom-theme","add-bank-account","remove-bank-account",
 ]);
-const MUTATING_CHANGE_ACTIONS = new Set(["upload-logo","upload-images","upload-gallery-images","import-data-file","toggle-auto-backup"]);
+const MUTATING_CHANGE_ACTIONS = new Set(["upload-logo","upload-images","upload-gallery-images","import-data-file","toggle-auto-backup","toggle-dark-mode"]);
 const DEV_NAME = "Morris Okereke";
 const DEV_STUDIO = "VersaX CS";
 const DEV_EMAIL = "info.versax@gmail.com";
@@ -343,12 +529,9 @@ const MEASUREMENT_FIELDS = [
   ["topLength","Top length"],["trouserLength","Trouser length"],["thigh","Thigh"],
   ["knee","Knee"],["ankle","Ankle"],["inseam","Inseam"],["acrossBack","Across back"],
 ];
-const STATUSES = [
-  {key:"Pending",pct:8},{key:"Cutting",pct:30},{key:"Sewing",pct:55},
-  {key:"Fitting",pct:78},{key:"Ready",pct:92},{key:"Delivered",pct:100},{key:"Cancelled",pct:100},
-];
-const statusInfo = (s) => STATUSES.find(x=>x.key===s) || STATUSES[0];
-const statusClass = (s) => "status-"+(s||"pending").toLowerCase();
+const currentStatuses = () => activeCatCfg().statuses;
+const statusInfo = (s) => currentStatuses().find(x=>x.key===s) || currentStatuses()[0];
+const statusClass = (s) => "status-"+(s||"pending").toLowerCase().replace(/\s+/g,"-");
 
 const waLink = (phone, text) => { const digits=(phone||"").replace(/[^0-9]/g,""); return "https://wa.me/"+digits+"?text="+encodeURIComponent(text); };
 const orderTotal = (o) => (o.items||[]).reduce((s,i)=>s+Number(i.price||0),0);
@@ -417,11 +600,18 @@ function buildInvoiceText(order, client, business, kind){
 /* ================= STATE ================= */
 const state = {
   tab: "dashboard",
+  businessCategory: null, // locked forever once a signup succeeds — see CATEGORY_CONFIG
+  pendingCategory: null,  // chosen on the picker screen, in effect until signup completes
+  universalAccess: false, // true if this account signed up with UNIVERSAL_KEY — unlocks the module switcher
+  policyAccepted: false, // must check both boxes on the policy gate before the category picker shows
+  policyChecks: { understand:false, accept:false },
   clients: [],
   orders: [],
   catalogue: { categories: [], items: [] },
   business: { name:"My Tailor Shop", phone:"", address:"", currency:"₦", regNumber:"", bankAccounts:[], logo:null },
   backupSettings: { enabled:false, frequency:"weekly", lastBackupAt:null },
+  darkMode: false,
+  customThemeColors: null, // {primary, gold} once the user picks a personalized colour
   loaded: false,
   selectedClientId: null,
   activeCategoryId: null,
@@ -653,48 +843,230 @@ function demoSwatch(label, bg, fg){
     '</svg>';
   return "data:image/svg+xml;utf8,"+encodeURIComponent(svg);
 }
+function demoContentFor(catId){
+  const CONTENT = {
+    tailoring: {
+      business: { name:"Adaeze Couture", phone:"0803 555 0142", address:"12 Allen Avenue, Ikeja, Lagos",
+        bankAccounts:[ { id:"demo-bank-1", bankName:"GTBank", accountName:"Adaeze Couture", accountNumber:"0123456789" } ] },
+      clients: [
+        { name:"Ngozi Umeh", phone:"0802 345 6789", gender:"Female", address:"Lekki Phase 1, Lagos",
+          notes:"Prefers fitted silhouettes.", measurements:{chest:"38",waist:"30",hip:"40",shoulder:"15",sleeveLength:"22"}, createdAt:-40 },
+        { name:"Emeka Obi", phone:"0805 987 6543", gender:"Male", address:"Surulere, Lagos",
+          notes:"Regular for native wear.", measurements:{chest:"42",waist:"36",shoulder:"18",sleeveLength:"25",topLength:"29"}, createdAt:-25 },
+        { name:"Funmi Adeyemi", phone:"0701 222 3344", gender:"Female", address:"Ikoyi, Lagos",
+          notes:"", measurements:{chest:"36",waist:"28",hip:"38"}, createdAt:-10 },
+      ],
+      categories: ["Native wear","Suits","Casual"],
+      items: [
+        { name:"Senator wear", cat:0, price:35000, description:"Classic senator style, made to measure." },
+        { name:"Two-piece suit", cat:1, price:95000, description:"Slim-fit two-piece suit." },
+      ],
+      records: [
+        { clientIdx:0, title:"Wedding gown", items:[{desc:"Fabric & lace",price:85000},{desc:"Tailoring",price:45000}],
+          paid:80000, dueDate:3, status:"Fitting", createdAt:-32 },
+        { clientIdx:1, title:"Native wear (agbada)", items:[{desc:"Fabric",price:40000},{desc:"Tailoring",price:25000}],
+          paid:65000, dueDate:-2, status:"Ready", createdAt:-22 },
+        { clientIdx:2, title:"Office blazer", items:[{desc:"Fabric",price:22000},{desc:"Tailoring",price:18000}],
+          paid:15000, dueDate:6, status:"Sewing", createdAt:-8 },
+      ],
+    },
+    restaurant: {
+      business: { name:"Mama Ronke's Kitchen", phone:"0806 234 5678", address:"18 Toyin Street, Ikeja, Lagos",
+        bankAccounts:[ { id:"demo-bank-1", bankName:"Zenith Bank", accountName:"Mama Ronke's Kitchen", accountNumber:"2034567890" } ] },
+      clients: [
+        { name:"Tolu Bankole", phone:"0802 111 2233", address:"Opebi, Ikeja, Lagos", notes:"Regular, no pepper.", createdAt:-18 },
+        { name:"Chika Nwosu", phone:"0803 445 5667", address:"Yaba, Lagos", notes:"", createdAt:-11 },
+        { name:"Bisi Fashola", phone:"0705 998 3344", address:"Anthony, Lagos", notes:"Prefers delivery.", createdAt:-4 },
+      ],
+      categories: ["Soups & Swallow","Grills & Proteins","Drinks"],
+      items: [
+        { name:"Egusi soup", cat:0, price:4500, description:"Served with pounded yam or fufu.", custom:{spiceLevel:"Medium",prepMinutes:"25"} },
+        { name:"Suya platter", cat:1, price:6000, description:"Grilled beef skewers with yaji spice.", custom:{spiceLevel:"Hot",prepMinutes:"15"} },
+        { name:"Chapman", cat:2, price:2000, description:"House special mocktail.", custom:{spiceLevel:"Mild",prepMinutes:"5"} },
+      ],
+      records: [
+        { clientIdx:0, title:"Table 4 order", items:[{desc:"Egusi soup",price:4500},{desc:"Chapman",price:2000}],
+          custom:{tableOrDelivery:"Table 4"}, paid:6500, dueDate:0, status:"Preparing", createdAt:0 },
+        { clientIdx:1, title:"Delivery - Ikeja", items:[{desc:"Suya platter",price:6000}],
+          custom:{tableOrDelivery:"14 Opebi Road, Ikeja"}, paid:6000, dueDate:-1, status:"Served", createdAt:-1 },
+        { clientIdx:2, title:"Table 9 order", items:[{desc:"Suya platter",price:6000},{desc:"Chapman",price:2000}],
+          custom:{tableOrDelivery:"Table 9"}, paid:0, dueDate:0, status:"Ready", createdAt:0 },
+      ],
+    },
+    salon: {
+      business: { name:"Glow Beauty Lounge", phone:"0813 222 9988", address:"5 Admiralty Way, Lekki, Lagos",
+        bankAccounts:[ { id:"demo-bank-1", bankName:"Access Bank", accountName:"Glow Beauty Lounge", accountNumber:"0056781234" } ] },
+      clients: [
+        { name:"Amara Chukwu", phone:"0802 556 7788", address:"Lekki, Lagos", notes:"Allergic to certain relaxers.", createdAt:-30 },
+        { name:"Ifeoma Eze", phone:"0806 334 2211", address:"Ajah, Lagos", notes:"", createdAt:-14 },
+        { name:"Tobi Adigun", phone:"0703 887 6655", address:"Victoria Island, Lagos", notes:"Books monthly.", createdAt:-6 },
+      ],
+      categories: ["Hair","Nails","Facial"],
+      items: [
+        { name:"Silk press", cat:0, price:15000, description:"Wash, deep condition and silk press finish.", custom:{durationMinutes:"90"} },
+        { name:"Gel manicure", cat:1, price:8000, description:"Shape, cuticle care and gel polish.", custom:{durationMinutes:"45"} },
+        { name:"Deep cleanse facial", cat:2, price:12000, description:"Cleansing, steam and mask.", custom:{durationMinutes:"60"} },
+      ],
+      records: [
+        { clientIdx:0, title:"Silk press appointment", items:[{desc:"Silk press",price:15000}],
+          custom:{stylist:"Chidinma"}, paid:15000, dueDate:-3, status:"Completed", createdAt:-4 },
+        { clientIdx:1, title:"Gel manicure", items:[{desc:"Gel manicure",price:8000}],
+          custom:{stylist:"Blessing"}, paid:0, dueDate:2, status:"Booked", createdAt:0 },
+        { clientIdx:2, title:"Facial + silk press", items:[{desc:"Deep cleanse facial",price:12000},{desc:"Silk press",price:15000}],
+          custom:{stylist:"Chidinma"}, paid:15000, dueDate:0, status:"In progress", createdAt:0 },
+      ],
+    },
+    retail: {
+      business: { name:"Lagos Boutique", phone:"0807 665 4321", address:"22 Adeniran Ogunsanya St, Surulere, Lagos",
+        bankAccounts:[ { id:"demo-bank-1", bankName:"UBA", accountName:"Lagos Boutique", accountNumber:"1012345678" } ] },
+      clients: [
+        { name:"Seun Alabi", phone:"0802 776 5544", address:"Surulere, Lagos", notes:"", createdAt:-20 },
+        { name:"Grace Okon", phone:"0705 443 2211", address:"Yaba, Lagos", notes:"Follows on Instagram.", createdAt:-9 },
+        { name:"Femi Durojaiye", phone:"0813 998 1122", address:"Ikeja, Lagos", notes:"", createdAt:-2 },
+      ],
+      categories: ["Dresses","Shoes","Accessories"],
+      items: [
+        { name:"Ankara maxi dress", cat:0, price:18000, description:"Handmade ankara print maxi dress.", custom:{sku:"DRS-014",stockQty:"12"} },
+        { name:"Block heel sandals", cat:1, price:14000, description:"Faux-leather block heel sandals.", custom:{sku:"SHO-027",stockQty:"8"} },
+        { name:"Beaded clutch bag", cat:2, price:9000, description:"Hand-beaded evening clutch.", custom:{sku:"ACC-005",stockQty:"20"} },
+      ],
+      records: [
+        { clientIdx:0, title:"Online order", items:[{desc:"Ankara maxi dress",price:18000}],
+          custom:{channel:"Instagram"}, paid:18000, dueDate:-4, status:"Paid", createdAt:-4 },
+        { clientIdx:1, title:"Walk-in sale", items:[{desc:"Block heel sandals",price:14000},{desc:"Beaded clutch bag",price:9000}],
+          custom:{channel:"In-store"}, paid:23000, dueDate:-1, status:"Fulfilled", createdAt:-1 },
+        { clientIdx:2, title:"WhatsApp order", items:[{desc:"Beaded clutch bag",price:9000}],
+          custom:{channel:"WhatsApp"}, paid:0, dueDate:2, status:"Pending", createdAt:0 },
+      ],
+    },
+    real_estate: {
+      business: { name:"Prime Properties", phone:"0809 112 3344", address:"9 Bourdillon Road, Ikoyi, Lagos",
+        bankAccounts:[ { id:"demo-bank-1", bankName:"First Bank", accountName:"Prime Properties", accountNumber:"3045671289" } ] },
+      clients: [
+        { name:"Adaobi Nwankwo", phone:"0802 334 5566", address:"Lekki, Lagos", notes:"Looking to buy.", createdAt:-25 },
+        { name:"Segun Balogun", phone:"0706 221 4455", address:"Yaba, Lagos", notes:"", createdAt:-12 },
+        { name:"Halima Yusuf", phone:"0813 556 7789", address:"Epe, Lagos", notes:"Cash buyer.", createdAt:-3 },
+      ],
+      categories: ["Duplexes","Flats","Land"],
+      items: [
+        { name:"3-bed duplex, Lekki", cat:0, price:85000000, description:"Newly built duplex with BQ.", custom:{propertyType:"Duplex",bedrooms:"3",bathrooms:"4",sqft:"220"} },
+        { name:"2-bed flat, Yaba", cat:1, price:35000000, description:"Serviced flat close to the mainland.", custom:{propertyType:"Flat",bedrooms:"2",bathrooms:"2",sqft:"95"} },
+        { name:"Plot of land, Epe", cat:2, price:12000000, description:"Dry, fenced plot with C of O.", custom:{propertyType:"Land",bedrooms:"",bathrooms:"",sqft:"600"} },
+      ],
+      records: [
+        { clientIdx:0, title:"3-bed duplex viewing", items:[{desc:"3-bed duplex, Lekki",price:85000000}],
+          custom:{agent:"Tunde"}, paid:0, dueDate:5, status:"Viewing", createdAt:-2 },
+        { clientIdx:1, title:"2-bed flat offer", items:[{desc:"2-bed flat, Yaba",price:35000000}],
+          custom:{agent:"Chioma"}, paid:3500000, dueDate:-2, status:"Offer", createdAt:-6 },
+        { clientIdx:2, title:"Land sale closed", items:[{desc:"Plot of land, Epe",price:12000000}],
+          custom:{agent:"Tunde"}, paid:12000000, dueDate:-10, status:"Closed", createdAt:-14 },
+      ],
+    },
+    events: {
+      business: { name:"Grand Events Ng", phone:"0812 445 6677", address:"7 Admiralty Way, Lekki, Lagos",
+        bankAccounts:[ { id:"demo-bank-1", bankName:"GTBank", accountName:"Grand Events Ng", accountNumber:"0198765432" } ] },
+      clients: [
+        { name:"Kemi Osagie", phone:"0802 667 7889", address:"Ikoyi, Lagos", notes:"Wedding, 300 guests.", createdAt:-35 },
+        { name:"David Effiong", phone:"0705 334 2299", address:"Lekki, Lagos", notes:"", createdAt:-16 },
+        { name:"Aisha Bello", phone:"0813 998 6611", address:"Victoria Island, Lagos", notes:"Corporate contact.", createdAt:-5 },
+      ],
+      categories: ["Weddings","Birthdays","Corporate"],
+      items: [
+        { name:"Classic wedding package", cat:0, price:1200000, description:"Decor, canopy and full-day coordination.", custom:{guestCapacity:"300"} },
+        { name:"Birthday deluxe package", cat:1, price:350000, description:"Decor, cake table and lighting.", custom:{guestCapacity:"100"} },
+        { name:"Corporate mixer package", cat:2, price:600000, description:"Stage, seating and AV setup.", custom:{guestCapacity:"150"} },
+      ],
+      records: [
+        { clientIdx:0, title:"Wedding - Osagie", items:[{desc:"Classic wedding package",price:1200000}],
+          custom:{venue:"Eko Hotel Hall"}, paid:600000, dueDate:20, status:"Booked", createdAt:-10 },
+        { clientIdx:1, title:"40th birthday", items:[{desc:"Birthday deluxe package",price:350000}],
+          custom:{venue:"Landmark Event Centre"}, paid:350000, dueDate:-15, status:"Completed", createdAt:-25 },
+        { clientIdx:2, title:"Corporate mixer inquiry", items:[{desc:"Corporate mixer package",price:600000}],
+          custom:{venue:""}, paid:0, dueDate:10, status:"Inquiry", createdAt:0 },
+      ],
+    },
+    laundry: {
+      business: { name:"CleanPress Laundry", phone:"0705 223 4488", address:"3 Herbert Macaulay Way, Yaba, Lagos",
+        bankAccounts:[ { id:"demo-bank-1", bankName:"Fidelity Bank", accountName:"CleanPress Laundry", accountNumber:"5067891234" } ] },
+      clients: [
+        { name:"Uche Igwe", phone:"0802 998 4433", address:"Yaba, Lagos", notes:"Weekly pickup.", createdAt:-22 },
+        { name:"Ronke Salami", phone:"0706 556 7712", address:"Surulere, Lagos", notes:"", createdAt:-9 },
+        { name:"Peter Nnamdi", phone:"0813 224 5567", address:"Ebute Metta, Lagos", notes:"", createdAt:-3 },
+      ],
+      categories: ["Wash & Fold","Dry Cleaning","Ironing"],
+      items: [
+        { name:"Wash & fold (per kg)", cat:0, price:800, description:"Standard wash, dry and fold.", custom:{turnaroundHours:"24"} },
+        { name:"Suit dry clean", cat:1, price:3500, description:"Two-piece suit, dry cleaned and pressed.", custom:{turnaroundHours:"48"} },
+        { name:"Iron only (per item)", cat:2, price:300, description:"Pressing service only.", custom:{turnaroundHours:"12"} },
+      ],
+      records: [
+        { clientIdx:0, title:"Weekly wash", items:[{desc:"Wash & fold (per kg)",price:800}],
+          custom:{bagTag:"#A102"}, paid:800, dueDate:1, status:"Washing", createdAt:0 },
+        { clientIdx:1, title:"Suit clean", items:[{desc:"Suit dry clean",price:3500}],
+          custom:{bagTag:"#A115"}, paid:3500, dueDate:0, status:"Ready", createdAt:-1 },
+        { clientIdx:2, title:"Shirts ironing", items:[{desc:"Iron only (per item)",price:300}],
+          custom:{bagTag:"#A120"}, paid:300, dueDate:-2, status:"Collected", createdAt:-3 },
+      ],
+    },
+    others: {
+      business: { name:"My Business", phone:"0802 000 1122", address:"14 Marina Road, Lagos Island, Lagos",
+        bankAccounts:[ { id:"demo-bank-1", bankName:"GTBank", accountName:"My Business", accountNumber:"0011223344" } ] },
+      clients: [
+        { name:"Chinedu Okafor", phone:"0802 334 5511", address:"Lagos Island, Lagos", notes:"", createdAt:-19 },
+        { name:"Amaka Bello", phone:"0705 667 2233", address:"Ikeja, Lagos", notes:"", createdAt:-8 },
+        { name:"Yusuf Danladi", phone:"0813 445 6677", address:"Apapa, Lagos", notes:"", createdAt:-2 },
+      ],
+      categories: ["General","Services"],
+      items: [
+        { name:"Consultation", cat:0, price:10000, description:"Initial consultation session." },
+        { name:"Standard service", cat:1, price:25000, description:"Standard service package." },
+      ],
+      records: [
+        { clientIdx:0, title:"Consultation booking", items:[{desc:"Consultation",price:10000}],
+          paid:10000, dueDate:3, status:"In progress", createdAt:-1 },
+        { clientIdx:1, title:"Service request", items:[{desc:"Standard service",price:25000}],
+          paid:0, dueDate:5, status:"Pending", createdAt:0 },
+        { clientIdx:2, title:"Completed job", items:[{desc:"Standard service",price:25000}],
+          paid:25000, dueDate:-4, status:"Completed", createdAt:-6 },
+      ],
+    },
+  };
+  return CONTENT[catId] || CONTENT.tailoring;
+}
 function seedDemoData(doPersist){
   if(doPersist === undefined) doPersist = true;
+  const cfg = activeCatCfg();
+  const d = demoContentFor(cfg.id);
+  const swatchColors = [["#F0DAB0","#8A5F1F"],["#1E3A3A","#E7E1D3"],["#F0DAD1","#A2432B"],["#DCE9DD","#3E6B4F"]];
+
   state.business = Object.assign({}, state.business, {
-    name: "Adaeze Couture", phone: "0803 555 0142", address: "12 Allen Avenue, Ikeja, Lagos",
-    currency: "₦", regNumber: "1234567", bankAccounts: [
-      { id:"demo-bank-1", bankName:"GTBank", accountName:"Adaeze Couture", accountNumber:"0123456789" }
-    ], logo: null,
+    name: d.business.name, phone: d.business.phone, address: d.business.address,
+    currency: "₦", regNumber: "1234567", bankAccounts: d.business.bankAccounts, logo: null,
   });
-  state.clients = [
-    { id:"demo-client-1", name:"Ngozi Umeh", phone:"0802 345 6789", gender:"Female", address:"Lekki Phase 1, Lagos",
-      notes:"Prefers fitted silhouettes.", measurements:{chest:"38",waist:"30",hip:"40",shoulder:"15",sleeveLength:"22"},
-      styleImages:[], createdAt: addDaysISO(-40) },
-    { id:"demo-client-2", name:"Emeka Obi", phone:"0805 987 6543", gender:"Male", address:"Surulere, Lagos",
-      notes:"Regular for native wear.", measurements:{chest:"42",waist:"36",shoulder:"18",sleeveLength:"25",topLength:"29"},
-      styleImages:[], createdAt: addDaysISO(-25) },
-    { id:"demo-client-3", name:"Funmi Adeyemi", phone:"0701 222 3344", gender:"Female", address:"Ikoyi, Lagos",
-      notes:"", measurements:{chest:"36",waist:"28",hip:"38"}, styleImages:[], createdAt: addDaysISO(-10) },
-  ];
-  state.orders = [
-    { id:"demo-order-1", clientId:"demo-client-1", title:"Wedding gown", items:[{desc:"Fabric & lace",price:85000},{desc:"Tailoring",price:45000}],
-      styleImages:[], payments:[{id:"demo-pay-1",amount:80000,date:addDaysISO(-30),method:"Transfer"}],
-      dueDate: addDaysISO(3), status:"Fitting", notes:"", createdAt: addDaysISO(-32) },
-    { id:"demo-order-2", clientId:"demo-client-2", title:"Native wear (agbada)", items:[{desc:"Fabric",price:40000},{desc:"Tailoring",price:25000}],
-      styleImages:[], payments:[{id:"demo-pay-2",amount:65000,date:addDaysISO(-20),method:"Cash"}],
-      dueDate: addDaysISO(-2), status:"Ready", notes:"", createdAt: addDaysISO(-22) },
-    { id:"demo-order-3", clientId:"demo-client-3", title:"Office blazer", items:[{desc:"Fabric",price:22000},{desc:"Tailoring",price:18000}],
-      styleImages:[], payments:[{id:"demo-pay-3",amount:15000,date:addDaysISO(-5),method:"Transfer"}],
-      dueDate: addDaysISO(6), status:"Sewing", notes:"", createdAt: addDaysISO(-8) },
-  ];
+
+  const clientIds = d.clients.map((c,i) => "demo-client-"+(i+1));
+  state.clients = d.clients.map((c,i) => Object.assign({ id:clientIds[i], styleImages:[], measurements:c.measurements||{} }, c, { createdAt: addDaysISO(c.createdAt) }));
+
+  const catIds = d.categories.map((name,i) => "demo-cat-"+(i+1));
   state.catalogue = {
-    categories: [
-      { id:"demo-cat-1", name:"Native wear", gallery:[ demoSwatch("Native wear","#F0DAB0","#8A5F1F"), demoSwatch("Native wear","#E7D2A4","#6B4718") ] },
-      { id:"demo-cat-2", name:"Suits", gallery:[ demoSwatch("Suits","#1E3A3A","#E7E1D3"), demoSwatch("Suits","#122626","#D6CDB6") ] },
-      { id:"demo-cat-3", name:"Casual", gallery:[ demoSwatch("Casual","#F0DAD1","#A2432B") ] },
-    ],
-    items: [
-      { id:"demo-item-1", name:"Senator wear", categoryId:"demo-cat-1", price:35000, description:"Classic senator style, made to measure.",
-        images:[ demoSwatch("Senator wear","#F0DAB0","#8A5F1F"), demoSwatch("Senator wear","#E7D2A4","#6B4718") ] },
-      { id:"demo-item-2", name:"Two-piece suit", categoryId:"demo-cat-2", price:95000, description:"Slim-fit two-piece suit.",
-        images:[ demoSwatch("Two-piece suit","#1E3A3A","#E7E1D3"), demoSwatch("Two-piece suit","#122626","#D6CDB6") ] },
-    ],
+    categories: d.categories.map((name,i) => {
+      const [bg,fg] = swatchColors[i % swatchColors.length];
+      return { id:catIds[i], name, gallery:[ demoSwatch(name,bg,fg) ] };
+    }),
+    items: d.items.map((it,i) => {
+      const [bg,fg] = swatchColors[it.cat % swatchColors.length];
+      return { id:"demo-item-"+(i+1), name:it.name, categoryId:catIds[it.cat], price:it.price, description:it.description,
+        custom: it.custom||{}, images:[ demoSwatch(it.name,bg,fg) ] };
+    }),
   };
+
+  state.orders = d.records.map((r,i) => ({
+    id:"demo-order-"+(i+1), clientId: clientIds[r.clientIdx], title:r.title, items:r.items,
+    styleImages:[], custom: r.custom||{},
+    payments: r.paid > 0 ? [{ id:"demo-pay-"+(i+1), amount:r.paid, date:addDaysISO(r.createdAt), method: (i%2===0?"Transfer":"Cash") }] : [],
+    dueDate: addDaysISO(r.dueDate), status:r.status, notes:"", createdAt: addDaysISO(r.createdAt),
+  }));
+
   if(doPersist){ persistBusiness(); persistClients(); persistOrders(); persistCatalogue(); }
 }
 function loadRealDataFromStorage(){
@@ -720,15 +1092,38 @@ async function loadAll(){
     const cat = localStorage.getItem("catalogue");
     const b = localStorage.getItem("business");
     const th = localStorage.getItem("theme");
+    const dm = localStorage.getItem("darkMode");
+    const ctc = localStorage.getItem("customThemeColors");
     const acc = localStorage.getItem("account");
     const bkS = localStorage.getItem("backupSettings");
+    const bizCat = localStorage.getItem("businessCategory");
+    if(bizCat && CATEGORY_CONFIG[bizCat]) state.businessCategory = bizCat;
+    state.universalAccess = localStorage.getItem("universalAccess") === "1";
     if(acc) state.account = JSON.parse(acc);
-    if(th) applyTheme(JSON.parse(th));
+    // Migration: any install that already has an account or saved data but no
+    // locked category predates the bundle — it was always the tailoring app.
+    if(!state.businessCategory && (acc || c || o || cat || b)){
+      state.businessCategory = "tailoring";
+      persistBusinessCategory();
+    }
+    if(ctc){ try{ state.customThemeColors = JSON.parse(ctc); }catch(e){} }
+    state.darkMode = dm ? JSON.parse(dm) : false;
+    if(th){
+      let themeKey = JSON.parse(th);
+      // Migration: the old built-in "Dark Mode" swatch is now the separate
+      // Dark mode toggle — carry old selections over so nothing looks reset.
+      if(themeKey === "dark"){ themeKey = "indigo"; state.darkMode = true; persist("darkMode", true); }
+      applyTheme(themeKey);
+    }
     if(bkS){ try{ state.backupSettings = Object.assign({}, state.backupSettings, JSON.parse(bkS)); }catch(e){} }
     if(!state.account && !c && !o && !cat && !b){
       // First-ever run, no real account created yet: seed sample data
-      // so the view-only demo login has something to show.
-      seedDemoData();
+      // in memory only (not persisted) so the view-only demo login has
+      // something to show. Persisting it here would make the next
+      // reopen look like a pre-existing install (see the migration
+      // check above) and silently lock the category to tailoring
+      // before the person ever picked a vertical.
+      seedDemoData(false);
     } else {
       if(c) state.clients = JSON.parse(c);
       if(o) state.orders = JSON.parse(o);
@@ -746,7 +1141,7 @@ async function loadAll(){
     state.business.bankAccounts.push({ id:uid(), bankName:state.business.bankName||"", accountName:state.business.bankAccountName||"", accountNumber:state.business.bankAccountNumber||"" });
   }
   if(!state.theme) applyTheme("indigo");
-  if(!state.catalogue.categories || state.catalogue.categories.length===0){
+  if((!state.catalogue.categories || state.catalogue.categories.length===0) && activeCategoryKey()==="tailoring"){
     state.catalogue.categories = [
       {id:uid(), name:"Native wear", gallery:[]},
       {id:uid(), name:"Suits", gallery:[]},
@@ -782,7 +1177,7 @@ async function registerBiometric(){
     const challenge = crypto.getRandomValues(new Uint8Array(32));
     const userId = crypto.getRandomValues(new Uint8Array(16));
     const cred = await navigator.credentials.create({ publicKey: {
-      challenge, rp:{ name:"Tailor Studio" },
+      challenge, rp:{ name:"Bizrail" },
       user:{ id:userId, name: state.account.email, displayName: state.account.name || state.account.email },
       pubKeyCredParams:[{type:"public-key",alg:-7},{type:"public-key",alg:-257}],
       authenticatorSelection:{ authenticatorAttachment:"platform", userVerification:"required" },
@@ -823,6 +1218,19 @@ function render(){
   if(state.showWelcome){ state.tour = null; renderTourOverlay(); app.innerHTML = renderWelcomeView(); startWelcomeCarousel(); return; }
   clearWelcomeTimer();
 
+  if(!state.businessCategory && !state.pendingCategory && !state.policyAccepted){
+    const prevScroll = document.getElementById("policyScroll") ? document.getElementById("policyScroll").scrollTop : 0;
+    app.innerHTML = renderPolicyGateView();
+    const psEl = document.getElementById("policyScroll");
+    if(psEl) psEl.scrollTop = prevScroll;
+    return;
+  }
+
+  if(!state.businessCategory && !state.pendingCategory){
+    app.innerHTML = renderCategoryPickerView();
+    return;
+  }
+
   if(!state.authed){
     state.tour = null; renderTourOverlay();
     app.innerHTML = renderAuthView() + renderModal();
@@ -843,9 +1251,9 @@ function render(){
 
   const NAV = [
     {key:"dashboard", label:"Overview", icon:"dashboard"},
-    {key:"clients", label:"Clients", icon:"users"},
-    {key:"orders", label:"Orders", icon:"bag"},
-    {key:"catalogue", label:"Catalogue", icon:"image"},
+    {key:"clients", label:nounFor("clientPlural"), icon:"users"},
+    {key:"orders", label:nounFor("recordPlural"), icon:"bag"},
+    {key:"catalogue", label:nounFor("catalogue"), icon:"image"},
     {key:"account", label:"Account", icon:"account"},
   ];
 
@@ -858,10 +1266,11 @@ function render(){
         '</div>'+
         '<div style="display:flex;gap:8px;align-items:center;">'+
           '<button class="iconbtn" data-action="start-tour" aria-label="Take a tour">'+icon("help",16)+'</button>'+
+          '<button class="iconbtn" data-action="open-global-search" aria-label="Search">'+icon("search",16)+'</button>'+
           '<button class="iconbtn" style="position:relative;" data-action="open-notifications" aria-label="Notifications">'+icon("bell",16)+
             (alerts.total>0 ? '<span style="position:absolute;top:-5px;right:-5px;background:var(--rust);color:#fff;font-size:10px;font-weight:700;min-width:16px;height:16px;border-radius:8px;display:flex;align-items:center;justify-content:center;padding:0 3px;line-height:1;">'+(alerts.total>9?"9+":alerts.total)+'</span>' : '')+
           '</button>'+
-          '<button class="btn gold sm" data-action="open-order-modal-new"><span>'+icon("plus",14)+'</span> New order</button>'+
+          '<button class="btn gold sm" data-action="open-order-modal-new"><span>'+icon("plus",14)+'</span> New '+nounFor("record").toLowerCase()+'</button>'+
         '</div>'+
       '</div>'+
       (state.viewOnly ? (
@@ -902,6 +1311,30 @@ function renderDashboard(){
   const outstanding = orders.filter(o=>o.status!=="Cancelled").reduce((s,o)=>s+(orderTotal(o)-orderPaid(o)),0);
   const activeOrders = orders.filter(o=>!["Delivered","Cancelled"].includes(o.status)).length;
 
+  const now = new Date();
+  const thisMonthKey = now.getFullYear()+"-"+String(now.getMonth()+1).padStart(2,"0");
+  const lastMonthDate = new Date(now.getFullYear(), now.getMonth()-1, 1);
+  const lastMonthKey = lastMonthDate.getFullYear()+"-"+String(lastMonthDate.getMonth()+1).padStart(2,"0");
+  let thisMonthRev = 0, lastMonthRev = 0;
+  orders.forEach(o=>{
+    (o.payments||[]).forEach(p=>{
+      if(!p.date) return;
+      const k = p.date.slice(0,7);
+      if(k===thisMonthKey) thisMonthRev += Number(p.amount)||0;
+      else if(k===lastMonthKey) lastMonthRev += Number(p.amount)||0;
+    });
+  });
+  let momText = "No revenue last month to compare.";
+  if(lastMonthRev>0){
+    const pct = Math.round(((thisMonthRev-lastMonthRev)/lastMonthRev)*100);
+    momText = (pct>=0?"+":"")+pct+"% vs last month";
+  } else if(thisMonthRev>0){ momText = "First month with revenue"; }
+
+  const lowStockItems = (state.catalogue.items||[]).filter(it=>{
+    const q = it.custom && it.custom.stockQty;
+    return q!==undefined && q!=="" && Number(q)<=3;
+  });
+
   const reminders = orders.filter(o=>o.status!=="Delivered" && o.status!=="Cancelled").map(o=>{
     const bal = orderTotal(o)-orderPaid(o); const dleft = daysUntil(o.dueDate);
     return {o, bal, dleft, client: clients.find(c=>c.id===o.clientId)};
@@ -923,18 +1356,25 @@ function renderDashboard(){
         '</div>'+
       '</div>'
     )+
+    (lowStockItems.length===0 ? '' :
+      '<div class="card" style="margin-bottom:16px;border-color:var(--rust);display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;cursor:pointer;" data-action="set-tab" data-tab="catalogue">'+
+        '<div style="display:flex;align-items:center;gap:8px;"><span style="color:var(--rust);">'+icon("alert",16)+'</span>'+
+          '<span style="font-size:13px;">'+lowStockItems.length+' item'+(lowStockItems.length===1?'':'s')+' running low on stock — '+esc(lowStockItems.slice(0,3).map(i=>i.name).join(", "))+(lowStockItems.length>3?" +"+(lowStockItems.length-3)+" more":"")+'</span></div>'+
+        '<span class="pill" style="background:var(--rust-soft);color:var(--rust);">Review '+nounFor("catalogue")+'</span>'+
+      '</div>'
+    )+
     '<div style="margin-bottom:18px;"><div class="disp" style="font-size:21px;font-weight:600;">'+greeting()+'</div>'+
       '<div style="font-size:13px;color:var(--ink-soft);margin-top:2px;">Here\'s how the shop is doing today.</div></div>'+
     '<div class="grid-stats">'+
-      statCard("Total revenue", money(totalRevenue, business.currency), "cash", "var(--green)", "var(--green-soft)")+
-      statCard("Outstanding balance", money(outstanding, business.currency), "alert", "var(--rust)", "var(--rust-soft)")+
-      statCard("Active orders", activeOrders, "scissors", "var(--primary)", "rgba(30,58,58,0.08)")+
-      statCard("Total clients", clients.length, "users", "#8A5F1F", "var(--gold-soft)")+
+      statCard("Total revenue", money(totalRevenue, business.currency), "cash", "var(--green)", "var(--green-soft)", {sub:momText})+
+      statCard("Outstanding balance", money(outstanding, business.currency), "alert", "var(--rust)", "var(--rust-soft)", {action:"dash-kpi-outstanding"})+
+      statCard("Active "+nounFor("recordPlural").toLowerCase(), activeOrders, "scissors", "var(--primary)", "rgba(30,58,58,0.08)", {action:"dash-kpi-active"})+
+      statCard("Total "+nounFor("clientPlural").toLowerCase(), clients.length, "users", "#8A5F1F", "var(--gold-soft)", {action:"set-tab", tab:"clients"})+
     '</div>'+
     '<div class="grid-2-even">'+
       '<div class="card" style="min-width:0;"><div class="disp" style="font-weight:600;margin-bottom:10px;">Revenue, last 6 months</div>'+
         '<div style="position:relative;height:220px;width:100%;min-width:0;"><canvas id="revChart" role="img" aria-label="Bar chart of revenue over the last six months"></canvas></div></div>'+
-      '<div class="card" style="min-width:0;"><div class="disp" style="font-weight:600;margin-bottom:10px;">Orders by status</div>'+
+      '<div class="card" style="min-width:0;"><div class="disp" style="font-weight:600;margin-bottom:10px;">'+nounFor("recordPlural")+' by status</div>'+
         '<div style="position:relative;height:220px;width:100%;min-width:0;"><canvas id="statusChart" role="img" aria-label="Doughnut chart of orders grouped by status"></canvas></div></div>'+
     '</div>'+
     '<div class="grid-2">'+
@@ -982,7 +1422,7 @@ function cardLogoHtml(business, size){
 }
 function cardBaseFooterHtml(inkSoft, line){
   return '<div style="margin-top:18px;padding-top:12px;border-top:1px solid '+line+';text-align:center;">'+
-    '<div style="font-size:10.5px;color:'+inkSoft+';">Powered by <strong>Tailor Studio</strong></div>'+
+    '<div style="font-size:10.5px;color:'+inkSoft+';">Powered by <strong>Bizrail</strong></div>'+
     '<div style="font-size:9.5px;color:'+inkSoft+';margin-top:2px;">Generated '+fmtDateTime()+'</div>'+
   '</div>';
 }
@@ -1134,13 +1574,15 @@ async function sharePriceListImage(mode){
   if(mode==="download"){ downloadFile(file); return; }
   await shareImageFile(file, (business.name||"")+" — Price List", "");
 }
-function statCard(label, value, iconName, tone, bg){
-  return '<div class="card" style="display:flex;flex-direction:column;gap:10px;min-width:0;">'+
+function statCard(label, value, iconName, tone, bg, opts){
+  opts = opts || {};
+  return '<div class="card" style="display:flex;flex-direction:column;gap:10px;min-width:0;'+(opts.action?'cursor:pointer;':'')+'"'+(opts.action?' data-action="'+opts.action+'"'+(opts.filter?' data-filter="'+opts.filter+'"':'')+(opts.tab?' data-tab="'+opts.tab+'"':''):'')+'>'+
     '<div style="display:flex;align-items:center;gap:9px;min-width:0;">'+
       '<div class="icon-badge" style="background:'+bg+';color:'+tone+';">'+icon(iconName,16)+'</div>'+
       '<span style="font-size:12.5px;font-weight:500;color:var(--ink-soft);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+label+'</span>'+
     '</div>'+
     '<div class="disp" style="font-size:clamp(16px,4.2vw,24px);font-weight:600;color:'+tone+';line-height:1.15;overflow-wrap:anywhere;word-break:break-word;min-width:0;">'+value+'</div>'+
+    (opts.sub ? '<div style="font-size:11px;color:var(--ink-soft);margin-top:-4px;">'+opts.sub+'</div>' : '')+
   '</div>';
 }
 function renderDashboardCharts(){
@@ -1187,9 +1629,9 @@ function renderClients(){
     '<div style="display:flex;justify-content:space-between;margin-bottom:16px;gap:10px;flex-wrap:wrap;">'+
       '<div style="position:relative;flex:1;min-width:180px;max-width:320px;">'+
         '<span style="position:absolute;left:10px;top:11px;color:var(--ink-soft);">'+icon("search",14)+'</span>'+
-        '<input style="padding-left:30px;" placeholder="Search clients..." data-action="search-clients" value="'+esc(state.clientSearch||"")+'">'+
+        '<input style="padding-left:30px;" placeholder="Search '+nounFor("clientPlural").toLowerCase()+'..." data-action="search-clients" value="'+esc(state.clientSearch||"")+'">'+
       '</div>'+
-      '<button class="btn" data-action="open-client-modal-new"><span>'+icon("plus",15)+'</span> New client</button>'+
+      '<button class="btn" data-action="open-client-modal-new"><span>'+icon("plus",15)+'</span> New '+nounFor("client").toLowerCase()+'</button>'+
     '</div>'+
     '<div class="grid-cards" id="clientsGrid">'+ clientCardsHtml(filtered) +'</div>'
   );
@@ -1235,20 +1677,22 @@ function renderClientDetail(){
       '</div>'+
       (client.notes ? '<div style="margin-top:10px;font-size:13px;color:var(--ink-soft);">'+esc(client.notes)+'</div>' : '')+
     '</div>'+
-    '<div class="card" style="margin-bottom:16px;">'+
-      '<div class="disp" style="font-weight:600;margin-bottom:10px;">Body measurements (cm)</div>'+
-      '<div class="grid-meas">'+
-        (MEASUREMENT_FIELDS.filter(([k])=>client.measurements&&client.measurements[k]).map(([k,l])=>
-          '<div><div style="font-size:11px;color:var(--ink-soft);">'+l+'</div><div class="mono" style="font-weight:500;">'+esc(client.measurements[k])+'</div></div>'
-        ).join("") || '<div class="empty">No measurements recorded yet.</div>')+
-      '</div></div>'+
+    (activeCatCfg().hasMeasurements ?
+      '<div class="card" style="margin-bottom:16px;">'+
+        '<div class="disp" style="font-weight:600;margin-bottom:10px;">Body measurements (cm)</div>'+
+        '<div class="grid-meas">'+
+          (MEASUREMENT_FIELDS.filter(([k])=>client.measurements&&client.measurements[k]).map(([k,l])=>
+            '<div><div style="font-size:11px;color:var(--ink-soft);">'+l+'</div><div class="mono" style="font-weight:500;">'+esc(client.measurements[k])+'</div></div>'
+          ).join("") || '<div class="empty">No measurements recorded yet.</div>')+
+        '</div></div>'
+    : '')+
     ((client.styleImages&&client.styleImages.length>0) ? (
       '<div class="card" style="margin-bottom:16px;"><div class="disp" style="font-weight:600;margin-bottom:10px;">Client photo</div>'+
       '<div style="display:flex;gap:8px;flex-wrap:wrap;">'+client.styleImages.map(s=>'<img src="'+s+'" style="width:88px;height:88px;object-fit:cover;border-radius:8px;border:1px solid var(--line);">').join("")+'</div></div>'
     ) : '')+
     '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">'+
-      '<div class="disp" style="font-weight:600;font-size:16px;">Orders</div>'+
-      '<button class="btn gold sm" data-action="open-order-modal-new-for-client" data-id="'+client.id+'">'+icon("plus",14)+' New order</button></div>'+
+      '<div class="disp" style="font-weight:600;font-size:16px;">'+nounFor("recordPlural")+'</div>'+
+      '<button class="btn gold sm" data-action="open-order-modal-new-for-client" data-id="'+client.id+'">'+icon("plus",14)+' New '+nounFor("record").toLowerCase()+'</button></div>'+
     '<div style="display:flex;flex-direction:column;gap:10px;">'+
       (clientOrders.length===0 ? '<div class="empty">No orders yet for this client.</div>' : clientOrders.map(o=>{
         const total=orderTotal(o), paid=orderPaid(o);
@@ -1266,23 +1710,80 @@ function renderClientDetail(){
 
 /* ================= ORDERS ================= */
 function renderOrders(){
-  const business = state.business;
   const filter = state.orderFilterStatus || "All";
-  const filtered = filter==="All" ? state.orders : state.orders.filter(o=>o.status===filter);
-  const sorted = filtered.slice().sort((a,b)=>(a.dueDate||"9999").localeCompare(b.dueDate||"9999"));
+  const bulkMode = !!state.orderBulkMode;
+  const bulkSel = state.orderBulkSelected || [];
+  const sorted = filteredSortedOrders();
+
   return (
-    '<div style="display:flex;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px;">'+
-      '<div class="chipbar">'+ ["All"].concat(STATUSES.map(s=>s.key)).map(s=>
-        '<button class="btn '+(filter===s?'gold':'ghost')+' sm" data-action="filter-orders" data-status="'+s+'">'+s+'</button>'
-      ).join("") +'</div>'+
-      '<button class="btn" data-action="open-order-modal-new"><span>'+icon("plus",15)+'</span> New order</button>'+
+    '<div style="display:flex;flex-direction:column;gap:10px;margin-bottom:16px;">'+
+      '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;justify-content:space-between;">'+
+        '<div style="position:relative;flex:1;min-width:160px;max-width:320px;">'+
+          '<span style="position:absolute;left:10px;top:11px;color:var(--ink-soft);">'+icon("search",14)+'</span>'+
+          '<input style="padding-left:30px;" placeholder="Search '+nounFor("recordPlural").toLowerCase()+'..." data-action="search-orders" value="'+esc(state.orderSearch||"")+'">'+
+        '</div>'+
+        '<div style="display:flex;gap:8px;flex-wrap:wrap;">'+
+          '<button class="btn '+(bulkMode?'gold':'ghost')+' sm" data-action="toggle-order-bulk">'+icon("check",13)+' '+(bulkMode?"Cancel select":"Select")+'</button>'+
+          '<button class="btn" data-action="open-order-modal-new"><span>'+icon("plus",15)+'</span> New '+nounFor("record").toLowerCase()+'</button>'+
+        '</div>'+
+      '</div>'+
+      '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">'+
+        '<div class="chipbar" style="flex:1;">'+ ["All"].concat(currentStatuses().map(s=>s.key)).map(s=>
+          '<button class="btn '+(filter===s?'gold':'ghost')+' sm" data-action="filter-orders" data-status="'+s+'">'+s+'</button>'
+        ).join("") +'</div>'+
+        '<button class="btn '+(state.orderBalanceOnly?'gold':'ghost')+' sm" data-action="toggle-balance-filter">'+icon("cash",13)+' Balance due</button>'+
+      '</div>'+
+      '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;font-size:12.5px;color:var(--ink-soft);">'+
+        '<span>Due date range:</span>'+
+        '<input type="date" style="width:auto;padding:6px 8px;" data-action="set-order-date-from" value="'+esc(state.orderDateFrom||"")+'">'+
+        '<span>to</span>'+
+        '<input type="date" style="width:auto;padding:6px 8px;" data-action="set-order-date-to" value="'+esc(state.orderDateTo||"")+'">'+
+        ((state.orderDateFrom||state.orderDateTo) ? '<button class="btn ghost sm" data-action="clear-order-dates">'+icon("x",12)+' Clear</button>' : '')+
+      '</div>'+
+      (bulkMode && bulkSel.length>0 ?
+        '<div class="card" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:10px 14px;background:var(--gold-soft);">'+
+          '<span style="font-size:12.5px;font-weight:600;">'+bulkSel.length+' selected</span>'+
+          '<div class="chipbar">'+ currentStatuses().map(s=>'<button class="btn ghost sm" data-action="bulk-set-status" data-status="'+s.key+'">Set '+s.key+'</button>').join("") +'</div>'+
+        '</div>' : '')+
     '</div>'+
-    '<div style="display:flex;flex-direction:column;gap:10px;">'+
-      (sorted.length===0 ? '<div class="empty">No orders in this view.</div>' : sorted.map(o=>{
+    '<div id="ordersListWrap">'+ orderCardsHtml(sorted) +'</div>'
+  );
+}
+function filteredSortedOrders(){
+  const filter = state.orderFilterStatus || "All";
+  const q = (state.orderSearch||"").toLowerCase();
+  let filtered = filter==="All" ? state.orders : state.orders.filter(o=>o.status===filter);
+  if(state.orderBalanceOnly) filtered = filtered.filter(o=>(orderTotal(o)-orderPaid(o))>0 && o.status!=="Cancelled");
+  if(state.orderDateFrom) filtered = filtered.filter(o=> o.dueDate && o.dueDate >= state.orderDateFrom);
+  if(state.orderDateTo) filtered = filtered.filter(o=> o.dueDate && o.dueDate <= state.orderDateTo);
+  if(q){
+    filtered = filtered.filter(o=>{
+      const client = state.clients.find(c=>c.id===o.clientId);
+      return (o.title||"").toLowerCase().includes(q) || (client && client.name.toLowerCase().includes(q)) || (o.notes||"").toLowerCase().includes(q);
+    });
+  }
+  return filtered.slice().sort((a,b)=>(a.dueDate||"9999").localeCompare(b.dueDate||"9999"));
+}
+function orderCardsHtml(sorted){
+  const business = state.business;
+  const bulkMode = !!state.orderBulkMode;
+  const bulkSel = state.orderBulkSelected || [];
+  return '<div style="display:flex;flex-direction:column;gap:10px;">'+
+      (sorted.length===0 ? (
+        state.orders.length===0 ?
+          '<div class="empty" style="display:flex;flex-direction:column;gap:10px;align-items:center;padding:28px 16px;">'+
+            '<div>No '+nounFor("recordPlural").toLowerCase()+' yet — create your first one to start tracking work and payments.</div>'+
+            '<button class="btn gold sm" data-action="open-order-modal-new">'+icon("plus",13)+' New '+nounFor("record").toLowerCase()+'</button>'+
+          '</div>' :
+          '<div class="empty">No '+nounFor("recordPlural").toLowerCase()+' match this view. Try clearing the search or filters.</div>'
+      ) : sorted.map(o=>{
         const client = state.clients.find(c=>c.id===o.clientId);
         const total=orderTotal(o), paid=orderPaid(o), bal=total-paid, dleft=daysUntil(o.dueDate);
         const info = statusInfo(o.status);
-        return '<div class="card" style="cursor:pointer;" data-action="open-order-modal" data-id="'+o.id+'">'+
+        const checked = bulkSel.includes(o.id);
+        return '<div class="card" style="cursor:pointer;display:flex;gap:10px;" '+(bulkMode?'data-action="toggle-order-select" data-id="'+o.id+'"':'data-action="open-order-modal" data-id="'+o.id+'"')+'>'+
+          (bulkMode ? '<div style="flex-shrink:0;padding-top:2px;"><input type="checkbox" '+(checked?"checked":"")+' style="width:18px;height:18px;pointer-events:none;"></div>' : '')+
+          '<div style="flex:1;min-width:0;">'+
           '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">'+
             '<div><div style="font-weight:500;">'+esc(client?client.name:"Unknown client")+' — '+esc(o.title||"Untitled order")+'</div>'+
               '<div style="font-size:12px;color:var(--ink-soft);margin-top:2px;display:flex;gap:12px;flex-wrap:wrap;">'+
@@ -1293,10 +1794,9 @@ function renderOrders(){
             '<span class="pill '+statusClass(o.status)+'">'+o.status+'</span></div>'+
           '<div style="margin-top:10px;"><div class="tape-track '+(o.status==="Cancelled"?"cancelled":"")+'"><div class="fill" style="width:'+info.pct+'%;"></div></div>'+
             '<div class="tape-labels"><span>Pending</span><span>Cutting</span><span>Sewing</span><span>Fitting</span><span>Ready</span><span>Delivered</span></div></div>'+
-        '</div>';
+          '</div></div>';
       }).join(""))+
-    '</div>'
-  );
+    '</div>';
 }
 
 /* ================= CATALOGUE ================= */
@@ -1330,8 +1830,16 @@ function renderCatalogue(){
   if(state.browseCategoryId===null || state.browseCategoryId===undefined) state.browseCategoryId = "__all__";
   const isAll = state.browseCategoryId === "__all__";
   const activeCat = isAll ? null : cats.find(c=>c.id===state.browseCategoryId);
-  const items = isAll ? state.catalogue.items.slice() : (activeCat ? state.catalogue.items.filter(i=>i.categoryId===activeCat.id) : []);
+  let items = isAll ? state.catalogue.items.slice() : (activeCat ? state.catalogue.items.filter(i=>i.categoryId===activeCat.id) : []);
   const catName = (id) => { const c = cats.find(x=>x.id===id); return c ? c.name : ""; };
+  const catQ = (state.catalogueSearch||"").toLowerCase();
+  if(catQ) items = items.filter(it => it.name.toLowerCase().includes(catQ) || (it.description||"").toLowerCase().includes(catQ));
+
+  const salesCount = {};
+  state.orders.forEach(o=>{ if(o.status==="Cancelled") return; (o.items||[]).forEach(li=>{ if(li.desc) salesCount[li.desc] = (salesCount[li.desc]||0)+1; }); });
+  const bestSellers = state.catalogue.items.slice()
+    .map(it=>({it, count: salesCount[it.name]||0}))
+    .filter(x=>x.count>0).sort((a,b)=>b.count-a.count).slice(0,5);
 
   const useLargeFilterList = cats.length > 5;
   const categoryFilterHtml = useLargeFilterList ? 
@@ -1346,12 +1854,16 @@ function renderCatalogue(){
 
   return (
     '<div>'+
-      '<div style="display:flex;align-items:center;margin-bottom:10px;gap:10px;flex-wrap:nowrap;overflow-x:auto;">'+
+      '<div style="position:relative;margin-bottom:12px;max-width:320px;">'+
+        '<span style="position:absolute;left:10px;top:11px;color:var(--ink-soft);">'+icon("search",14)+'</span>'+
+        '<input style="padding-left:30px;" placeholder="Search '+nounFor("item").toLowerCase()+'s..." data-action="search-catalogue" value="'+esc(state.catalogueSearch||"")+'">'+
+      '</div>'+
+      '<div style="display:flex;align-items:center;margin-bottom:10px;gap:10px;flex-wrap:wrap;">'+
         (cats.length > 4 ? 
           '<select data-action="select-browse-category" data-id="dummy" style="flex-shrink:0;"><option value="__all__" '+(isAll?'selected':'')+'>All Categories</option>'+
             cats.map(c=>'<option value="'+c.id+'" '+(state.browseCategoryId===c.id?'selected':'')+'>'+esc(c.name)+'</option>').join("")+
           '</select>' :
-          '<div class="chipbar" style="flex-shrink:0;white-space:nowrap;">'+
+          '<div class="chipbar">'+
             '<button class="btn '+(isAll?'gold':'ghost')+' sm" data-action="select-browse-category" data-id="__all__">All</button>'+
             cats.map(c=>
               '<button class="btn '+(state.browseCategoryId===c.id?'gold':'ghost')+' sm" data-action="select-browse-category" data-id="'+c.id+'">'+esc(c.name)+'</button>'
@@ -1363,13 +1875,33 @@ function renderCatalogue(){
         '<button class="btn ghost sm" data-action="download-pricelist-image">'+icon("download",14)+' Download</button>'+
       '</div>'+
     '</div>'+
+    (isAll && !catQ && bestSellers.length>0 ?
+      '<div style="margin-bottom:16px;">'+
+        '<div class="disp" style="font-weight:600;font-size:13.5px;margin-bottom:8px;">'+icon("cash",13)+' Best sellers</div>'+
+        '<div style="display:flex;gap:10px;overflow-x:auto;padding-bottom:4px;">'+
+          bestSellers.map(({it,count})=>{
+            const img = (it.images&&it.images[0]) || null;
+            return '<div style="flex-shrink:0;width:110px;cursor:pointer;" data-action="view-catitem" data-id="'+it.id+'">'+
+              (img ? '<img src="'+img+'" style="width:110px;height:90px;object-fit:cover;border-radius:10px;">' : '<div style="width:110px;height:90px;background:var(--line);border-radius:10px;display:flex;align-items:center;justify-content:center;color:var(--ink-soft);">'+icon("image",18)+'</div>')+
+              '<div style="font-size:11.5px;font-weight:600;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+esc(it.name)+'</div>'+
+              '<div style="font-size:10.5px;color:var(--ink-soft);">'+count+' sold</div>'+
+            '</div>';
+          }).join("")+
+        '</div>'+
+      '</div>' : '')+
     (cats.length===0 ? '<div class="empty">No categories yet — add some from Account &gt; Manage catalogue.</div>' :
-      (items.length===0 ? '<div class="empty">No items yet. Add some from Account &gt; Manage catalogue.</div>' :
+      (items.length===0 ? (
+        catQ ? '<div class="empty">No '+nounFor("item").toLowerCase()+'s match "'+esc(state.catalogueSearch)+'".</div>' :
+        '<div class="empty">No items yet. Add some from Account &gt; Manage catalogue.</div>'
+      ) :
       '<div class="grid-cards">'+
         items.map(it=>{
           const img = (it.images&&it.images[0]) || null;
-          return '<div class="card" style="cursor:pointer;padding:0;overflow:hidden;" data-action="view-catitem" data-id="'+it.id+'">'+
+          const stockQty = it.custom && it.custom.stockQty;
+          const lowStock = stockQty!==undefined && stockQty!=="" && Number(stockQty)<=3;
+          return '<div class="card" style="cursor:pointer;padding:0;overflow:hidden;position:relative;" data-action="view-catitem" data-id="'+it.id+'">'+
             (img ? '<img src="'+img+'" style="width:100%;height:150px;object-fit:cover;">' : '<div style="width:100%;height:150px;background:var(--line);display:flex;align-items:center;justify-content:center;color:var(--ink-soft);">'+icon("image",24)+'</div>')+
+            (lowStock ? '<span class="pill" style="position:absolute;top:8px;left:8px;background:var(--rust-soft);color:var(--rust);font-size:10px;">Low stock: '+esc(stockQty)+'</span>' : '')+
             '<div style="padding:10px;display:flex;align-items:center;justify-content:space-between;gap:8px;">'+
               '<div style="min-width:0;flex:1;">'+
                 (isAll ? '<div style="font-size:10px;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.04em;margin-bottom:2px;">'+esc(catName(it.categoryId))+'</div>' : '')+
@@ -1461,6 +1993,19 @@ function renderAccount(){
         '<div style="font-size:12px;color:var(--ink-soft);margin-top:2px;">Replay the guided tour of the app anytime.</div></div>'+
       '<button class="btn ghost sm" data-action="start-tour">'+icon("help",14)+' Take the tour</button>'+
     '</div>'+
+    (state.universalAccess ?
+      '<div class="card" style="margin-bottom:16px;">'+
+        '<div class="disp" style="font-weight:600;font-size:14.5px;margin-bottom:4px;">Business module</div>'+
+        '<div style="font-size:12px;color:var(--ink-soft);margin-bottom:12px;">Signed up with the universal key — switch between modules anytime. Your '+esc(nounFor("clientPlural")).toLowerCase()+', '+esc(nounFor("recordPlural")).toLowerCase()+' and '+esc(nounFor("catalogue")).toLowerCase()+' stay the same; only the labels, statuses and extra fields shown change.</div>'+
+        '<div class="chipbar">'+
+          CATEGORY_ORDER.map(key => {
+            const cfg = CATEGORY_CONFIG[key];
+            const active = activeCategoryKey()===key;
+            return '<button class="btn '+(active?"gold":"ghost")+' sm" data-action="switch-module" data-cat="'+key+'">'+icon(cfg.icon,13)+' '+esc(cfg.label.split(" / ")[0])+'</button>';
+          }).join("")+
+        '</div>'+
+      '</div>'
+    : '')+
     '<div class="card" style="margin-bottom:16px;" data-tour-target="business-profile">'+
       '<div class="disp" style="font-weight:600;font-size:14.5px;margin-bottom:12px;">Business profile</div>'+
       '<div style="display:flex;gap:16px;align-items:center;margin-bottom:16px;flex-wrap:wrap;">'+
@@ -1500,7 +2045,7 @@ function renderAccount(){
     '<div class="card" data-tour-target="appearance">'+
       '<div class="disp" style="font-weight:600;font-size:14.5px;margin-bottom:10px;">Appearance</div>'+
       '<div style="display:grid;grid-template-columns:repeat(auto-fill, minmax(76px,1fr));gap:10px;">'+
-        Object.keys(THEMES).map(key => {
+        Object.keys(THEMES).filter(k=>k!=="custom").map(key => {
           const t = THEMES[key];
           const active = (state.theme||"indigo")===key;
           return '<button class="theme-swatch '+(active?"active":"")+'" data-action="select-theme" data-theme="'+key+'" title="'+t.label+'">'+
@@ -1508,6 +2053,28 @@ function renderAccount(){
             '<span class="swatch-label">'+t.label+'</span>'+
           '</button>';
         }).join("")+
+        (state.customThemeColors ? (
+          '<div class="theme-swatch '+((state.theme||"")==="custom"?"active":"")+'" style="cursor:pointer;position:relative;" data-action="select-theme" data-theme="custom" title="My colours">'+
+            '<span class="swatch-circle" style="background:linear-gradient(135deg, '+state.customThemeColors.primary+' 50%, '+state.customThemeColors.gold+' 50%);"></span>'+
+            '<span class="swatch-label">My colours</span>'+
+            '<span data-action="open-custom-theme-modal" title="Edit personalized colours" style="position:absolute;top:2px;right:6px;width:20px;height:20px;border-radius:50%;background:var(--surface);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;color:var(--ink-soft);">'+icon("palette",11)+'</span>'+
+          '</div>'
+        ) : (
+          '<button class="theme-swatch" data-action="open-custom-theme-modal" title="Add a personalized colour">'+
+            '<span class="swatch-circle" style="background:var(--surface);border:1.5px dashed var(--line);display:flex;align-items:center;justify-content:center;color:var(--ink-soft);">'+icon("palette",16)+'</span>'+
+            '<span class="swatch-label">Custom</span>'+
+          '</button>'
+        ))+
+      '</div>'+
+    '</div>'+
+    '<div class="card" style="margin-top:16px;" data-tour-target="dark-mode">'+
+      '<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">'+
+        '<div style="display:flex;align-items:center;gap:10px;">'+
+          '<div class="icon-badge" style="background:var(--gold-soft);color:var(--ink);">'+icon("moon",16)+'</div>'+
+          '<div><div style="font-size:13.5px;font-weight:600;">Dark mode</div>'+
+            '<div style="font-size:11.5px;color:var(--ink-soft);margin-top:1px;">Keeps your chosen colour, swaps the background to dark.</div></div>'+
+        '</div>'+
+        '<label class="switch"><input type="checkbox" data-action="toggle-dark-mode" '+(state.darkMode?"checked":"")+'><span class="slider"></span></label>'+
       '</div>'+
     '</div>'+
     '<div class="card" style="margin-top:16px;" data-tour-target="backup-transfer">'+
@@ -1518,6 +2085,11 @@ function renderAccount(){
         '<label class="btn ghost sm" style="margin:0;">'+icon("upload",14)+' Import backup'+
           '<input type="file" accept="application/json" data-action="import-data-file" style="display:none;">'+
         '</label>'+
+        (navigator.share ? '<button class="btn ghost sm" data-action="share-backup-file">'+icon("send",14)+' Share backup file</button>' : '')+
+      '</div>'+
+      '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;">'+
+        '<button class="btn ghost sm" data-action="export-csv-clients">'+icon("download",14)+' Export '+nounFor("clientPlural").toLowerCase()+' (CSV)</button>'+
+        '<button class="btn ghost sm" data-action="export-csv-orders">'+icon("download",14)+' Export '+nounFor("recordPlural").toLowerCase()+' (CSV)</button>'+
       '</div>'+
       '<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:16px;padding-top:14px;border-top:1px solid var(--line);">'+
         '<div><div style="font-size:13px;font-weight:500;">Automatic backup</div>'+
@@ -1536,10 +2108,14 @@ function renderAccount(){
       '<button class="btn rust sm" data-action="sign-out">'+icon("back",14)+' Sign out</button>'+
     '</div>'+
     '<div class="card" style="margin-top:16px;">'+
+      '<div class="disp" style="font-weight:600;font-size:14.5px;margin-bottom:4px;">Data &amp; privacy note</div>'+
+      policyBodyHtml()+
+    '</div>'+
+    '<div class="card" style="margin-top:16px;">'+
       '<div class="disp" style="font-weight:600;font-size:14.5px;margin-bottom:4px;">Contact the developer</div>'+
       '<div style="font-size:12px;color:var(--ink-soft);margin-bottom:12px;">Got a query, complaint, or bug to report? Reach out directly.</div>'+
       '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">'+
-        '<a class="btn wa sm" href="'+waLink(DEV_PHONE, "Hi "+DEV_STUDIO+", I have a query/complaint about "+esc(b.name||"Tailor Studio")+": ")+'" target="_blank" rel="noopener">'+icon("chat",14)+' WhatsApp</a>'+
+        '<a class="btn wa sm" href="'+waLink(DEV_PHONE, "Hi "+DEV_STUDIO+", I have a query/complaint about "+esc(b.name||"Bizrail")+": ")+'" target="_blank" rel="noopener">'+icon("chat",14)+' WhatsApp</a>'+
         '<a class="btn ghost sm" href="tel:'+DEV_PHONE.replace(/[^0-9+]/g,"")+'">'+icon("phone",14)+' Call</a>'+
         '<a class="btn ghost sm" href="mailto:'+DEV_EMAIL+'">'+icon("mail",14)+' Email</a>'+
       '</div>'+
@@ -1566,6 +2142,8 @@ function renderModal(){
   if(state.modal.type==="catitem-view") return renderCatItemView();
   if(state.modal.type==="catpicker") return renderCatalogPickerModal();
   if(state.modal.type==="notifications") return renderNotificationsModal();
+  if(state.modal.type==="global-search") return renderGlobalSearchModal();
+  if(state.modal.type==="custom-theme") return renderCustomThemeModal();
   if(state.modal.type==="contact-dev") return renderContactDevModal();
   return "";
 }
@@ -1577,11 +2155,26 @@ function modalShell(title, bodyHtml, variant){
     bodyHtml+
   '</div></div>';
 }
+function policyBodyHtml(){
+  return '<div style="font-size:12.5px;color:var(--ink-soft);line-height:1.7;">'+
+    '<p style="margin:0 0 10px;">All data you enter — '+esc(nounFor("clientPlural")).toLowerCase()+', '+esc(nounFor("recordPlural")).toLowerCase()+', '+esc(nounFor("catalogue")).toLowerCase()+' items and photos — is stored only on this device\u2019s local storage. Nothing is sent to '+esc(DEV_STUDIO)+' or any external server.</p>'+
+    '<p style="margin:0 0 10px;">Because it lives only on this device, uninstalling the app, clearing browser data, or losing the device can permanently erase it. Use Account &gt; Backup &amp; transfer to export a backup regularly or move data to another device.</p>'+
+    '<p style="margin:0 0 4px;font-weight:600;color:var(--ink);">Access levels</p>'+
+    '<p style="margin:0 0 10px;">Signing up needs an access key, and there are two kinds:</p>'+
+    '<ul style="margin:0 0 10px;padding-left:18px;">'+
+      '<li style="margin-bottom:4px;"><strong style="color:var(--ink);">Standard key</strong> — unlocks one business module (Tailoring, Restaurant, Salon, etc.), matched to the category you picked. That category is then permanent on this device.</li>'+
+      '<li><strong style="color:var(--ink);">Universal key</strong> — unlocks every business module on the same account, with a switcher in Account to move between them at any time. The underlying data (clients, orders, catalogue) is shared across whichever module is active; only the labels, statuses and extra fields shown change.</li>'+
+    '</ul>'+
+    '<p style="margin:0 0 4px;font-weight:600;color:var(--ink);">Responsibility &amp; indemnity</p>'+
+    '<p style="margin:0 0 10px;">You are solely responsible for the accuracy of the business, pricing and client information you enter, for how you use it with your clients, and for keeping your own backups. To the fullest extent permitted by law, you agree to indemnify and hold harmless '+esc(DEV_STUDIO)+' and '+esc(DEV_NAME)+' from any claim, loss, liability, or dispute — including with your own clients or customers — arising from your use of the app, data you enter or lose, or decisions made based on it. The app is provided as-is, with no warranty of uninterrupted or error-free operation.</p>'+
+    '<p style="margin:0;">Questions about this note? Reach out using the Contact the developer details below.</p>'+
+  '</div>';
+}
 function renderContactDevModal(){
   return modalShell("Contact the developer",
     '<div style="font-size:13px;color:var(--ink-soft);margin-bottom:14px;">Need help signing up, or spotted an issue? Reach out directly.</div>'+
     '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;">'+
-      '<a class="btn wa sm" href="'+waLink(DEV_PHONE, "Hi "+DEV_STUDIO+", I need help with Tailor Studio: ")+'" target="_blank" rel="noopener">'+icon("chat",14)+' WhatsApp</a>'+
+      '<a class="btn wa sm" href="'+waLink(DEV_PHONE, "Hi "+DEV_STUDIO+", I need help with Bizrail: ")+'" target="_blank" rel="noopener">'+icon("chat",14)+' WhatsApp</a>'+
       '<a class="btn ghost sm" href="tel:'+DEV_PHONE.replace(/[^0-9+]/g,"")+'">'+icon("phone",14)+' Call</a>'+
       '<a class="btn ghost sm" href="mailto:'+DEV_EMAIL+'">'+icon("mail",14)+' Email</a>'+
     '</div>'+
@@ -1591,7 +2184,15 @@ function renderContactDevModal(){
 
 function renderClientModal(){
   const c = state.modal.draft;
-  return modalShell(state.modal.isNew?"New client":"Edit client",
+  const measureFields = activeCatCfg().hasMeasurements ?
+    '<div class="divider"></div>'+
+    '<div class="disp" style="font-weight:600;margin-bottom:8px;font-size:15px;">Body measurements (cm)</div>'+
+    '<div class="grid-meas">'+
+      MEASUREMENT_FIELDS.map(([k,l])=>(
+        '<div><label>'+l+'</label><input class="mono" type="number" step="0.1" data-bind="modal.draft.measurements.'+k+'" value="'+esc(c.measurements[k]||"")+'" placeholder="0.0"></div>'
+      )).join("")+
+    '</div>' : '';
+  return modalShell(state.modal.isNew?"New "+nounFor("client").toLowerCase():"Edit "+nounFor("client").toLowerCase(),
     '<div style="display:flex;gap:14px;align-items:flex-end;margin-bottom:12px;">'+
       '<div style="flex:1;"><label>Full name</label><input data-bind="modal.draft.name" value="'+esc(c.name)+'" placeholder="Amaka Obi"></div>'+
       clientAvatarPickerHtml(c.styleImages, "modal.draft.styleImages")+
@@ -1606,17 +2207,11 @@ function renderClientModal(){
       '</select></div>'+
       '<div style="grid-column:1/-1;"><label>Address</label><input data-bind="modal.draft.address" value="'+esc(c.address)+'" placeholder="Lekki, Lagos"></div>'+
     '</div>'+
-    '<div style="margin-top:12px;"><label>Notes</label><textarea rows="2" data-bind="modal.draft.notes" placeholder="Preferences, fabric notes, etc.">'+esc(c.notes)+'</textarea></div>'+
-    '<div class="divider"></div>'+
-    '<div class="disp" style="font-weight:600;margin-bottom:8px;font-size:15px;">Body measurements (cm)</div>'+
-    '<div class="grid-meas">'+
-      MEASUREMENT_FIELDS.map(([k,l])=>(
-        '<div><label>'+l+'</label><input class="mono" type="number" step="0.1" data-bind="modal.draft.measurements.'+k+'" value="'+esc(c.measurements[k]||"")+'" placeholder="0.0"></div>'
-      )).join("")+
-    '</div>'+
+    '<div style="margin-top:12px;"><label>Notes</label><textarea rows="2" data-bind="modal.draft.notes" placeholder="Preferences, notes, etc.">'+esc(c.notes)+'</textarea></div>'+
+    measureFields+
     '<div style="display:flex;justify-content:flex-end;gap:8px;margin-top:20px;">'+
       '<button class="btn ghost" data-action="close-modal">Cancel</button>'+
-      '<button class="btn" id="modalSaveBtn" '+(!c.name.trim()?"disabled":"")+' data-action="save-client">'+icon("check",15)+' Save client</button>'+
+      '<button class="btn" id="modalSaveBtn" '+(!c.name.trim()?"disabled":"")+' data-action="save-client">'+icon("check",15)+' Save '+nounFor("client").toLowerCase()+'</button>'+
     '</div>', true
   );
 }
@@ -1669,7 +2264,12 @@ function renderOrderModal(){
     '</div>'
   ) : "";
 
-  return modalShell(state.modal.isNew?"New order":"Edit order",
+  if(!o.custom) o.custom = {};
+  const extraRecordFieldsHtml = activeRecordFields().map(f=>
+    '<div><label>'+esc(f.label)+'</label><input '+(f.type==="number"?'class="mono" type="number"':'type="text"')+' data-bind="modal.draft.custom.'+f.key+'" value="'+esc(o.custom[f.key]||"")+'" placeholder="'+esc(f.placeholder||"")+'"></div>'
+  ).join("");
+
+  return modalShell(state.modal.isNew?"New "+nounFor("record").toLowerCase():"Edit "+nounFor("record").toLowerCase(),
     '<div class="grid-form2">'+
       '<div><label>Client</label><select data-bind="modal.draft.clientId" data-rerender="1">'+
         (clients.length===0 ? '<option value="">No clients yet</option>' : clients.map(c=>'<option value="'+c.id+'" '+(o.clientId===c.id?"selected":"")+'>'+esc(c.name)+'</option>').join(""))+
@@ -1677,8 +2277,9 @@ function renderOrderModal(){
       '<div><label>Order title</label><input data-bind="modal.draft.title" value="'+esc(o.title)+'" placeholder="Wedding aso-ebi, native wear..."></div>'+
       '<div><label>Due date</label><input type="date" data-bind="modal.draft.dueDate" value="'+esc(o.dueDate)+'"></div>'+
       '<div><label>Status</label><select data-bind="modal.draft.status" data-rerender="1">'+
-        STATUSES.map(s=>'<option value="'+s.key+'" '+(o.status===s.key?"selected":"")+'>'+s.key+'</option>').join("")+
+        currentStatuses().map(s=>'<option value="'+s.key+'" '+(o.status===s.key?"selected":"")+'>'+s.key+'</option>').join("")+
       '</select></div>'+
+      extraRecordFieldsHtml+
     '</div>'+
     '<div style="margin-top:14px;"><div class="tape-track '+(o.status==="Cancelled"?"cancelled":"")+'"><div class="fill" style="width:'+info.pct+'%;"></div></div>'+
       '<div class="tape-labels"><span>Pending</span><span>Cutting</span><span>Sewing</span><span>Fitting</span><span>Ready</span><span>Delivered</span></div></div>'+
@@ -1708,8 +2309,21 @@ function renderOrderModal(){
     '</div>'+
     '<div style="margin-top:14px;"><label>Notes</label><textarea rows="2" data-bind="modal.draft.notes">'+esc(o.notes)+'</textarea></div>'+
     invoiceSection+
+    (state.modal.isExisting && o.history && o.history.length ? (
+      '<div class="divider"></div>'+
+      '<div class="disp" style="font-weight:600;font-size:15px;margin-bottom:8px;">Activity</div>'+
+      '<div style="display:flex;flex-direction:column;gap:6px;">'+
+        o.history.slice().reverse().map(h=>
+          '<div style="display:flex;justify-content:space-between;font-size:12.5px;color:var(--ink-soft);">'+
+            '<span><span class="pill '+statusClass(h.status)+'" style="font-size:10.5px;padding:2px 8px;">'+esc(h.status)+'</span></span>'+
+            '<span>'+fmtDateTime(new Date(h.at))+'</span>'+
+          '</div>'
+        ).join("")+
+      '</div>'
+    ) : '')+
     '<div style="display:flex;gap:8px;margin-top:20px;flex-wrap:wrap;justify-content:flex-end;">'+
       (state.modal.isExisting ? '<button class="btn rust sm" data-action="delete-order">'+icon("trash",14)+' Delete</button>' : '')+
+      (state.modal.isExisting ? '<button class="btn ghost sm" data-action="duplicate-order">'+icon("plus",14)+' Duplicate as new</button>' : '')+
       '<button class="btn ghost sm" data-action="close-modal">Cancel</button>'+
       '<button class="btn sm" '+(!o.clientId?"disabled":"")+' data-action="save-order">'+icon("check",15)+' Save</button>'+
     '</div>', true
@@ -1718,9 +2332,13 @@ function renderOrderModal(){
 
 function renderCatItemModal(){
   const it = state.modal.draft;
+  if(!it.custom) it.custom = {};
   const cats = state.catalogue.categories;
   const images = it.images||[];
-  return modalShell(state.modal.isNew?"New catalogue item":"Edit catalogue item",
+  const extraFieldsHtml = activeItemFields().map(f=>
+    '<div><label>'+esc(f.label)+'</label><input '+(f.type==="number"?'class="mono" type="number"':'type="text"')+' data-bind="modal.draft.custom.'+f.key+'" value="'+esc(it.custom[f.key]||"")+'" placeholder="'+esc(f.placeholder||"")+'"></div>'
+  ).join("");
+  return modalShell(state.modal.isNew?"New "+nounFor("item").toLowerCase():"Edit "+nounFor("item").toLowerCase(),
     imagePickerHtml("Item photos", images, "modal.draft.images")+
     '<div class="grid-form2" style="margin-top:12px;">'+
       '<div style="grid-column:1/-1;"><label>Item name</label><input data-bind="modal.draft.name" value="'+esc(it.name)+'" placeholder="Ankara wrap dress"></div>'+
@@ -1729,6 +2347,7 @@ function renderCatItemModal(){
       '</select></div>'+
       '<div><label>Price</label><input class="mono" type="number" data-bind="modal.draft.price" value="'+esc(it.price)+'"></div>'+
       '<div style="grid-column:1/-1;"><label>Description</label><textarea rows="2" data-bind="modal.draft.description">'+esc(it.description)+'</textarea></div>'+
+      extraFieldsHtml+
     '</div>'+
     '<div style="display:flex;justify-content:space-between;margin-top:20px;">'+
       (state.modal.isExisting ? '<button class="btn rust sm" data-action="delete-catitem">'+icon("trash",14)+' Delete</button>' : '<span></span>')+
@@ -1760,12 +2379,17 @@ function renderCatItemView(){
     '</div>'
   ) : "";
 
+  const extraFieldsView = activeItemFields().filter(f=>it.custom && it.custom[f.key]).map(f=>
+    '<div><div style="font-size:11px;color:var(--ink-soft);">'+esc(f.label)+'</div><div class="mono" style="font-weight:500;">'+esc(it.custom[f.key])+'</div></div>'
+  ).join("");
+
   return modalShell(it.name,
     heroBlock+
     thumbRow+
     (cat ? '<div style="font-size:11.5px;color:var(--ink-soft);margin-bottom:4px;">'+esc(cat.name)+'</div>' : '')+
     '<div class="mono" style="font-weight:700;font-size:20px;margin-bottom:8px;">'+money(it.price,business.currency)+'</div>'+
     (it.description ? '<div style="font-size:13.5px;color:var(--ink-soft);white-space:pre-wrap;margin-bottom:14px;">'+esc(it.description)+'</div>' : '')+
+    (extraFieldsView ? '<div class="grid-meas" style="margin-bottom:14px;">'+extraFieldsView+'</div>' : '')+
     '<div style="display:flex;gap:8px;flex-wrap:wrap;">'+
       '<button class="btn wa sm" data-action="share-catitem-whatsapp" data-id="'+it.id+'">'+icon("send",14)+' Share</button>'+
       '<button class="btn gold sm" data-action="add-catitem-to-new-order" data-id="'+it.id+'">'+icon("plus",14)+' Add to new order</button>'+
@@ -1830,6 +2454,82 @@ function renderNotificationsModal(){
   return modalShell("Notifications", body);
 }
 
+function renderGlobalSearchModal(){
+  const q = (state.globalSearchQ||"").trim().toLowerCase();
+  const business = state.business;
+  let clientResults = [], orderResults = [], itemResults = [];
+  if(q.length>=2){
+    clientResults = state.clients.filter(c=> c.name.toLowerCase().includes(q) || (c.phone||"").includes(q)).slice(0,8);
+    orderResults = state.orders.filter(o=>{
+      const client = state.clients.find(c=>c.id===o.clientId);
+      return (o.title||"").toLowerCase().includes(q) || (client && client.name.toLowerCase().includes(q)) || (o.notes||"").toLowerCase().includes(q);
+    }).slice(0,8);
+    itemResults = state.catalogue.items.filter(it=> it.name.toLowerCase().includes(q) || (it.description||"").toLowerCase().includes(q)).slice(0,8);
+  }
+  const resultGroup = (title, list, renderRow) => list.length===0 ? "" :
+    '<div style="margin-bottom:16px;">'+
+      '<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-soft);margin-bottom:6px;">'+esc(title)+' ('+list.length+')</div>'+
+      list.map(renderRow).join("")+
+    '</div>';
+  const body =
+    '<div style="position:relative;margin-bottom:14px;">'+
+      '<span style="position:absolute;left:10px;top:11px;color:var(--ink-soft);">'+icon("search",14)+'</span>'+
+      '<input id="globalSearchInput" style="padding-left:30px;" placeholder="Search '+nounFor("clientPlural").toLowerCase()+', '+nounFor("recordPlural").toLowerCase()+', '+nounFor("catalogue").toLowerCase()+'..." data-action="global-search-input" value="'+esc(state.globalSearchQ||"")+'">'+
+    '</div>'+
+    (q.length<2 ? '<div class="empty">Type at least 2 characters to search across everything.</div>' :
+      (clientResults.length+orderResults.length+itemResults.length===0 ? '<div class="empty">No matches for "'+esc(state.globalSearchQ)+'".</div>' :
+        resultGroup(nounFor("clientPlural"), clientResults, c=>
+          '<div class="rowline" style="cursor:pointer;" data-action="global-search-goto-client" data-id="'+c.id+'">'+
+            '<span>'+esc(c.name)+'</span><span style="font-size:12px;color:var(--ink-soft);">'+esc(c.phone||"")+'</span>'+
+          '</div>'
+        )+
+        resultGroup(nounFor("recordPlural"), orderResults, o=>{
+          const client = state.clients.find(c=>c.id===o.clientId);
+          return '<div class="rowline" style="cursor:pointer;" data-action="global-search-goto-order" data-id="'+o.id+'">'+
+            '<span>'+esc(client?client.name:"Unknown")+' — '+esc(o.title||"Order")+'</span><span class="pill '+statusClass(o.status)+'" style="font-size:10px;">'+o.status+'</span>'+
+          '</div>';
+        })+
+        resultGroup(nounFor("catalogue"), itemResults, it=>
+          '<div class="rowline" style="cursor:pointer;" data-action="global-search-goto-item" data-id="'+it.id+'">'+
+            '<span>'+esc(it.name)+'</span><span class="mono" style="font-size:12px;">'+money(it.price,business.currency)+'</span>'+
+          '</div>'
+        )
+      )
+    );
+  return modalShell("Search", body);
+}
+
+function renderCustomThemeModal(){
+  const d = state.modal.draft;
+  const preview = buildCustomTheme(d.primary, d.gold).vars;
+  const body =
+    '<div style="font-size:12.5px;color:var(--ink-soft);margin-bottom:16px;">Pick two colours — Bizrail builds a full, balanced colour scheme around them.</div>'+
+    '<div class="grid-form2">'+
+      '<div><label>Primary colour</label><div style="display:flex;gap:8px;align-items:center;">'+
+        '<input type="color" data-bind="modal.draft.primary" data-rerender="1" value="'+esc(d.primary)+'" style="width:44px;height:38px;padding:2px;">'+
+        '<input type="text" data-bind="modal.draft.primary" data-rerender="1" value="'+esc(d.primary)+'" style="flex:1;">'+
+      '</div></div>'+
+      '<div><label>Accent colour</label><div style="display:flex;gap:8px;align-items:center;">'+
+        '<input type="color" data-bind="modal.draft.gold" data-rerender="1" value="'+esc(d.gold)+'" style="width:44px;height:38px;padding:2px;">'+
+        '<input type="text" data-bind="modal.draft.gold" data-rerender="1" value="'+esc(d.gold)+'" style="flex:1;">'+
+      '</div></div>'+
+    '</div>'+
+    '<div class="disp" style="font-weight:600;font-size:13px;margin:16px 0 8px;">Preview</div>'+
+    '<div style="border-radius:12px;padding:16px;background:'+preview.bg+';border:1px solid '+preview.line+';">'+
+      '<div style="background:'+preview.surface+';border-radius:10px;padding:12px;">'+
+        '<div style="font-weight:700;color:'+preview.ink+';margin-bottom:4px;">Sample card</div>'+
+        '<div style="font-size:12px;color:'+preview["ink-soft"]+';margin-bottom:10px;">This is how text looks on a surface.</div>'+
+        '<span style="display:inline-block;background:'+preview.primary+';color:#fff;border-radius:999px;padding:6px 14px;font-size:12.5px;font-weight:600;margin-right:6px;">Primary button</span>'+
+        '<span style="display:inline-block;background:'+preview["gold-soft"]+';color:'+preview.primary+';border-radius:999px;padding:6px 14px;font-size:12.5px;font-weight:600;">Accent pill</span>'+
+      '</div>'+
+    '</div>'+
+    '<div style="display:flex;gap:8px;margin-top:20px;justify-content:flex-end;">'+
+      '<button class="btn ghost sm" data-action="close-modal">Cancel</button>'+
+      '<button class="btn sm" data-action="save-custom-theme">'+icon("check",15)+' Use these colours</button>'+
+    '</div>';
+  return modalShell("Personalized colours", body);
+}
+
 function imagePickerHtml(label, images, targetPath, max){
   images = images || [];
   const canAddMore = !max || images.length < max;
@@ -1863,42 +2563,128 @@ function welcomeSlidesData(){
     img: i.images[0], name: i.name, price: i.price, category: catNames[i.categoryId] || ""
   }));
 }
+// Before a vertical has been picked (and locked) for this device, the
+// welcome screen has no real business to showcase yet — it shows the
+// app itself and the business verticals it supports instead of the
+// tailoring demo catalogue.
+function isWelcomeOnboarding(){ return !state.businessCategory; }
+function verticalSlidesData(){
+  return CATEGORY_ORDER.map(key => CATEGORY_CONFIG[key]);
+}
+function activeWelcomeSlideCount(){
+  return isWelcomeOnboarding() ? verticalSlidesData().length : welcomeSlidesData().length;
+}
 function renderWelcomeView(){
   const business = state.business;
-  const slides = welcomeSlidesData();
-  const logoHtml = business.logo ? '<img src="'+business.logo+'" alt="">' : (business.name||"T").trim()[0].toUpperCase();
+  const onboarding = isWelcomeOnboarding();
 
-  const heroHtml = slides.length === 0 ? (
-    '<div class="welcome-empty">'+icon("image",30)+'<div style="font-size:12.5px;max-width:220px;text-align:center;">Add photos to your catalogue items to showcase them here.</div></div>'
-  ) : (
-    '<div class="welcome-track" id="welcomeTrack">'+
-      slides.map(s => (
-        '<div class="welcome-slide"><img src="'+s.img+'" alt="'+esc(s.name)+'">'+
-          '<div class="welcome-caption"><div class="wname">'+esc(s.name)+'</div>'+
-            (s.category ? '<div class="wcat">'+esc(s.category)+'</div>' : '')+
-            '<div class="wprice">'+money(s.price, business.currency)+'</div>'+
-          '</div>'+
+  let heroHtml, logoHtml, titleHtml, subtitleHtml;
+
+  if(onboarding){
+    const slides = verticalSlidesData();
+    logoHtml = "B";
+    titleHtml = "Bizrail";
+    subtitleHtml = "One app, tailored to your business. Browse the verticals it supports, then step inside to set yours up.";
+    heroHtml =
+      '<div class="welcome-track" id="welcomeTrack">'+
+        slides.map(cfg => (
+          '<div class="welcome-slide"><div class="welcome-vslide">'+
+            '<div class="vicon">'+icon(cfg.icon,26)+'</div>'+
+            '<div class="vname">'+esc(cfg.label)+'</div>'+
+            '<div class="vblurb">'+esc(cfg.blurb)+'</div>'+
+          '</div></div>'
+        )).join("")+
+      '</div>'+
+      (slides.length > 1 ? (
+        '<button class="welcome-arrow prev" data-action="welcome-prev" aria-label="Previous">'+icon("back",16)+'</button>'+
+        '<button class="welcome-arrow next" data-action="welcome-next" aria-label="Next">'+icon("forward",16)+'</button>'+
+        '<div class="welcome-dots" id="welcomeDots">'+
+          slides.map((_,i) => '<button class="welcome-dot '+(i===state.welcomeIndex?"active":"")+'" data-action="welcome-goto" data-index="'+i+'"></button>').join("")+
         '</div>'
-      )).join("")+
-    '</div>'+
-    (slides.length > 1 ? (
-      '<button class="welcome-arrow prev" data-action="welcome-prev" aria-label="Previous">'+icon("back",16)+'</button>'+
-      '<button class="welcome-arrow next" data-action="welcome-next" aria-label="Next">'+icon("forward",16)+'</button>'+
-      '<div class="welcome-dots" id="welcomeDots">'+
-        slides.map((_,i) => '<button class="welcome-dot '+(i===state.welcomeIndex?"active":"")+'" data-action="welcome-goto" data-index="'+i+'"></button>').join("")+
-      '</div>'
-    ) : "")
-  );
+      ) : "");
+  } else {
+    const slides = welcomeSlidesData();
+    logoHtml = business.logo ? '<img src="'+business.logo+'" alt="">' : (business.name||"T").trim()[0].toUpperCase();
+    titleHtml = esc(business.name);
+    subtitleHtml = "Browse our latest styles and prices, then step inside to manage clients, orders and your catalogue.";
+    heroHtml = slides.length === 0 ? (
+      '<div class="welcome-empty">'+icon("image",30)+'<div style="font-size:12.5px;max-width:220px;text-align:center;">Add photos to your catalogue items to showcase them here.</div></div>'
+    ) : (
+      '<div class="welcome-track" id="welcomeTrack">'+
+        slides.map(s => (
+          '<div class="welcome-slide"><img src="'+s.img+'" alt="'+esc(s.name)+'">'+
+            '<div class="welcome-caption"><div class="wname">'+esc(s.name)+'</div>'+
+              (s.category ? '<div class="wcat">'+esc(s.category)+'</div>' : '')+
+              '<div class="wprice">'+money(s.price, business.currency)+'</div>'+
+            '</div>'+
+          '</div>'
+        )).join("")+
+      '</div>'+
+      (slides.length > 1 ? (
+        '<button class="welcome-arrow prev" data-action="welcome-prev" aria-label="Previous">'+icon("back",16)+'</button>'+
+        '<button class="welcome-arrow next" data-action="welcome-next" aria-label="Next">'+icon("forward",16)+'</button>'+
+        '<div class="welcome-dots" id="welcomeDots">'+
+          slides.map((_,i) => '<button class="welcome-dot '+(i===state.welcomeIndex?"active":"")+'" data-action="welcome-goto" data-index="'+i+'"></button>').join("")+
+        '</div>'
+      ) : "")
+    );
+  }
 
   return (
     '<div class="welcome-shell">'+
       '<div class="welcome-hero">'+ heroHtml +'</div>'+
       '<div class="welcome-body">'+
         '<div class="welcome-logo">'+logoHtml+'</div>'+
-        '<div class="disp" style="font-size:25px;font-weight:600;">'+esc(business.name)+'</div>'+
-        '<div style="font-size:13.5px;color:var(--ink-soft);max-width:300px;">Browse our latest styles and prices, then step inside to manage clients, orders and your catalogue.</div>'+
-        '<button class="btn gold" data-action="enter-shop" style="padding:12px 30px;font-size:14.5px;margin-top:4px;">Enter shop '+icon("forward",15)+'</button>'+
+        '<div class="disp" style="font-size:25px;font-weight:600;">'+titleHtml+'</div>'+
+        '<div style="font-size:13.5px;color:var(--ink-soft);max-width:300px;">'+subtitleHtml+'</div>'+
+        '<button class="btn gold" data-action="enter-shop" style="padding:12px 30px;font-size:14.5px;margin-top:4px;">'+(onboarding?"Get started":"Enter shop")+' '+icon("forward",15)+'</button>'+
         '<button class="btn ghost sm" data-action="download-user-guide" style="margin-top:2px;">'+icon("download",13)+' Download user guide</button>'+
+      '</div>'+
+    '</div>'
+  );
+}
+function renderPolicyGateView(){
+  const c = state.policyChecks;
+  const bothChecked = c.understand && c.accept;
+  return (
+    '<div id="policyScroll" style="position:fixed;inset:0;overflow-y:auto;-webkit-overflow-scrolling:touch;display:flex;align-items:flex-start;justify-content:center;padding:30px 16px;box-sizing:border-box;background:var(--bg);">'+
+      '<div class="card" style="max-width:480px;width:100%;margin-bottom:30px;">'+
+        '<div class="disp" style="font-weight:700;font-size:19px;margin-bottom:4px;">Before you pick a business</div>'+
+        '<div style="font-size:12.5px;color:var(--ink-soft);margin-bottom:14px;">Please read this quick note, then confirm both boxes to continue.</div>'+
+        policyBodyHtml()+
+        '<div style="border-top:1px solid var(--line);margin-top:14px;padding-top:14px;display:flex;flex-direction:column;gap:10px;">'+
+          '<label style="display:flex;align-items:flex-start;gap:8px;font-size:12.5px;cursor:pointer;">'+
+            '<input type="checkbox" data-action="toggle-policy-understand" '+(c.understand?"checked":"")+' style="width:16px;height:16px;margin-top:1px;flex-shrink:0;">'+
+            '<span>I understand my data is stored only on this device, and I understand the difference between a standard access key (one business module) and a universal key (all modules, switchable anytime).</span>'+
+          '</label>'+
+          '<label style="display:flex;align-items:flex-start;gap:8px;font-size:12.5px;cursor:pointer;">'+
+            '<input type="checkbox" data-action="toggle-policy-accept" '+(c.accept?"checked":"")+' style="width:16px;height:16px;margin-top:1px;flex-shrink:0;">'+
+            '<span>I accept responsibility for the information I enter, and I agree to the indemnity clause above.</span>'+
+          '</label>'+
+        '</div>'+
+        '<button class="btn gold" style="width:100%;justify-content:center;margin-top:16px;" '+(bothChecked?"":"disabled")+' data-action="accept-policy">'+icon("check",15)+' Continue</button>'+
+      '</div>'+
+    '</div>'
+  );
+}
+function renderCategoryPickerView(){
+  return (
+    '<div style="position:fixed;inset:0;overflow-y:auto;-webkit-overflow-scrolling:touch;display:flex;align-items:flex-start;justify-content:center;padding:30px 16px;box-sizing:border-box;background:var(--bg);">'+
+      '<div style="max-width:560px;width:100%;margin-bottom:30px;">'+
+        '<div style="text-align:center;margin-bottom:22px;">'+
+          '<div class="disp" style="font-weight:700;font-size:22px;">What kind of business is this for?</div>'+
+          '<div style="font-size:12.5px;color:var(--ink-soft);margin-top:6px;">Pick a category to set up the right tools for your business. This choice is permanent on this device — you\'ll sign up with an access key next.</div>'+
+        '</div>'+
+        '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px;">'+
+          CATEGORY_ORDER.map(key => {
+            const cfg = CATEGORY_CONFIG[key];
+            return '<button type="button" class="card" data-action="choose-category" data-cat="'+key+'" style="text-align:left;display:flex;gap:12px;align-items:flex-start;border:none;">'+
+              '<div class="icon-badge" style="background:var(--gold-soft);color:#8A5F1F;flex-shrink:0;">'+icon(cfg.icon,17)+'</div>'+
+              '<div style="min-width:0;"><div class="disp" style="font-weight:600;font-size:14px;">'+esc(cfg.label)+'</div>'+
+                '<div style="font-size:11.5px;color:var(--ink-soft);margin-top:2px;">'+esc(cfg.blurb)+'</div></div>'+
+            '</button>';
+          }).join("")+
+        '</div>'+
       '</div>'+
     '</div>'
   );
@@ -1937,11 +2723,19 @@ function renderAuthView(){
     ) : '');
 
   const signUpBody =
-    '<div style="margin-bottom:10px;"><label>Business name</label><input data-bind="authForm.name" value="'+esc(f.name||"")+'" placeholder="e.g. Ade\u2019s Tailor Shop"></div>'+
+    (!state.businessCategory ? (
+      '<div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;padding:9px 12px;background:var(--surface);border:1px solid var(--line);border-radius:9px;font-size:12px;">'+
+        '<span class="icon-badge" style="width:26px;height:26px;background:var(--gold-soft);color:#8A5F1F;">'+icon(activeCatCfg().icon,13)+'</span>'+
+        '<span style="flex:1;font-weight:500;">'+esc(activeCatCfg().label)+'</span>'+
+        '<span data-action="back-to-category-picker" style="color:var(--primary);font-weight:600;cursor:pointer;text-decoration:underline;white-space:nowrap;">Change</span>'+
+      '</div>'
+    ) : '')+
+    '<div style="margin-bottom:10px;"><label>Business name</label><input data-bind="authForm.name" value="'+esc(f.name||"")+'" placeholder="'+esc(activeCatCfg().namePlaceholder)+'"></div>'+
     '<div style="margin-bottom:10px;"><label>Email</label><input data-bind="authForm.email" value="'+esc(f.email||"")+'" placeholder="you@example.com"></div>'+
     '<div style="margin-bottom:10px;"><label>Password</label><input type="password" data-bind="authForm.password" value="'+esc(f.password||"")+'" placeholder="Create a password"></div>'+
     '<div style="margin-bottom:10px;"><label>Confirm password</label><input type="password" data-bind="authForm.confirm" value="'+esc(f.confirm||"")+'" placeholder="Confirm password"></div>'+
     '<div style="margin-bottom:14px;"><label>Access key</label><input data-bind="authForm.key" value="'+esc(f.key||"")+'" placeholder="Enter your access key"></div>'+
+    '<div style="text-align:center;margin-bottom:14px;font-size:11px;color:var(--ink-soft);">Have a universal key instead? Enter it above — it works for any module and lets you switch between them later in Account.</div>'+
     '<button class="btn gold" style="width:100%;justify-content:center;" data-action="sign-up">'+icon("plus",15)+' Create account</button>'+
     '<div style="text-align:center;margin-top:16px;font-size:11.5px;color:var(--ink-soft);">Creating an account permanently clears the demo data on this device and unlocks full editing.</div>'+
     '<div style="text-align:center;margin-top:10px;font-size:12.5px;color:var(--ink-soft);">Already have an account? '+
@@ -1950,11 +2744,11 @@ function renderAuthView(){
       '<span data-action="open-contact-dev-modal" style="color:var(--primary);font-weight:600;cursor:pointer;text-decoration:underline;">Contact developer</span></div>';
 
   return (
-    '<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;box-sizing:border-box;background:var(--bg);">'+
-      '<div class="card" style="max-width:380px;width:100%;">'+
+    '<div id="authScroll" style="position:fixed;inset:0;overflow-y:auto;-webkit-overflow-scrolling:touch;display:flex;align-items:flex-start;justify-content:center;padding:30px 16px;box-sizing:border-box;background:var(--bg);">'+
+      '<div class="card" style="max-width:380px;width:100%;margin-bottom:30px;">'+
         '<div style="display:flex;flex-direction:column;align-items:center;margin-bottom:20px;">'+
           logoHtml+
-          '<div class="disp" style="font-weight:700;font-size:19px;margin-top:12px;">'+esc(business.name||"Tailor Studio")+'</div>'+
+          '<div class="disp" style="font-weight:700;font-size:19px;margin-top:12px;">'+esc(state.businessCategory ? (business.name||"Bizrail") : activeCatCfg().defaultBusinessName)+'</div>'+
           '<div style="font-size:12.5px;color:var(--ink-soft);margin-top:2px;">'+(mode==="signup"?"Create your account":"Sign in to continue")+'</div>'+
         '</div>'+
         (state.authError ? '<div style="background:var(--rust-soft);color:var(--rust);font-size:12.5px;padding:8px 12px;border-radius:8px;margin-bottom:12px;">'+esc(state.authError)+'</div>' : '')+
@@ -1964,9 +2758,9 @@ function renderAuthView(){
   );
 }
 function goToWelcomeSlide(index){
-  const slides = welcomeSlidesData();
-  if(slides.length === 0) return;
-  state.welcomeIndex = ((index % slides.length) + slides.length) % slides.length;
+  const count = activeWelcomeSlideCount();
+  if(count === 0) return;
+  state.welcomeIndex = ((index % count) + count) % count;
   const track = document.getElementById("welcomeTrack");
   if(track) track.style.transform = "translateX(-"+(state.welcomeIndex*100)+"%)";
   const dots = document.getElementById("welcomeDots");
@@ -1974,8 +2768,8 @@ function goToWelcomeSlide(index){
 }
 function startWelcomeCarousel(){
   clearWelcomeTimer();
-  const slides = welcomeSlidesData();
-  if(slides.length <= 1) return;
+  const count = activeWelcomeSlideCount();
+  if(count <= 1) return;
   welcomeTimer = setInterval(() => goToWelcomeSlide(state.welcomeIndex + 1), 3800);
 }
 function clearWelcomeTimer(){ if(welcomeTimer){ clearInterval(welcomeTimer); welcomeTimer = null; } }
@@ -2015,14 +2809,16 @@ function openOrderModal(existing, prefillClientId){
   state.modal = { type:"order", isNew: !existing, isExisting: !!existing, payAmt:"", payMethod:"Cash",
     draft: existing ? JSON.parse(JSON.stringify(existing)) : {
       id:uid(), clientId: prefillClientId || (state.clients[0]?state.clients[0].id:""), title:"",
-      items:[{desc:"",price:""}], styleImages:[], payments:[], dueDate:"", status:"Pending", notes:"", createdAt: todayISO()
+      items:[{desc:"",price:""}], styleImages:[], payments:[], dueDate:"", status:"Pending", notes:"", custom:{}, createdAt: todayISO()
     }};
+  if(!state.modal.draft.custom) state.modal.draft.custom = {};
   pushNav();
   render();
 }
 function openCatItemModal(existing, catId){
   state.modal = { type:"catitem", isNew: !existing, isExisting: !!existing,
-    draft: existing ? JSON.parse(JSON.stringify(existing)) : { id:uid(), name:"", categoryId: catId || (state.catalogue.categories[0]?state.catalogue.categories[0].id:""), price:"", description:"", images:[] } };
+    draft: existing ? JSON.parse(JSON.stringify(existing)) : { id:uid(), name:"", categoryId: catId || (state.catalogue.categories[0]?state.catalogue.categories[0].id:""), price:"", description:"", images:[], custom:{} } };
+  if(!state.modal.draft.custom) state.modal.draft.custom = {};
   pushNav();
   render();
 }
@@ -2098,69 +2894,88 @@ async function shareCatalogueItem(id){
 function tourSeen(){ try{ return localStorage.getItem("ts_tour_seen")==="1"; }catch(e){ return false; } }
 function markTourSeen(){ try{ localStorage.setItem("ts_tour_seen","1"); }catch(e){} }
 
-const TOUR_STEPS = [
-  { title:"Welcome to Tailor Studio",
-    body:"A quick, 60-second tour of the essentials — how to manage clients, orders, your catalogue and your shop settings. Tap Next to begin, or Skip tour at any time." },
-  { tab:"dashboard", getTarget:()=>document.querySelector(".brand"),
-    title:"Your shop identity",
-    body:"Your business name and logo, top-left, everywhere in the app. Tap it any time to preview the public welcome screen clients see." },
-  { tab:"dashboard", getTarget:()=>document.querySelector('.topbar [data-action="open-notifications"]'),
-    title:"Alerts",
-    body:"The bell flags orders that are due soon, due today, or overdue — plus any order with an unpaid balance." },
-  { tab:"dashboard", getTarget:()=>document.querySelector('.topbar [data-action="open-order-modal-new"]'),
-    title:"Start a new order",
-    body:"Create an order for any client from anywhere in the app — pick items from your catalogue, set a due date, and record payments as they come in." },
-  { tab:"dashboard", getTarget:()=>document.querySelector("#content .grid-stats"),
-    title:"Overview at a glance",
-    body:"Total revenue, outstanding balance, active orders and total clients — updated automatically as you work." },
-  { tab:"dashboard", getTarget:()=>document.querySelector("#content .grid-2-even"),
-    title:"Charts",
-    body:"See revenue over the last six months, and how your orders are spread across each stage of production." },
-  { tab:"dashboard", getTarget:()=>document.querySelector("#content .grid-2"),
-    title:"Due soon & top clients",
-    body:"Orders that need attention soon, plus the clients who've spent the most with you — with a one-tap WhatsApp reminder button." },
-  { tab:"clients", getTarget:()=>document.querySelector('#content [data-action="open-client-modal-new"]'),
-    title:"Clients",
-    body:"Search your client list, or add a new client here — name, phone, address, measurements and style photos all live on their profile." },
-  { tab:"clients", getTarget:()=>document.querySelector("#content .grid-cards, #content #clientsGrid"),
-    title:"Client profiles",
-    body:"Tap any client card to open their full profile: body measurements, style photos, and their complete order history." },
-  { tab:"orders", getTarget:()=>document.querySelector("#content .chipbar"),
-    title:"Order status filters",
-    body:"Filter orders by stage — Pending, Cutting, Sewing, Fitting, Ready, Delivered — or Cancelled." },
-  { tab:"orders", getTarget:()=>document.querySelector('#content [data-action="open-order-modal-new"]'),
-    title:"Order tracker",
-    body:"Every order shows a progress tape through each stage, plus its total, balance and due date, right on the card. Tap a card to update it." },
-  { tab:"catalogue", getTarget:()=>document.querySelector("#content .chipbar"),
-    title:"Catalogue",
-    body:"Browse your priced styles by category — this is what you'd show a client browsing your work." },
-  { tab:"catalogue", getTarget:()=>document.querySelector('#content [data-action="open-full-gallery"]'),
-    title:"Browse all photos",
-    body:"Tap the gallery icon to see all your category photos in one place — full-screen and easy to flip through." },
-  { tab:"catalogue", getTarget:()=>document.querySelector('#content [data-action="share-pricelist-image"]'),
-    title:"Share your price list",
-    body:"Send your whole catalogue as a neat image straight to WhatsApp, or download it to share anywhere." },
-  { tab:"account", getTarget:()=>document.querySelector('[data-tour-target="business-profile"]'),
-    title:"Business profile",
-    body:"Your shop name, logo, phone, address and registration number — used on every invoice, receipt and shared price list." },
-  { tab:"account", getTarget:()=>document.querySelector('[data-tour-target="bank-details"]'),
-    title:"Bank details",
-    body:"Add one or more bank accounts here so clients know exactly where to pay — they'll appear automatically on invoices with a balance due." },
-  { tab:"account", getTarget:()=>document.querySelector('[data-tour-target="category-gallery"]'),
-    title:"Photo gallery",
-    body:"Upload photos for each category — clients see these when browsing your catalogue. Tap a photo to view it full-screen." },
-  { tab:"account", getTarget:()=>document.querySelector('[data-tour-target="manage-catalogue"]'),
-    title:"Manage catalogue",
-    body:"This is where you build what shows up in the Catalogue tab — add categories, upload gallery photos, and create priced items." },
-  { tab:"account", getTarget:()=>document.querySelector('[data-tour-target="appearance"]'),
-    title:"Appearance",
-    body:"Pick a color theme for the whole app — including dark mode." },
-  { tab:"account", getTarget:()=>document.querySelector('[data-tour-target="backup-transfer"]'),
-    title:"Backup & transfer",
-    body:"Your data lives only on this device. Export a backup regularly, or turn on automatic backups so you never lose your records." },
-  { title:"You're all set",
-    body:"That's the tour! Explore at your own pace — tap the ? icon in the top bar anytime to run through this again." },
-];
+// Built as a function (not a static array) so every string reflects
+// whichever vertical is active right now — the tour needs to read
+// correctly whether the account is a tailor, a salon, a restaurant,
+// or any other business in CATEGORY_CONFIG, and (for universal-key
+// accounts) needs to re-read correctly after switching modules.
+function getTourSteps(){
+  const cfg = activeCatCfg();
+  const clientWord = nounFor("client").toLowerCase();
+  const clientsWord = nounFor("clientPlural").toLowerCase();
+  const recordWord = nounFor("record").toLowerCase();
+  const recordsWord = nounFor("recordPlural").toLowerCase();
+  const catalogueWord = nounFor("catalogue").toLowerCase();
+  const statusList = currentStatuses().map(s=>s.key).join(", ");
+  const measurementsBit = cfg.hasMeasurements ? ", measurements and style photos" : " and photos";
+  const measurementsBit2 = cfg.hasMeasurements ? "body measurements, style photos, and their complete " : "their complete ";
+  return [
+    { title:"Welcome to Bizrail",
+      body:"A quick, 60-second tour of the essentials — how to manage "+clientsWord+", "+recordsWord+", your "+catalogueWord.toLowerCase()+" and your business settings. Tap Next to begin, or Skip tour at any time." },
+    { tab:"dashboard", getTarget:()=>document.querySelector(".brand"),
+      title:"Your business identity",
+      body:"Your business name and logo, top-left, everywhere in the app. Tap it any time to preview the public welcome screen "+clientsWord+" see." },
+    { tab:"dashboard", getTarget:()=>document.querySelector('.topbar [data-action="open-notifications"]'),
+      title:"Alerts",
+      body:"The bell flags "+recordsWord+" that are due soon, due today, or overdue — plus any "+recordWord+" with an unpaid balance." },
+    { tab:"dashboard", getTarget:()=>document.querySelector('.topbar [data-action="open-order-modal-new"]'),
+      title:"Start a new "+recordWord,
+      body:"Create a "+recordWord+" for any "+clientWord+" from anywhere in the app — pick items from your "+catalogueWord+", set a due date, and record payments as they come in." },
+    { tab:"dashboard", getTarget:()=>document.querySelector("#content .grid-stats"),
+      title:"Overview at a glance",
+      body:"Total revenue, outstanding balance, active "+recordsWord+" and total "+clientsWord+" — updated automatically as you work." },
+    { tab:"dashboard", getTarget:()=>document.querySelector("#content .grid-2-even"),
+      title:"Charts",
+      body:"See revenue over the last six months, and how your "+recordsWord+" are spread across each status." },
+    { tab:"dashboard", getTarget:()=>document.querySelector("#content .grid-2"),
+      title:"Due soon & top "+clientsWord,
+      body:recordsWord.charAt(0).toUpperCase()+recordsWord.slice(1)+" that need attention soon, plus the "+clientsWord+" who've spent the most with you — with a one-tap WhatsApp reminder button." },
+    { tab:"clients", getTarget:()=>document.querySelector('#content [data-action="open-client-modal-new"]'),
+      title:nounFor("clientPlural"),
+      body:"Search your "+clientWord+" list, or add a new "+clientWord+" here — name, phone, address"+measurementsBit+" all live on their profile." },
+    { tab:"clients", getTarget:()=>document.querySelector("#content .grid-cards, #content #clientsGrid"),
+      title:nounFor("clientPlural")+" profiles",
+      body:"Tap any "+clientWord+" card to open their full profile: "+measurementsBit2+recordWord+" history." },
+    { tab:"orders", getTarget:()=>document.querySelector("#content .chipbar"),
+      title:recordsWord.charAt(0).toUpperCase()+recordsWord.slice(1)+" status filters",
+      body:"Filter "+recordsWord+" by stage — "+statusList+"." },
+    { tab:"orders", getTarget:()=>document.querySelector('#content [data-action="open-order-modal-new"]'),
+      title:recordWord.charAt(0).toUpperCase()+recordWord.slice(1)+" tracker",
+      body:"Every "+recordWord+" shows a progress tape through each stage, plus its total, balance and due date, right on the card. Tap a card to update it." },
+    { tab:"catalogue", getTarget:()=>document.querySelector("#content .chipbar"),
+      title:nounFor("catalogue"),
+      body:"Browse your priced "+nounFor("item").toLowerCase()+"s by category — this is what you'd show a "+clientWord+" browsing your work." },
+    { tab:"catalogue", getTarget:()=>document.querySelector('#content [data-action="open-full-gallery"]'),
+      title:"Browse all photos",
+      body:"Tap the gallery icon to see all your category photos in one place — full-screen and easy to flip through." },
+    { tab:"catalogue", getTarget:()=>document.querySelector('#content [data-action="share-pricelist-image"]'),
+      title:"Share your price list",
+      body:"Send your whole "+catalogueWord+" as a neat image straight to WhatsApp, or download it to share anywhere." },
+    { tab:"account", getTarget:()=>document.querySelector('[data-tour-target="business-profile"]'),
+      title:"Business profile",
+      body:"Your business name, logo, phone, address and registration number — used on every invoice, receipt and shared price list." },
+    { tab:"account", getTarget:()=>document.querySelector('[data-tour-target="bank-details"]'),
+      title:"Bank details",
+      body:"Add one or more bank accounts here so "+clientsWord+" know exactly where to pay — they'll appear automatically on invoices with a balance due." },
+    { tab:"account", getTarget:()=>document.querySelector('[data-tour-target="category-gallery"]'),
+      title:"Photo gallery",
+      body:"Upload photos for each category — "+clientsWord+" see these when browsing your "+catalogueWord+". Tap a photo to view it full-screen." },
+    { tab:"account", getTarget:()=>document.querySelector('[data-tour-target="manage-catalogue"]'),
+      title:"Manage "+catalogueWord,
+      body:"This is where you build what shows up in the "+nounFor("catalogue")+" tab — add categories, upload gallery photos, and create priced items." },
+    { tab:"account", getTarget:()=>document.querySelector('[data-tour-target="appearance"]'),
+      title:"Appearance",
+      body:"Pick a color theme for the whole app, or tap the palette swatch to build your own personalized colours from scratch." },
+    { tab:"account", getTarget:()=>document.querySelector('[data-tour-target="dark-mode"]'),
+      title:"Dark mode",
+      body:"Switch this on anytime for a dark background — it keeps whichever color theme you picked, so your brand colors stay the same." },
+    { tab:"account", getTarget:()=>document.querySelector('[data-tour-target="backup-transfer"]'),
+      title:"Backup & transfer",
+      body:"Your data lives only on this device. Export a backup regularly, or turn on automatic backups so you never lose your records." },
+    { title:"You're all set",
+      body:"That's the tour! Explore at your own pace — tap the ? icon in the top bar anytime to run through this again." },
+  ];
+}
 
 let tourResizeBound = false;
 function startTour(){
@@ -2168,7 +2983,7 @@ function startTour(){
   collapseNav(navDepth);
   state.modal = null; state.selectedClientId = null; state.lightbox = null; state.tab = "dashboard";
   markTourSeen();
-  state.tour = { step: 0 };
+  state.tour = { step: 0, steps: getTourSteps() };
   goToTourStep(0);
   if(!tourResizeBound){
     tourResizeBound = true;
@@ -2178,9 +2993,9 @@ function startTour(){
 function goToTourStep(i){
   if(!state.tour) return;
   if(i < 0){ return; }
-  if(i >= TOUR_STEPS.length){ endTour(); return; }
+  if(i >= state.tour.steps.length){ endTour(); return; }
   state.tour.step = i;
-  const step = TOUR_STEPS[i];
+  const step = state.tour.steps[i];
   if(step.tab && state.tab !== step.tab){
     const wasHome = state.tab === "dashboard";
     state.tab = step.tab; state.selectedClientId = null;
@@ -2214,17 +3029,17 @@ function renderTourOverlay(){
     });
   }
   const idx = state.tour.step;
-  const step = TOUR_STEPS[idx];
+  const step = state.tour.steps[idx];
   let target = null;
   if(step && step.getTarget){ try{ target = step.getTarget(); }catch(e){ target = null; } }
   if(target && target.scrollIntoView) target.scrollIntoView({block:"center", behavior:"auto"});
-  requestAnimationFrame(() => { paintTourOverlay(overlay, step, target, idx, TOUR_STEPS.length); });
+  requestAnimationFrame(() => { paintTourOverlay(overlay, step, target, idx, state.tour.steps.length); });
 }
 function paintTourOverlay(overlay, step, target, idx, total){
   if(!state.tour) return;
   const rect = target ? target.getBoundingClientRect() : null;
   const pad = 6;
-  const dots = TOUR_STEPS.map((_,i)=>'<span class="tour-dot '+(i===idx?"active":"")+'"></span>').join("");
+  const dots = state.tour.steps.map((_,i)=>'<span class="tour-dot '+(i===idx?"active":"")+'"></span>').join("");
   const isFirst = idx === 0, isLast = idx === total - 1;
   const panelClass = rect ? "tour-panel" : "tour-panel centered";
   const panelHtml =
@@ -2297,6 +3112,12 @@ document.addEventListener("click", (e) => {
     case "open-order-modal-new-for-client": openOrderModal(null, id); break;
     case "open-order-modal": openOrderModal(findOrder(id)); break;
     case "open-notifications": state.modal = { type:"notifications" }; pushNav(); render(); break;
+    case "open-global-search": state.modal = { type:"global-search" }; state.globalSearchQ = ""; pushNav(); render();
+      setTimeout(()=>{ const el = document.getElementById("globalSearchInput"); if(el) el.focus(); }, 30);
+      break;
+    case "global-search-goto-client": closeModal(); state.tab = "clients"; state.selectedClientId = id; render(); break;
+    case "global-search-goto-order": closeModal(); openOrderModal(findOrder(id)); break;
+    case "global-search-goto-item": closeModal(); state.tab = "catalogue"; openCatItemView(id); break;
     case "copy-text": {
       const value = el.getAttribute("data-value")||"";
       const restoreHtml = el.innerHTML;
@@ -2334,14 +3155,57 @@ document.addEventListener("click", (e) => {
       if(!o.clientId) return;
       o.items = o.items.filter(it => (it.desc && it.desc.trim()) || Number(it.price)>0);
       if(o.items.length===0) o.items = [{desc:"",price:0}];
-      const exists = state.orders.some(x=>x.id===o.id);
+      const existingOrder = state.orders.find(x=>x.id===o.id);
+      const exists = !!existingOrder;
+      if(!o.history) o.history = existingOrder && existingOrder.history ? existingOrder.history.slice() : [];
+      if(!exists || !existingOrder || existingOrder.status !== o.status){
+        o.history.push({status:o.status, at:new Date().toISOString()});
+      }
       state.orders = exists ? state.orders.map(x=>x.id===o.id?o:x) : state.orders.concat([o]);
       persistOrders();
       closeModal();
       break;
     }
     case "delete-order": if(confirm("Delete this order?")){ const o=state.modal.draft; state.orders = state.orders.filter(x=>x.id!==o.id); persistOrders(); closeModal(); } break;
+    case "duplicate-order": {
+      const src = state.modal.draft;
+      const copy = JSON.parse(JSON.stringify(src));
+      copy.id = uid();
+      copy.status = "Pending";
+      copy.payments = [];
+      copy.createdAt = todayISO();
+      copy.dueDate = "";
+      copy.history = [{status:"Pending", at:new Date().toISOString()}];
+      closeModal();
+      openOrderModal(copy);
+      break;
+    }
     case "filter-orders": state.orderFilterStatus = el.getAttribute("data-status"); render(); break;
+    case "toggle-balance-filter": state.orderBalanceOnly = !state.orderBalanceOnly; render(); break;
+    case "clear-order-dates": state.orderDateFrom = ""; state.orderDateTo = ""; render(); break;
+    case "toggle-order-bulk": state.orderBulkMode = !state.orderBulkMode; state.orderBulkSelected = []; render(); break;
+    case "toggle-order-select": {
+      const sel = state.orderBulkSelected || (state.orderBulkSelected = []);
+      const i = sel.indexOf(id);
+      if(i>=0) sel.splice(i,1); else sel.push(id);
+      render();
+      break;
+    }
+    case "bulk-set-status": {
+      const status = el.getAttribute("data-status");
+      const sel = state.orderBulkSelected || [];
+      state.orders = state.orders.map(o=>{
+        if(!sel.includes(o.id)) return o;
+        const hist = o.history ? o.history.slice() : [];
+        hist.push({status, at:new Date().toISOString()});
+        return Object.assign({}, o, {status, history:hist});
+      });
+      state.orderBulkMode = false; state.orderBulkSelected = [];
+      persistOrders(); render();
+      break;
+    }
+    case "dash-kpi-outstanding": state.tab = "orders"; state.orderFilterStatus = "All"; state.orderBalanceOnly = true; pushNav(); render(); break;
+    case "dash-kpi-active": state.tab = "orders"; state.orderFilterStatus = "All"; state.orderBalanceOnly = false; pushNav(); render(); break;
 
     case "select-category": state.activeCategoryId = id; render(); break;
     case "add-category": {
@@ -2463,6 +3327,31 @@ document.addEventListener("click", (e) => {
       render();
       break;
     }
+    case "accept-policy": {
+      if(state.policyChecks.understand && state.policyChecks.accept){
+        state.policyAccepted = true;
+      }
+      render();
+      break;
+    }
+    case "choose-category": {
+      const cat = el.getAttribute("data-cat");
+      if(CATEGORY_CONFIG[cat]){
+        state.pendingCategory = cat;
+        state.authMode = "signup";
+        state.authForm = null; state.authError = null;
+        state.showWelcome = false;
+        if(!state.account) seedDemoData(false);
+      }
+      render();
+      break;
+    }
+    case "back-to-category-picker": {
+      state.pendingCategory = null;
+      state.authForm = null; state.authError = null;
+      render();
+      break;
+    }
     case "close-modal": closeModal(); break;
     case "sign-in": {
       const f = state.authForm || {};
@@ -2504,22 +3393,39 @@ document.addEventListener("click", (e) => {
         state.authError = "Password should be at least 6 characters.";
       } else if(password !== f.confirm){
         state.authError = "Passwords don't match.";
-      } else if(key !== SIGNUP_KEY){
+      } else if(key !== (CATEGORY_CONFIG[state.pendingCategory] || CATEGORY_CONFIG.tailoring).accessKey && key !== UNIVERSAL_KEY){
         state.authError = "Incorrect access key.";
       } else {
         // Wipe the demo data — the new account starts with a clean slate.
+        const cfg = CATEGORY_CONFIG[state.pendingCategory] || CATEGORY_CONFIG.tailoring;
         state.clients = [];
         state.orders = [];
         state.catalogue = { categories: [], items: [] };
-        state.business = { name: name||"My Tailor Shop", phone:"", address:"", currency: state.business.currency||"₦", regNumber:"", bankAccounts:[], logo:null };
+        state.business = { name: name||cfg.defaultBusinessName, phone:"", address:"", currency: state.business.currency||"₦", regNumber:"", bankAccounts:[], logo:null };
         persistClients(); persistOrders(); persistCatalogue(); persistBusiness();
         state.account = { name, email, password };
         persistAccount();
+        state.businessCategory = state.pendingCategory || "tailoring";
+        state.pendingCategory = null;
+        persistBusinessCategory();
+        state.universalAccess = (key === UNIVERSAL_KEY);
+        persistUniversalAccess();
         state.authed = true; state.authError = null; state.authMode = "signin"; state.viewOnly = false;
         state.authForm = null;
         if(supportsWebAuthn()){
           setTimeout(() => { if(confirm("Enable fingerprint sign-in on this device for next time?")) registerBiometric(); }, 300);
         }
+      }
+      render();
+      break;
+    }
+    case "switch-module": {
+      const cat = el.getAttribute("data-cat");
+      if(state.universalAccess && CATEGORY_CONFIG[cat]){
+        state.businessCategory = cat;
+        persistBusinessCategory();
+        state.activeCategoryId = null; state.browseCategoryId = null;
+        state.tab = "dashboard";
       }
       render();
       break;
@@ -2562,6 +3468,22 @@ document.addEventListener("click", (e) => {
       render();
       break;
     }
+    case "open-custom-theme-modal": {
+      const c = state.customThemeColors || { primary:"#1E3A3A", gold:"#B8842E" };
+      state.modal = { type:"custom-theme", draft: { primary:c.primary, gold:c.gold } };
+      pushNav(); render();
+      break;
+    }
+    case "save-custom-theme": {
+      const c = state.modal.draft;
+      state.customThemeColors = { primary:c.primary, gold:c.gold };
+      THEMES.custom = buildCustomTheme(c.primary, c.gold);
+      persist("customThemeColors", state.customThemeColors);
+      applyTheme("custom");
+      persist("theme", "custom");
+      closeModal();
+      break;
+    }
     case "add-bank-account": {
       if(!state.business.bankAccounts) state.business.bankAccounts = [];
       state.business.bankAccounts.push({ id:uid(), bankName:"", accountName:"", accountNumber:"" });
@@ -2575,21 +3497,67 @@ document.addEventListener("click", (e) => {
     }
     case "export-data": exportBackup(); break;
     case "download-user-guide": downloadUserGuide(); break;
+    case "export-csv-clients": exportClientsCsv(); break;
+    case "export-csv-orders": exportOrdersCsv(); break;
+    case "share-backup-file": shareBackupFile(); break;
     case "open-contact-dev-modal": state.modal = { type:"contact-dev" }; pushNav(); render(); break;
   }
 });
 
+function csvEscape(v){
+  const s = (v===null||v===undefined) ? "" : String(v);
+  return /[",\n]/.test(s) ? '"'+s.replace(/"/g,'""')+'"' : s;
+}
+function downloadCsv(filename, rows){
+  const csv = rows.map(r => r.map(csvEscape).join(",")).join("\r\n");
+  const blob = new Blob([csv], {type:"text/csv;charset=utf-8;"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 2000);
+}
+function exportClientsCsv(){
+  const rows = [["Name","Phone","Address","Gender","Notes","Total spent","Orders"]];
+  state.clients.forEach(c=>{
+    const clientOrders = state.orders.filter(o=>o.clientId===c.id);
+    const total = clientOrders.reduce((s,o)=>s+orderTotal(o),0);
+    rows.push([c.name, c.phone||"", c.address||"", c.gender||"", c.notes||"", total, clientOrders.length]);
+  });
+  downloadCsv("bizrail-"+nounFor("clientPlural").toLowerCase()+"-"+todayISO()+".csv", rows);
+}
+function exportOrdersCsv(){
+  const rows = [["Client","Title","Status","Total","Paid","Balance","Due date","Created"]];
+  state.orders.forEach(o=>{
+    const client = state.clients.find(c=>c.id===o.clientId);
+    const total = orderTotal(o), paid = orderPaid(o);
+    rows.push([client?client.name:"Unknown", o.title||"", o.status, total, paid, total-paid, o.dueDate||"", o.createdAt||""]);
+  });
+  downloadCsv("bizrail-"+nounFor("recordPlural").toLowerCase()+"-"+todayISO()+".csv", rows);
+}
+function shareBackupFile(){
+  const backup = {
+    app: "Bizrail", version: 1, exportedAt: new Date().toISOString(),
+    clients: state.clients, orders: state.orders, catalogue: state.catalogue,
+    business: state.business, theme: state.theme || "indigo", darkMode: state.darkMode||false, customThemeColors: state.customThemeColors||null,
+  };
+  const stamp = new Date().toISOString().slice(0,10);
+  const file = new File([JSON.stringify(backup, null, 2)], "bizrail-backup-"+stamp+".json", {type:"application/json"});
+  if(navigator.canShare && !navigator.canShare({files:[file]})){ exportBackup(); return; }
+  navigator.share({ files:[file], title:"Bizrail backup" }).catch(()=>{});
+}
+
 function exportBackup(){
   const backup = {
-    app: "Tailor Studio", version: 1, exportedAt: new Date().toISOString(),
+    app: "Bizrail", version: 1, exportedAt: new Date().toISOString(),
     clients: state.clients, orders: state.orders, catalogue: state.catalogue,
-    business: state.business, theme: state.theme || "indigo",
+    business: state.business, theme: state.theme || "indigo", darkMode: state.darkMode||false, customThemeColors: state.customThemeColors||null,
   };
   const blob = new Blob([JSON.stringify(backup, null, 2)], {type:"application/json"});
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   const stamp = new Date().toISOString().slice(0,10);
-  a.href = url; a.download = "tailor-studio-backup-"+stamp+".json";
+  a.href = url; a.download = "bizrail-backup-"+stamp+".json";
   document.body.appendChild(a); a.click(); a.remove();
   setTimeout(() => URL.revokeObjectURL(url), 2000);
 }
@@ -2638,6 +3606,12 @@ function downloadUserGuide(){
   let y = 56;
 
   const goldRGB = [184,132,46], inkRGB = [38,34,27], softRGB = [100,94,80], primaryRGB = [30,58,58];
+
+  const cfg = activeCatCfg();
+  const clientPl = nounFor("clientPlural").toLowerCase(), clientPlCap = nounFor("clientPlural");
+  const recordWord = nounFor("record").toLowerCase(), recordPl = nounFor("recordPlural").toLowerCase(), recordPlCap = nounFor("recordPlural");
+  const catWord = nounFor("catalogue"), catWordLower = catWord.toLowerCase(), itemWord = nounFor("item").toLowerCase(), itemPl = nounFor("item")+"s";
+  const statusNames = currentStatuses().map(s => s.key).filter(k => k !== "Cancelled");
 
   function ensureSpace(need){
     if(y + need > pageH - 44){ doc.addPage(); y = 56; }
@@ -2733,13 +3707,32 @@ function downloadUserGuide(){
     doc.line(marginX, y+6, marginX+maxW, y+6);
     y += 24;
   }
+  function subheading(text){
+    ensureSpace(22);
+    doc.setFont("times","bolditalic"); doc.setFontSize(11.5); doc.setTextColor(...primaryRGB);
+    doc.text(text, marginX, y);
+    y += 19;
+  }
   function bullet(text){
     doc.setFont("times","normal"); doc.setFontSize(11); doc.setTextColor(...inkRGB);
     const lines = doc.splitTextToSize(text, maxW - 16);
     ensureSpace(lines.length*15 + 6);
-    doc.text("\u2022", marginX, y);
+    doc.setFillColor(...goldRGB);
+    doc.circle(marginX+2, y-4, 1.8, "F");
     doc.text(lines, marginX+14, y);
     y += lines.length*15 + 6;
+  }
+  function numStep(n, text){
+    doc.setFont("times","bold"); doc.setFontSize(11); doc.setTextColor(...inkRGB);
+    const lines = doc.splitTextToSize(text, maxW - 22);
+    ensureSpace(lines.length*15 + 8);
+    doc.setFillColor(...primaryRGB);
+    doc.circle(marginX+7, y-4, 8, "F");
+    doc.setFont("times","bold"); doc.setFontSize(9); doc.setTextColor(255,255,255);
+    doc.text(String(n), marginX+7, y-1.5, {align:"center"});
+    doc.setFont("times","normal"); doc.setFontSize(11); doc.setTextColor(...inkRGB);
+    doc.text(lines, marginX+20, y);
+    y += lines.length*15 + 8;
   }
   function paragraph(text){
     doc.setFont("times","normal"); doc.setFontSize(11); doc.setTextColor(...inkRGB);
@@ -2786,6 +3779,42 @@ function downloadUserGuide(){
     doc.text(label, x+w/2, yTop+h/2+4, { align:"center" });
     doc.link(x, yTop, w, h, { url });
   }
+  function twoCol(leftTitle, leftItems, rightTitle, rightItems){
+    const colW = (maxW - 24)/2;
+    ensureSpace(20);
+    doc.setFont("times","bolditalic"); doc.setFontSize(11); doc.setTextColor(...primaryRGB);
+    doc.text(leftTitle, marginX, y);
+    doc.text(rightTitle, marginX+colW+24, y);
+    y += 17;
+    doc.setFont("times","normal"); doc.setFontSize(10.5); doc.setTextColor(...inkRGB);
+    const leftLines = [], rightLines = [];
+    leftItems.forEach(t => leftLines.push(...doc.splitTextToSize("\u2022 "+t, colW-6)));
+    rightItems.forEach(t => rightLines.push(...doc.splitTextToSize("\u2022 "+t, colW-6)));
+    const rows = Math.max(leftLines.length, rightLines.length);
+    ensureSpace(rows*15 + 8);
+    for(let i=0;i<rows;i++){
+      if(leftLines[i]) doc.text(leftLines[i], marginX, y+i*15);
+      if(rightLines[i]) doc.text(rightLines[i], marginX+colW+24, y+i*15);
+    }
+    y += rows*15 + 14;
+  }
+  function statusChain(names){
+    doc.setFont("times","bold"); doc.setFontSize(9.5);
+    let x = marginX;
+    const rowH = 26, chipGap = 5;
+    ensureSpace(rowH+10);
+    names.forEach((n,i) => {
+      const w = doc.getTextWidth(n) + 18;
+      if(x + w > marginX+maxW){ x = marginX; y += rowH; ensureSpace(rowH+10); }
+      doc.setFillColor(...(i===names.length-1?[62,107,79]:goldRGB));
+      doc.roundedRect(x, y-14, w, 18, 9, 9, "F");
+      doc.setTextColor(255,255,255);
+      doc.text(n, x+w/2, y-2.5, {align:"center"});
+      x += w;
+      if(i<names.length-1){ doc.setTextColor(...softRGB); doc.text("\u2192", x+3, y-2.5); x += 15; }
+    });
+    y += rowH + 10;
+  }
   function sectionGap(){ y += 22; }
 
   // ---- Cover ----
@@ -2794,19 +3823,20 @@ function downloadUserGuide(){
   doc.setFillColor(...goldRGB);
   doc.rect(0,150,pageW,4,"F");
   doc.setFont("times","bold"); doc.setFontSize(30); doc.setTextColor(255,255,255);
-  doc.text(state.business.name || "Tailor Studio", marginX, 90);
+  doc.text("Bizrail", marginX, 90);
   doc.setFont("times","normal"); doc.setFontSize(13); doc.setTextColor(231,226,211);
   doc.text("Complete User Guide", marginX, 118);
   y = 190;
   doc.setFont("times","italic"); doc.setFontSize(11.5); doc.setTextColor(...softRGB);
-  doc.text("Everything you need to run your tailoring business from your phone.", marginX, y);
-  y += 34;
+  const subtitleLines = doc.splitTextToSize("Everything you need to run your "+recordPl+"/bookings and your "+cfg.label.split(" / ")[0].toLowerCase()+" business from your phone — this copy is set up for "+cfg.label.toLowerCase()+".", maxW);
+  doc.text(subtitleLines, marginX, y);
+  y += subtitleLines.length*15 + 20;
 
   doc.setFont("times","bold"); doc.setFontSize(12); doc.setTextColor(...inkRGB);
   doc.text("Contents", marginX, y); y += 18;
   const toc = [
-    "1. Getting started", "2. Dashboard", "3. Clients", "4. Orders",
-    "5. Receipts & invoices", "6. Catalogue", "7. Account & business settings",
+    "1. Getting started", "2. Dashboard", "3. "+clientPlCap, "4. "+recordPlCap,
+    "5. Receipts & invoices", "6. "+catWord, "7. Account & business settings",
     "8. Backup & restore your data", "9. Fingerprint sign-in", "10. Demo mode",
     "11. Frequently asked questions", "12. Support & contact the developer",
   ];
@@ -2815,76 +3845,123 @@ function downloadUserGuide(){
   doc.addPage(); y = 56;
 
   heading("1. Getting started", "start");
-  bullet("The app opens on a demo account so you can look around with sample clients, orders and catalogue items already filled in.");
-  bullet("The demo is view-only — nothing you tap can be saved while browsing it.");
-  bullet("Tap Sign up on the sign-in screen to create your own account. You will need the access key from whoever set up your app.");
-  bullet("Creating an account permanently clears the demo data on this device and unlocks full editing.");
-  tip("if you're just exploring, stay in the demo as long as you like before creating a real account.");
+  paragraph("Bizrail adapts itself to how you work. Every screen, label and workflow below reflects the business type this copy of the app is configured for: "+cfg.label+".");
+  subheading("Your first five minutes");
+  numStep(1, "Open the app — it launches straight into a demo account pre-loaded with sample "+clientPl+", "+recordPl+" and "+catWordLower+" items so you can explore safely.");
+  numStep(2, "The demo is view-only. Nothing you tap, add or edit in it is ever saved — try everything without worrying.");
+  numStep(3, "When ready, tap Sign up. Choose a business type — Tailoring, Restaurant, Salon, Retail, Real Estate, Events, Laundry or Other — this choice is permanent on this device and shapes every label and status you'll see.");
+  numStep(4, "Enter the access key from whoever set up your app. A standard key unlocks one business type; a universal key unlocks all eight and lets you switch between them later from Account.");
+  numStep(5, "Tap Create account. This permanently clears the demo data on this device and unlocks full editing of your real business data.");
+  tip("if you're just exploring, stay in the demo as long as you like before creating a real account — there's no time limit.");
   sectionGap();
 
   heading("2. Dashboard", "dashboard");
-  bullet("See total revenue, outstanding balance, active orders and total clients at a glance in the KPI cards.");
-  bullet("The revenue chart shows the last 6 months, and the status chart breaks down your orders by stage.");
-  bullet("Due soon & overdue lists any order with a balance due within 5 days, so nothing slips through.");
-  bullet("Top clients ranks who has spent the most with you.");
+  paragraph("Your dashboard is the home screen — a live snapshot of how the business is doing, updated the instant you add or change anything.");
+  twoCol(
+    "KPI cards at a glance",
+    ["Total revenue collected to date", "Outstanding balance still owed to you", "Active "+recordPl+" currently in progress", "Total "+clientPl+" on file"],
+    "Below the KPI cards",
+    ["Revenue chart — last 6 months of income", "Status chart — "+recordPl+" broken down by stage", "Due soon & overdue — anything owing within 5 days", "Top "+clientPl+" — who has spent the most with you"]
+  );
+  tip("tap any KPI card to jump straight into that filtered list — it's the fastest way to act on what you see.");
   sectionGap();
 
-  heading("3. Clients", "clients");
-  bullet("Add a client with their name, phone, address, gender and notes.");
-  bullet("Record body measurements once and reuse them for every future order.");
-  bullet("Attach reference photos to a client's profile so you remember their preferred styles.");
-  bullet("Open a client to see their full order history in one place.");
+  heading("3. "+clientPlCap, "clients");
+  paragraph("Every "+nounFor("client").toLowerCase()+" profile is the single source of truth for that person — their details, history and preferences all live in one place, ready to reuse on the next "+recordWord+".");
+  twoCol(
+    "What you can record",
+    ["Name, phone, address, gender and free-text notes", cfg.hasMeasurements ? "Body measurements, saved once and reused on every future "+recordWord : "Any extra details relevant to your business type", "Reference photos of preferred styles or past work", "Full "+recordWord+" history, newest first"],
+    "Where it's used",
+    ["Auto-fills new "+recordPl+" started from their profile", "Powers the Top "+clientPl+" ranking on your dashboard", "Shown on receipts and invoices you share with them", "Searchable from the "+clientPlCap+" tab at any time"]
+  );
+  numStep(1, "Tap "+clientPlCap+" in the bottom navigation, then the + button to add a new one.");
+  numStep(2, "Fill in their details — only name and phone are required, everything else can be added later.");
+  numStep(3, "Open their profile any time to start a new "+recordWord+", edit details, or review past activity.");
   sectionGap();
 
-  heading("4. Orders", "orders");
-  bullet("Create a new order from the Orders tab or directly from a client's profile.");
-  bullet("Add line items with prices, record part-payments as they come in, and set a due date.");
-  bullet("Update the status — Pending, Cutting, Sewing, Fitting, Ready, Delivered — as work progresses.");
-  bullet("Filter the orders list by status to quickly find what needs attention.");
+  heading("4. "+recordPlCap, "orders");
+  paragraph("Every "+recordWord+" moves through a set of stages built for "+cfg.label.split(" / ")[0].toLowerCase()+" — here's the exact flow this copy of Bizrail uses:");
+  statusChain(statusNames.concat(["Cancelled"]));
+  numStep(1, "Tap New "+recordWord+" from the top bar, the "+recordPlCap+" tab, or directly from a "+nounFor("client").toLowerCase()+"'s profile.");
+  numStep(2, "Add line items with prices — the total updates live as you go.");
+  numStep(3, "Record any part-payment received now, and set a due date for the balance.");
+  numStep(4, "Move the status forward as work progresses; each change is timestamped in the "+recordWord+"'s history.");
+  numStep(5, "Filter the "+recordPl+" list by status any time to see exactly what needs attention right now.");
+  tip("overdue balances surface automatically on your dashboard — you never have to chase them manually.");
   sectionGap();
 
   heading("5. Receipts & invoices", "invoice");
-  bullet("Generate a receipt or invoice image straight from any order.");
-  bullet("Your logo, business name, address and RC number appear automatically at the top.");
-  bullet("Share the image directly on WhatsApp or download it to send however you like.");
+  paragraph("Turn any "+recordWord+" into a professional, branded document in one tap — no design work needed on your end.");
+  twoCol(
+    "Generated automatically",
+    ["Your logo, business name and address", "RC number, if you've added one", "Line items, prices and payment status", "Bank details for outstanding balances"],
+    "How to share it",
+    ["Share directly on WhatsApp in one tap", "Download the image to send another way", "Re-generate any time details change", "Works the same across every business type"]
+  );
   sectionGap();
 
-  heading("6. Catalogue", "catalogue");
-  bullet("Organise your styles into categories, each with its own photo gallery.");
-  bullet("Add items with photos, prices and a short description.");
-  bullet("Share an individual item on WhatsApp, or share your entire price list as one image.");
+  heading("6. "+catWord, "catalogue");
+  paragraph("Your "+catWordLower+" is the visual menu of everything you offer — build it once, then share it or pull from it whenever you start a new "+recordWord+".");
+  numStep(1, "Create categories to group related "+itemPl+" — each gets its own photo gallery.");
+  numStep(2, "Add "+itemPl+" with photos, a price and a short description.");
+  numStep(3, "Share a single "+itemWord+" on WhatsApp, or export your entire price list as one shareable image.");
+  numStep(4, "Pick straight from the "+catWordLower+" when building a new "+recordWord+" — no retyping details.");
   sectionGap();
 
   heading("7. Account & business settings", "settings");
-  bullet("Update your business name, logo, phone, address, RC number and currency.");
-  bullet("Add one or more bank accounts so clients know where to pay.");
-  bullet("Choose a colour theme for the whole app.");
+  twoCol(
+    "Business profile",
+    ["Business name, logo and RC number", "Phone number and address", "Currency used across the app", "Colour theme for the whole app"],
+    "Payments",
+    ["Add one or more bank accounts", "Shown automatically on receipts", clientPlCap+" always know where to pay", "Edit or remove accounts any time"]
+  );
+  if(state.universalAccess){
+    subheading("Business module switcher (universal key)");
+    paragraph("Because this account signed up with a universal key, you can switch business modules anytime from Account. Your "+clientPl+", "+recordPl+" and "+catWordLower+" stay exactly the same — only the labels, statuses and extra fields shown change to match the module you pick.");
+  } else {
+    subheading("Have a universal key instead?");
+    paragraph("A universal key unlocks every business type and adds a module switcher here in Account, letting you flip between them without losing data. Contact the developer to upgrade your key.");
+  }
   sectionGap();
 
   heading("8. Backup & restore your data", "backup");
-  bullet("Your data is stored only on this device.");
-  bullet("Export a backup file regularly, and use it to move your data to a new device or restore after reinstalling.");
-  tip("export a backup before switching phones — it only takes a second and could save all your records.");
+  paragraph("Bizrail stores everything locally on this device only — nothing is sent to a server, which means backups are entirely in your hands.");
+  numStep(1, "Open Account and tap Export backup — this saves a single file containing every "+nounFor("client").toLowerCase()+", "+recordWord+" and "+catWordLower+" item.");
+  numStep(2, "Store that file somewhere safe — email it to yourself, save it to cloud storage, or keep it on a computer.");
+  numStep(3, "On a new or reinstalled device, tap Import backup and select the file to restore everything exactly as it was.");
+  tip("export a backup before switching phones — it only takes a second and could save every record you have.");
   sectionGap();
 
   heading("9. Fingerprint sign-in", "security");
-  bullet("After signing in with your password, you'll be asked if you want to enable fingerprint sign-in on that device.");
-  bullet("Once enabled, the fingerprint prompt opens automatically the next time you open the sign-in screen.");
-  bullet("Requires a device with Touch ID, Face ID, Windows Hello or a fingerprint sensor.");
+  paragraph("Skip typing your password every time by using your device's built-in biometric sign-in.");
+  numStep(1, "Sign in normally with your password once.");
+  numStep(2, "When prompted, choose to enable fingerprint sign-in on that device.");
+  numStep(3, "From then on, the fingerprint prompt opens automatically every time you return to the sign-in screen.");
+  tip("requires a device with Touch ID, Face ID, Windows Hello, or a fingerprint sensor — the option only appears if yours supports it.");
   sectionGap();
 
   heading("10. Demo mode", "demo");
-  bullet("The demo account is view-only and safe to explore freely.");
-  bullet("Once you've created a real account, you can still tap View demo account on the sign-in screen to look at the sample data again — your own data is never affected.");
+  paragraph("The demo account never goes away — it's always there as a safe space to explore, test, or show someone how Bizrail works.");
+  twoCol(
+    "Before you have an account",
+    ["Loads automatically on first open", "Pre-filled with sample "+clientPl+" and "+recordPl, "Fully interactive but nothing saves"],
+    "After you have an account",
+    ["Tap View demo account on the sign-in screen", "Your real data is never touched or affected", "Use it anytime to test or demonstrate features"]
+  );
   sectionGap();
 
   heading("11. Frequently asked questions", "faq");
+  paragraph("Quick answers to the questions "+cfg.label.split(" / ")[0].toLowerCase()+" businesses ask most.");
   faqItem("I forgot my password — what do I do?", "Contact the developer using the details on the last page to help you regain access.");
   faqItem("Can I use the app on more than one device?", "Data is stored per device. Export a backup on one device and import it on the other to move your data across.");
-  faqItem("What is the access key for signing up?", "It's provided by whoever set up your copy of the app. Contact the developer if you don't have it.");
+  faqItem("What is the access key for signing up?", "It's provided by whoever set up your copy of the app. A standard key unlocks one business type; a universal key unlocks every business type and lets you switch between them from Account. Contact the developer if you don't have one.");
+  faqItem("Can I change my business type after signing up?", "Only if you signed up with a universal key — use the Business module switcher in Account. With a standard key, the business type chosen at sign-up is permanent on that device.");
   faqItem("Will creating an account delete anything important?", "It clears the sample demo data only. If you already have real data saved, that stays intact.");
   faqItem("Is my data sent to a server?", "No — everything is stored locally on your device. Back up regularly to avoid losing it.");
   faqItem("Fingerprint sign-in isn't showing up — why?", "It only appears on devices with a supported biometric sensor, and after you've enabled it once from a password sign-in.");
+  faqItem("What happens to my "+recordPl+" if I lose my phone?", "Anything not backed up is lost with the device. This is exactly why exporting a backup regularly matters — it's the only copy outside this phone.");
+  faqItem("Can I customise the statuses shown for my "+recordPl+"?", "The stages shown are set by your business type ("+cfg.label+") to keep the workflow consistent. Contact the developer if you need a different set for your use case.");
+  faqItem("Does the "+catWordLower+" support unlimited "+itemPl+"?", "Yes — add as many "+itemPl+" and categories as your business needs; there's no built-in limit.");
 
   // ---- Support & contact — always last, with live clickable buttons ----
   doc.addPage(); y = 56;
@@ -2907,7 +3984,7 @@ function downloadUserGuide(){
   y += 8;
   paragraph("You can also tap \"Contact developer\" on the sign-up screen at any time to reach out directly from the app.");
 
-  doc.save("tailor-studio-user-guide.pdf");
+  doc.save("bizrail-user-guide.pdf");
 }
 
 function importBackup(file){
@@ -2923,13 +4000,16 @@ function importBackup(file){
       if(data.catalogue && typeof data.catalogue === "object") state.catalogue = data.catalogue;
       if(data.business && typeof data.business === "object") state.business = Object.assign({}, state.business, data.business);
       if(!state.business.bankAccounts) state.business.bankAccounts = [];
-      if(data.theme) applyTheme(data.theme);
+      if(data.customThemeColors) state.customThemeColors = data.customThemeColors;
+      state.darkMode = !!data.darkMode;
+      if(data.theme) applyTheme(data.theme); else applyTheme(state.theme||"indigo");
       persistClients(); persistOrders(); persistCatalogue(); persistBusiness(); persist("theme", state.theme||"indigo");
+      persist("darkMode", state.darkMode); if(state.customThemeColors) persist("customThemeColors", state.customThemeColors);
       state.activeCategoryId = state.catalogue.categories[0] ? state.catalogue.categories[0].id : null;
       render();
       alert("Backup imported successfully.");
     }catch(e){
-      alert("Couldn't read that file. Make sure it's a Tailor Studio backup exported from this app.");
+      alert("Couldn't read that file. Make sure it's a Bizrail backup exported from this app.");
     }
   };
   reader.readAsText(file);
@@ -2960,6 +4040,19 @@ document.addEventListener("input", (e) => {
     }
     return;
   }
+  if(e.target.matches('[data-action="search-orders"]')){
+    state.orderSearch = e.target.value;
+    const wrap = document.getElementById("ordersListWrap");
+    if(wrap) wrap.innerHTML = orderCardsHtml(filteredSortedOrders());
+    return;
+  }
+  if(e.target.matches('[data-action="set-order-date-from"]')){ state.orderDateFrom = e.target.value; render(); return; }
+  if(e.target.matches('[data-action="set-order-date-to"]')){ state.orderDateTo = e.target.value; render(); return; }
+  if(e.target.matches('[data-action="search-catalogue"]')){ state.catalogueSearch = e.target.value; render(); return; }
+  if(e.target.matches('[data-action="global-search-input"]')){ state.globalSearchQ = e.target.value; render();
+    setTimeout(()=>{ const el = document.getElementById("globalSearchInput"); if(el){ el.focus(); el.setSelectionRange(el.value.length, el.value.length); } }, 0);
+    return;
+  }
 });
 function updateOrderTotalsInline(){
   if(!state.modal || state.modal.type!=="order") return;
@@ -2972,6 +4065,12 @@ function updateOrderTotalsInline(){
 }
 
 document.addEventListener("change", (e) => {
+  if(e.target.matches('[data-action="toggle-policy-understand"]')){
+    state.policyChecks.understand = e.target.checked; render(); return;
+  }
+  if(e.target.matches('[data-action="toggle-policy-accept"]')){
+    state.policyChecks.accept = e.target.checked; render(); return;
+  }
   if(e.target.matches('[data-action="toggle-auto-backup"]')){
     if(state.viewOnly){ showViewOnlyToast(); e.target.checked = state.backupSettings.enabled; return; }
     state.backupSettings.enabled = e.target.checked;
@@ -2979,6 +4078,12 @@ document.addEventListener("change", (e) => {
     // backup the moment it's turned on.
     state.backupSettings.lastBackupAt = new Date().toISOString();
     persistBackupSettings();
+    render();
+    return;
+  }
+  if(e.target.matches('[data-action="toggle-dark-mode"]')){
+    if(state.viewOnly){ showViewOnlyToast(); e.target.checked = state.darkMode; return; }
+    toggleDarkMode(e.target.checked);
     render();
     return;
   }
